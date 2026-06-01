@@ -33,29 +33,10 @@
         .toast { position:fixed; top:20px; right:20px; background:#1e293b; color:#fff; padding:12px 20px; border-radius:8px; font-size:13px; z-index:9999; opacity:0; transform:translateX(120px); transition:.3s; } .toast.show { opacity:1; transform:translateX(0); } .toast.success { background:#059669; } .toast.error { background:#dc2626; }
         .modal { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.5); z-index:999; justify-content:center; align-items:center; } .modal.active { display:flex; }
         .modal-content { background:#fff; border-radius:var(--radius); padding:24px; width:90%; max-width:550px; max-height:90vh; overflow-y:auto; }
-        /* 移动端适配 */
-        @media (max-width: 768px) {
-            .sidebar { width: 0; min-width: 0; overflow: hidden; }
-            .sidebar.open { width: 240px; min-width: 240px; }
-            .main { margin-left: 0 !important; }
-            .menu-toggle { display: block; position: fixed; top: 10px; left: 10px; z-index: 200; background: var(--primary); color: #fff; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; }
-        }
-        @media (min-width: 769px) {
-            .menu-toggle { display: none; }
-        }
-        /* 登录层 */
-        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f1f5f9; z-index: 9999; display: flex; justify-content: center; align-items: center; }
-        .login-container { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 90%; max-width: 400px; }
-        .login-container h2 { text-align: center; margin-bottom: 20px; }
-        .login-container label { display: block; margin-top: 10px; font-weight: 500; }
-        .login-container input, .login-container select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #e2e8f0; border-radius: 6px; }
-        .login-container button { width: 100%; margin-top: 15px; padding: 12px; }
-        .bio-btn { background: #10b981; }
     </style>
 </head>
 <body>
 <aside class="sidebar"><div class="sidebar-header"><h2>📋 25化学工艺1班</h2></div>
-    <div style="color:#fff; font-size:12px; padding:5px 18px;" id="sidebar-user-info"></div>
 <ul class="sidebar-nav">
     <li><a data-page="dashboard" class="active">📊 仪表盘</a></li>
     <li><a data-page="roster">👥 学生名册</a></li>
@@ -71,167 +52,27 @@
     <li><a data-page="attendance-history">📊 出勤历史</a></li>
     <li><a data-page="warning-notice">📄 预警通知单</a></li>
     <li><a data-page="ai-advisor">🤖 <span>班级管理小助手</span></a></li>
-    <li id="menu-account-admin" style="display:none;"><a data-page="account-admin">👤 账号管理</a></li>
-    <li><a data-page="settings">⚙️ 设置</a></li>
     <li><a data-page="system-upgrade">⬆️ 系统升级</a></li>
 </ul></aside>
 <div class="toast" id="toast"></div>
-<button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
 <div class="main" id="mainContent"></div>
-<div id="login-overlay">
-    <div class="login-container">
-        <h2>📋 班级管理系统</h2>
-        <label>选择角色</label>
-        <select id="login-role">
-            <option value="班主任">班主任</option>
-            <option value="班委">班委</option>
-        </select>
-        <label>手机号</label>
-        <input type="tel" id="login-phone" placeholder="请输入手机号">
-        <label>密码</label>
-        <input type="password" id="login-password" placeholder="请输入密码">
-        <button onclick="window.handleLogin()">🔐 登录</button>
-        <button class="btn-outline" onclick="window.handleRegister()">📝 注册</button>
-        <button class="bio-btn" onclick="window.handleWebAuthnLogin()">👆 指纹/人脸登录</button>
-<p style="font-size:11px; text-align:center; margin-top:5px; color:#999;">首次使用请在登录后到“设置”中注册指纹</p>
-        <div style="margin-top:10px; text-align:center;">          
-        </div>
-    </div>
-</div>
+
 <script>
 (function() {
     const SUPABASE_URL = 'https://iqjyhoiwgawocxtcrcem.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_nsDhudLW5-QcylC2mGPUaw_cEBr3QNg';
     const DEEPSEEK_KEY = 'sk-05ef4ee9d4ed4c808404aacb46ff5ab0';
-        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-    auth: {
-        persistSession: false,  // 改为 false，不再需要本地存储
-        autoRefreshToken: false
-    }
-});
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const NETLIFY_SITE_ID = '179421d1-d65f-440b-83bb-756cda55daf2';
     const NETLIFY_TOKEN = 'nfp_4xSyyb1T4EutUPqWcspznhcyvsmbu8fid502';
 
-    let students=[], logs=[], classLogs=[], dailyLogs=[], alerts=[], talks=[], weeklyData={}, deductCodes=[], bonusCodes=[];    let currentUser = null;
-    let userProfile = null;
-    // 权限检查
-    function canModify() { return userProfile && userProfile.role === '班主任'; }
-    async function requestModification(action, details) {
-        if (confirm('您是班委，无权此操作。是否提交申请给班主任？')) {
-            await sb.from('action_requests').insert({
-                requester: currentUser.id,
-                phone: userProfile.phone,
-                action: action,
-                details: details,
-                status: '待审批',
-                created_at: new Date().toISOString()
-            });
-            toast('已提交申请，等待班主任审批');
-        }
-    }
+    let students=[], logs=[], classLogs=[], dailyLogs=[], alerts=[], talks=[], weeklyData={}, deductCodes=[], bonusCodes=[];
+
     window.toast = (msg, type='success') => {
         const t = document.getElementById('toast'); t.textContent = msg;
         t.className = 'toast ' + type + ' show';
         setTimeout(() => t.className = 'toast', 2200);
     };
-
-// 登录处理（手机号+密码）
-// ========== 登录/注册/权限模块 ==========
-window.handleLogin = async function() {
-    const phone = document.getElementById('login-phone').value.trim();
-    const password = document.getElementById('login-password').value.trim();
-    if (!phone || !password) { toast('请输入手机号和密码', 'error'); return; }
-    const email = phone + '@class.local';
-    const { data, error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) { toast('登录失败：' + error.message, 'error'); return; }
-    await loadUserProfile(data.user);
-    hideLogin();
-    location.reload();
-};
-
-window.handleRegister = async function() {
-    const phone = document.getElementById('login-phone').value.trim();
-    const password = document.getElementById('login-password').value.trim();
-    const role = document.getElementById('login-role').value;
-    if (!phone || !password) { toast('请输入手机号和密码', 'error'); return; }
-    if (password.length < 6) { toast('密码至少6位', 'error'); return; }
-    const email = phone + '@class.local';
-    const { data, error } = await sb.auth.signUp({ email, password });
-    if (error) {
-        if (error.message.includes('already registered')) {
-            toast('该手机号已注册，请直接登录', 'error');
-        } else {
-            toast('注册失败：' + error.message, 'error');
-        }
-        return;
-    }
-    if (data.user) {
-        await sb.from('profiles').upsert({ user_id: data.user.id, phone, role, status: 'active' });
-        toast('注册成功，自动登录');
-        if (!data.session) {
-            const { error: loginErr } = await sb.auth.signInWithPassword({ email, password });
-            if (loginErr) { toast('自动登录失败，请手动登录', 'error'); return; }
-        }
-        await loadUserProfile(data.user);
-        hideLogin();
-        location.reload();
-    }
-};
-
-async function loadUserProfile(user) {
-    currentUser = user;
-    const { data } = await sb.from('profiles').select('*').eq('user_id', user.id).single();
-    userProfile = data;
-}
-
-function hideLogin() {
-    document.getElementById('login-overlay').style.display = 'none';
-}
-
-window.logout = async function() {
-    await sb.auth.signOut();
-    currentUser = null;
-    userProfile = null;
-    document.getElementById('login-overlay').style.display = 'flex';
-    document.getElementById('mainContent').innerHTML = '';
-    toast('已退出登录');
-};
-
-function canModify() { return userProfile && userProfile.role === '班主任'; }
-
-async function requestModification(action, details) {
-    if (confirm('您是班委，无权此操作。是否提交申请给班主任？')) {
-        await sb.from('action_requests').insert({
-            requester: currentUser.id,
-            phone: userProfile.phone,
-            action: action,
-            details: details,
-            status: '待审批',
-            created_at: new Date().toISOString()
-        });
-        toast('已提交申请，等待班主任审批');
-    }
-}
-// ========== 登录模块结束 ==========
-window.handleWebAuthnLogin = async function() {
-    toast('生物识别登录暂未开放，请使用密码登录', 'error');
-};
-window.registerWebAuthn = async function() {
-    toast('请在设置中注册指纹/人脸', 'error');
-};
-// ArrayBuffer 转换工具
-function arrayBufferToBase64(buffer) {
-    let binary = '';
-    const bytes = new Uint8Array(buffer);
-    for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-    return btoa(binary);
-}
-function base64ToArrayBuffer(base64) {
-    const binary = atob(base64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    return bytes.buffer;
-}
     window.closeModal = id => { const m = document.getElementById(id); if(m) m.classList.remove('active'); };
     window.openModal = id => { const m = document.getElementById(id); if(m) m.classList.add('active'); };
     const fmt = d => d ? new Date(d).toISOString().split('T')[0] : '';
@@ -615,38 +456,6 @@ function getAgeFromIdcard(idcard) {
         <div id="ai-general-result" style="margin-top:10px; padding:12px; background:#f8fafc; border-radius:6px; white-space:pre-wrap; font-size:13px; display:none;"></div>
     </div>
 </div>
-        <div class="page" id="page-account-admin">
-            <div class="card">
-                <h2>👤 账号管理（班主任）</h2>
-                <table id="account-table">
-                    <thead><tr><th>手机号</th><th>角色</th><th>状态</th><th>操作</th></tr></thead>
-                    <tbody id="account-tbody"><tr><td colspan="4">加载中...</td></tr></tbody>
-                </table>
-            </div>
-        </div>
-        <div class="page" id="page-settings">
-            <div class="card">
-                <h2>⚙️ 设置</h2>
-                <div class="form-row">
-                    <div><label>主题颜色</label>
-                        <select id="theme-select" onchange="window.changeTheme()">
-                            <option value="default">默认蓝</option>
-                            <option value="green">护眼绿</option>
-                            <option value="dark">暗夜模式</option>
-                        </select>
-                    </div>
-                    <div><label>屏幕亮度</label>
-                        <input type="range" id="brightness-range" min="50" max="150" value="100" oninput="window.changeBrightness(this.value)">
-                    </div>
-                </div>
-                <hr style="margin:15px 0;">
-                <h3>🔐 生物识别</h3>
-                <p style="font-size:12px; color:var(--text-secondary);">注册指纹或人脸，下次可直接快速登录。</p>
-                <button class="btn-outline" onclick="window.registerWebAuthn()">👆 注册指纹/人脸</button>
-                <hr style="margin:15px 0;">
-                <button class="btn-danger" onclick="window.logout()">🚪 退出登录</button>
-            </div>
-        </div>
         <div class="page" id="page-system-upgrade">
             <div class="card"><h2>⬆️ 系统自动升级</h2><p>输入需求，AI生成并直接部署到 Netlify。</p><textarea id="upgrade-requirement" placeholder="例如：增加宿舍违纪登记..." style="width:100%;height:80px"></textarea><button id="btn-upgrade" onclick="window.autoUpgrade()">🚀 一键升级</button><div id="upgrade-status" style="margin-top:12px;"></div><pre id="upgrade-preview" style="background:#f8fafc;padding:16px;border-radius:6px;white-space:pre-wrap;font-size:13px;max-height:300px;overflow-y:auto;display:none;"></pre></div>
         </div>`;
@@ -663,23 +472,6 @@ function getAgeFromIdcard(idcard) {
             document.getElementById('page-' + a.dataset.page).classList.add('active');
             refreshPage(a.dataset.page);
         }
-        if (p === 'settings') {
-    // 恢复已保存的主题
-    const savedTheme = localStorage.getItem('theme') || 'default';
-    const themeSelect = document.getElementById('theme-select');
-    if (themeSelect) {
-        themeSelect.value = savedTheme;
-        window.changeTheme(); // 应用主题
-    }
-    // 恢复已保存的亮度
-    const savedBrightness = localStorage.getItem('brightness') || '100';
-    const brightnessRange = document.getElementById('brightness-range');
-    if (brightnessRange) {
-        brightnessRange.value = savedBrightness;
-        window.changeBrightness(savedBrightness);
-    }
-}
-        if (p === 'account-admin') { window.loadAccounts(); }
         if (e.target.classList.contains('modal')) e.target.classList.remove('active');
     });
     function refreshPage(p) {
@@ -692,11 +484,6 @@ function getAgeFromIdcard(idcard) {
         if (p === 'code-table') renderCodeTable();
         if (p === 'student-profile') populateProfileSelect();
         if (p === 'ai-advisor') populateAIWarningStudents();
-        if (userProfile && userProfile.role === '班主任') {
-    document.getElementById('menu-account-admin').style.display = '';
-} else {
-    document.getElementById('menu-account-admin').style.display = 'none';
-}
         if (p === 'absence-log') { document.getElementById('absence-week').value = getWeek(); renderAbsenceTable(); }
         if (p === 'attendance-history') {
     document.getElementById('att-history-start').value = '';
@@ -902,37 +689,25 @@ async function refreshDashboard() {
     window.openStudentModal = () => openStudentModal(null);
     window.editStudent = (id) => openStudentModal(id);
     window.saveStudent = async function() {
-    const name = document.getElementById('stu-name').value.trim();
-    const idcard = document.getElementById('stu-idcard').value.trim();
-    if (!name || !idcard) { toast('姓名和身份证必填','error'); return; }
-    const editId = document.getElementById('stu-edit-id').value;
-    const data = {
-        name, idcard,
-        gender: document.getElementById('stu-gender').value,
-        parent: document.getElementById('stu-parent').value,
-        phone: document.getElementById('stu-phone').value,
-        zoudu: document.getElementById('stu-zoudu').value,
-        status: '在读'
+        const name = document.getElementById('stu-name').value.trim();
+        const idcard = document.getElementById('stu-idcard').value.trim();
+        if (!name || !idcard) { toast('姓名和身份证必填','error'); return; }
+        const editId = document.getElementById('stu-edit-id').value;
+        const data = { name, idcard, gender: document.getElementById('stu-gender').value, parent: document.getElementById('stu-parent').value, phone: document.getElementById('stu-phone').value, zoudu: document.getElementById('stu-zoudu').value, status: '在读' };
+        if (editId) await sb.from('students').update(data).eq('idcard', editId);
+        else await sb.from('students').insert(data);
+        closeModal('modal-student');
+        await loadData(); populateAllSelects(); renderRoster(); refreshDashboard();
+        toast('保存成功');
     };
-    if (editId) {
-        if (!canModify()) { await requestModification('修改学生信息', '学生身份证:' + editId); return; }
-        await sb.from('students').update(data).eq('idcard', editId);
-    } else {
-        await sb.from('students').insert(data);
-    }
-    closeModal('modal-student');
-    await loadData(); populateAllSelects(); renderRoster(); refreshDashboard();
-    toast('保存成功');
-};
     window.toggleStudent = async function(idcard) {
-    if (!canModify()) { await requestModification('变更学生状态', '学生身份证:' + idcard); return; }
-    if (!confirm('确定变更状态？')) return;
-    const s = students.find(st => st.idcard === idcard);
-    if (s) {
-        await sb.from('students').update({ status: s.status === '在读' ? '退学' : '在读' }).eq('idcard', idcard);
-        await loadData(); populateAllSelects(); renderRoster();
-    }
-};
+        if (!confirm('确定变更状态？')) return;
+        const s = students.find(st => st.idcard === idcard);
+        if (s) {
+            await sb.from('students').update({ status: s.status === '在读' ? '退学' : '在读' }).eq('idcard', idcard);
+            await loadData(); populateAllSelects(); renderRoster();
+        }
+    };
     // 保存学期配置
 window.saveSemesterConfig = function() {
     const startDate = document.getElementById('semester-start').value;
@@ -1113,12 +888,13 @@ window.loadSemesterConfig = function() {
         if (selectAll) selectAll.checked = false;
     };
 
-  window.deleteLog = async function(id) {
-    if (!canModify()) { await requestModification('删除操行分记录', '记录ID:' + id); return; }
-    if(!confirm('删除？')) return;
-    await sb.from('score_log').delete().eq('id', id);
-    await loadData(); window.renderScoreLog(); refreshDashboard();
-};
+    window.deleteLog = async function(id) {
+        if(!confirm('删除？')) return;
+        await sb.from('score_log').delete().eq('id', id);
+        await loadData();
+        window.renderScoreLog();
+        refreshDashboard();
+    };
 
     window.openAddScoreModal = function() {
         if (!document.getElementById('modal-score')) document.body.insertAdjacentHTML('beforeend', `<div class="modal" id="modal-score"><div class="modal-content"><h3>新增操行分</h3><div class="form-row"><select id="ms-student"></select><input type="date" id="ms-date"></div><div class="form-row"><input type="number" id="ms-week" value="1" style="width:70px"><select id="ms-code" onchange="window.onCodeChange()"></select><input type="number" id="ms-value" placeholder="分值" style="width:80px"></div><input id="ms-reason" placeholder="事由"><div class="form-row"><input id="ms-operator" value="班主任"><select id="ms-basis"><option>直接记录</option><option>课堂日志</option><option>班级日志</option></select></div><div style="text-align:right;margin-top:10px"><button class="btn-outline" onclick="window.closeModal('modal-score')">取消</button><button class="btn-primary" onclick="window.saveScoreRecord()">保存</button></div></div></div>`);
@@ -1240,23 +1016,13 @@ window.loadSemesterConfig = function() {
 
     // ==================== 课堂日志 ====================
     function renderClassLogs() { document.getElementById('class-log-tbody').innerHTML = classLogs.length ? classLogs.map(l => `<tr><td>${l.date}</td><td>${l.period}</td><td>${l.subject||''}</td><td>${l.teacher||''}</td><td>${l.rating}</td><td>${l.violation||'—'}</td><td>${l.measure||'—'}</td><td><button class="btn-danger btn-xs" onclick="window.deleteClassLog(${l.id})">删</button></td></tr>`).join('') : '<tr><td colspan="8">暂无课堂日志</td></tr>'; }
-    window.deleteClassLog = async id => {
-    if (!canModify()) { await requestModification('删除课堂日志', '记录ID:' + id); return; }
-    await sb.from('class_logs').delete().eq('id', id);
-    await loadData();
-    renderClassLogs();
-};
+    window.deleteClassLog = async id => { await sb.from('class_logs').delete().eq('id', id); await loadData(); renderClassLogs(); };
     window.openClassLogModal = function() { if(!document.getElementById('modal-class-log')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-class-log"><div class="modal-content"><h3>课堂日志</h3><div class="form-row"><input type="date" id="cl-date"><input type="number" id="cl-period" value="1" style="width:70px"></div><div class="form-row"><input id="cl-subject" placeholder="科目"><input id="cl-teacher" placeholder="教师"></div><div class="form-row"><select id="cl-rating"><option>A</option><option>B</option><option>C</option></select><input id="cl-monitor" value="唐雨馨"></div><textarea id="cl-violation" rows="2" placeholder="违纪记录"></textarea><textarea id="cl-measure" rows="2" placeholder="教师措施"></textarea><div style="text-align:right;margin-top:10px"><button class="btn-outline" onclick="window.closeModal('modal-class-log')">取消</button><button class="btn-primary" onclick="window.saveClassLog()">保存</button></div></div></div>`); document.getElementById('cl-date').value = fmt(new Date()); openModal('modal-class-log'); };
     window.saveClassLog = async function() { const d = { date: document.getElementById('cl-date').value, period: parseInt(document.getElementById('cl-period').value)||1, subject: document.getElementById('cl-subject').value, teacher: document.getElementById('cl-teacher').value, rating: document.getElementById('cl-rating').value, monitor: document.getElementById('cl-monitor').value, violation: document.getElementById('cl-violation').value, measure: document.getElementById('cl-measure').value }; if(!d.date){ toast('请填写日期','error'); return; } await sb.from('class_logs').insert(d); closeModal('modal-class-log'); await loadData(); renderClassLogs(); toast('已保存'); };
 
     // ==================== 班级日志 ====================
     function renderDailyLogs() { document.getElementById('daily-log-tbody').innerHTML = dailyLogs.length ? dailyLogs.map(l => `<tr><td>${l.date}</td><td>${l.monitor||''}</td><td>${l.overall}</td><td>${l.recess||'—'}</td><td>${l.hygiene||'—'}</td><td>${l.good||'—'}</td><td>${l.concern||'—'}</td><td><button class="btn-danger btn-xs" onclick="window.deleteDailyLog(${l.id})">删</button></td></tr>`).join('') : '<tr><td colspan="8">暂无班级日志</td></tr>'; }
-    window.deleteDailyLog = async id => {
-    if (!canModify()) { await requestModification('删除班级日志', '记录ID:' + id); return; }
-    await sb.from('daily_logs').delete().eq('id', id);
-    await loadData();
-    renderDailyLogs();
-};
+    window.deleteDailyLog = async id => { await sb.from('daily_logs').delete().eq('id', id); await loadData(); renderDailyLogs(); };
     window.openDailyLogModal = function() { if(!document.getElementById('modal-daily-log')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-daily-log"><div class="modal-content"><h3>班级日志</h3><div class="form-row"><input type="date" id="dl-date"><input id="dl-monitor" value="杨桂琼"></div><div class="form-row"><select id="dl-overall"><option>优</option><option>良</option><option>一般</option><option>需关注</option></select></div><textarea id="dl-recess" rows="1" placeholder="课间"></textarea><textarea id="dl-hygiene" rows="1" placeholder="卫生"></textarea><textarea id="dl-good" rows="2" placeholder="好事"></textarea><textarea id="dl-concern" rows="2" placeholder="关注"></textarea><div style="text-align:right;margin-top:10px"><button class="btn-outline" onclick="window.closeModal('modal-daily-log')">取消</button><button class="btn-primary" onclick="window.saveDailyLog()">保存</button></div></div></div>`); document.getElementById('dl-date').value = fmt(new Date()); openModal('modal-daily-log'); };
     window.saveDailyLog = async function() { const d = { date: document.getElementById('dl-date').value, monitor: document.getElementById('dl-monitor').value, overall: document.getElementById('dl-overall').value, recess: document.getElementById('dl-recess').value, hygiene: document.getElementById('dl-hygiene').value, good: document.getElementById('dl-good').value, concern: document.getElementById('dl-concern').value }; if(!d.date){ toast('请填写日期','error'); return; } await sb.from('daily_logs').insert(d); closeModal('modal-daily-log'); await loadData(); renderDailyLogs(); toast('已保存'); };
 
@@ -1307,12 +1073,7 @@ window.loadSemesterConfig = function() {
 }
     // ==================== 谈话记录 ====================
     function renderTalks() { document.getElementById('talk-tbody').innerHTML = talks.length ? talks.map(t => `<tr><td>${t.date}</td><td>${t.student}</td><td>${t.type}</td><td>${t.reason||'—'}</td><td>${t.points||'—'}</td><td>${t.response||'—'}</td><td>${t.followup||'—'}</td><td><button class="btn-danger btn-xs" onclick="window.deleteTalk(${t.id})">删</button></td></tr>`).join('') : '<tr><td colspan="8">暂无谈话记录</td></tr>'; }
-    window.deleteTalk = async id => {
-    if (!canModify()) { await requestModification('删除谈话记录', '记录ID:' + id); return; }
-    await sb.from('talks').delete().eq('id', id);
-    await loadData();
-    renderTalks();
-};
+    window.deleteTalk = async id => { await sb.from('talks').delete().eq('id', id); await loadData(); renderTalks(); };
     window.openTalkModal = function() { if(!document.getElementById('modal-talk')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-talk"><div class="modal-content"><h3>新增谈话记录</h3><div class="form-row"><select id="talk-student"></select><input type="date" id="talk-date"></div><div class="form-row"><select id="talk-type"><option>个别谈话</option><option>家长沟通</option></select></div><input id="talk-reason" placeholder="事由"><textarea id="talk-points" rows="2" placeholder="要点"></textarea><textarea id="talk-response" rows="2" placeholder="表态"></textarea><input id="talk-followup" placeholder="后续跟进"><div style="display:flex;gap:8px;margin-top:8px"><button class="btn-outline btn-sm" onclick="window.aiGenerateTalk()">🤖 AI生成建议</button></div><div style="text-align:right;margin-top:10px"><button class="btn-outline" onclick="window.closeModal('modal-talk')">取消</button><button class="btn-primary" onclick="window.saveTalk()">保存</button></div></div></div>`); document.getElementById('talk-date').value = fmt(new Date()); const sel = document.getElementById('talk-student'); sel.innerHTML=''; students.filter(s=>s.status==='在读').forEach(s=>sel.innerHTML+=`<option value="${s.name}">${s.name}</option>`); openModal('modal-talk'); };
     window.saveTalk = async function() { const s = document.getElementById('talk-student').value; if(!s){ toast('请选择学生','error'); return; } const d = { date: document.getElementById('talk-date').value, student: s, type: document.getElementById('talk-type').value, reason: document.getElementById('talk-reason').value, points: document.getElementById('talk-points').value, response: document.getElementById('talk-response').value, followup: document.getElementById('talk-followup').value }; await sb.from('talks').insert(d); closeModal('modal-talk'); await loadData(); renderTalks(); toast('已保存'); };
     window.aiGenerateTalk = async function() { const student = document.getElementById('talk-student').value; const reason = document.getElementById('talk-reason').value.trim(); if(!student||!reason){ toast('请先选择学生并填写事由','error'); return; } const btn = document.querySelector('#modal-talk .btn-outline'); btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span>'; const prompt = `你是班主任助手。学生${student}因"${reason}"需要谈话，请生成谈话要点、学生可能表态、后续跟进策略。用【要点】、【表态】、【跟进】作为开头分三行。`; try { const res = await fetch('https://api.deepseek.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+DEEPSEEK_KEY},body:JSON.stringify({model:'deepseek-chat',messages:[{role:'user',content:prompt}],temperature:0.8,max_tokens:500})}); const data = await res.json(); const txt = data.choices[0].message.content; document.getElementById('talk-points').value = (txt.match(/【要点】\s*(.*?)(?:\n|$)/)?.[1]||'').trim(); document.getElementById('talk-response').value = (txt.match(/【表态】\s*(.*?)(?:\n|$)/)?.[1]||'').trim(); document.getElementById('talk-followup').value = (txt.match(/【跟进】\s*(.*?)(?:\n|$)/)?.[1]||'').trim(); } catch(e) { toast('AI生成失败','error'); } btn.disabled = false; btn.innerHTML = '🤖 AI生成建议'; };
@@ -1320,44 +1081,11 @@ window.loadSemesterConfig = function() {
     // ==================== 代码管理 ====================
     function renderCodeTable() { const dedCodes = getDeductCodes(), bonCodes = getBonusCodes(); document.getElementById('code-tbody').innerHTML = dedCodes.map(c => `<tr><td>${c.code}</td><td>${c.desc}</td><td style="color:#ef4444">${c.pt}</td><td><button class="btn-sm" onclick="window.openDeductCodeModal('${c.code}')">编辑</button> <button class="btn-sm btn-danger" onclick="window.deleteDeductCode('${c.code}')">删</button></td></tr>`).join(''); document.getElementById('bonus-code-tbody').innerHTML = bonCodes.map(c => `<tr><td>${c.code}</td><td>${c.desc}</td><td style="color:#10b981">+${c.pt}</td><td><button class="btn-sm" onclick="window.openBonusCodeModal('${c.code}')">编辑</button> <button class="btn-sm btn-danger" onclick="window.deleteBonusCode('${c.code}')">删</button></td></tr>`).join(''); }
     window.openDeductCodeModal = function(code=null) { if(!document.getElementById('modal-deduct-code')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-deduct-code"><div class="modal-content"><h3>编辑扣分代码</h3><input id="dc-code" placeholder="代码"><input id="dc-desc" placeholder="事项描述"><input type="number" id="dc-pt" placeholder="扣分（负数）" step="0.5"><div style="margin-top:10px"><button class="btn-primary" onclick="window.saveDeductCode()">保存</button><button class="btn-outline" onclick="window.closeModal('modal-deduct-code')">取消</button></div></div></div>`); if(code){ const c = getDeductCodes().find(c=>c.code===code); document.getElementById('dc-code').value=c.code; document.getElementById('dc-desc').value=c.desc; document.getElementById('dc-pt').value=c.pt; } else { document.getElementById('dc-code').value=''; document.getElementById('dc-desc').value=''; document.getElementById('dc-pt').value=''; } openModal('modal-deduct-code'); };
-    window.saveDeductCode = async function() {
-    const code = document.getElementById('dc-code').value.trim(),
-          desc = document.getElementById('dc-desc').value.trim(),
-          pt = parseFloat(document.getElementById('dc-pt').value);
-    if(!code||!desc||isNaN(pt)){ toast('请完整填写','error'); return; }
-    // 判断是否已存在（编辑）
-    const existing = getDeductCodes().find(c => c.code === code);
-    if (existing && !canModify()) { await requestModification('修改扣分代码', '代码:' + code); return; }
-    await sb.from('deduct_codes').upsert({code,desc,pt});
-    await loadData(); renderCodeTable(); closeModal('modal-deduct-code');
-    toast('代码已保存');
-};
-    window.deleteDeductCode = async function(code) {
-    if (!canModify()) { await requestModification('删除扣分代码', '代码:' + code); return; }
-    if(!confirm('删除？')) return;
-    await sb.from('deduct_codes').delete().eq('code', code);
-    await loadData();
-    renderCodeTable();
-};
+    window.saveDeductCode = async function() { const code = document.getElementById('dc-code').value.trim(), desc = document.getElementById('dc-desc').value.trim(), pt = parseFloat(document.getElementById('dc-pt').value); if(!code||!desc||isNaN(pt)){ toast('请完整填写','error'); return; } await sb.from('deduct_codes').upsert({code,desc,pt}); await loadData(); renderCodeTable(); closeModal('modal-deduct-code'); toast('代码已保存'); };
+    window.deleteDeductCode = async function(code) { if(!confirm('删除？')) return; await sb.from('deduct_codes').delete().eq('code',code); await loadData(); renderCodeTable(); };
     window.openBonusCodeModal = function(code=null) { if(!document.getElementById('modal-bonus-code')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-bonus-code"><div class="modal-content"><h3>编辑加分代码</h3><input id="bc-code" placeholder="代码"><input id="bc-desc" placeholder="事项描述"><input type="number" id="bc-pt" placeholder="加分（正数）" step="0.5"><div style="margin-top:10px"><button class="btn-primary" onclick="window.saveBonusCode()">保存</button><button class="btn-outline" onclick="window.closeModal('modal-bonus-code')">取消</button></div></div></div>`); if(code){ const c = getBonusCodes().find(c=>c.code===code); document.getElementById('bc-code').value=c.code; document.getElementById('bc-desc').value=c.desc; document.getElementById('bc-pt').value=c.pt; } else { document.getElementById('bc-code').value=''; document.getElementById('bc-desc').value=''; document.getElementById('bc-pt').value=''; } openModal('modal-bonus-code'); };
-    window.saveBonusCode = async function() {
-    const code = document.getElementById('bc-code').value.trim(),
-          desc = document.getElementById('bc-desc').value.trim(),
-          pt = parseFloat(document.getElementById('bc-pt').value);
-    if(!code||!desc||isNaN(pt)){ toast('请完整填写','error'); return; }
-    const existing = getBonusCodes().find(c => c.code === code);
-    if (existing && !canModify()) { await requestModification('修改加分代码', '代码:' + code); return; }
-    await sb.from('bonus_codes').upsert({code,desc,pt});
-    await loadData(); renderCodeTable(); closeModal('modal-bonus-code');
-    toast('代码已保存');
-};
-    window.deleteBonusCode = async function(code) {
-    if (!canModify()) { await requestModification('删除加分代码', '代码:' + code); return; }
-    if(!confirm('删除？')) return;
-    await sb.from('bonus_codes').delete().eq('code', code);
-    await loadData();
-    renderCodeTable();
-};
+    window.saveBonusCode = async function() { const code = document.getElementById('bc-code').value.trim(), desc = document.getElementById('bc-desc').value.trim(), pt = parseFloat(document.getElementById('bc-pt').value); if(!code||!desc||isNaN(pt)){ toast('请完整填写','error'); return; } await sb.from('bonus_codes').upsert({code,desc,pt}); await loadData(); renderCodeTable(); closeModal('modal-bonus-code'); toast('代码已保存'); };
+    window.deleteBonusCode = async function(code) { if(!confirm('删除？')) return; await sb.from('bonus_codes').delete().eq('code',code); await loadData(); renderCodeTable(); };
 
     // ==================== 缺旷登记 ====================
 window.renderAbsenceTable = function() {
@@ -1768,36 +1496,19 @@ window.submitAbsence = async function() {
         toast('班级日志已保存');
     };
 
-        async function init() {
-        const { data: { session } } = await sb.auth.getSession();
-        if (session) {
-            await loadUserProfile(session.user);
-            hideLogin();
-            await initApp();
-        } else {
-            document.getElementById('login-overlay').style.display = 'flex';
-        }
-    }
-    async function initApp() {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-        await loadUserProfile(session.user);
-        hideLogin();
-    } else {
-        document.getElementById('login-overlay').style.display = 'flex';
-        return; // 停止加载主界面
-    }
+    async function init() {
         buildUI();
-        window.loadSemesterConfig();
+    window.loadSemesterConfig();
         await loadData();
-        // ... 保留原来 init 中后续所有代码，但去掉 loadData 以上的部分
-    }
+        if (students.length === 0) {
+            const preset = [ /* 35名学生数据 */ ];
+            await sb.from('students').insert(preset.map(s => ({...s, status:'在读'})));
+            await loadData();
+        }
+        if (deductCodes.length === 0) { for (const c of DEFAULT_DEDUCT) await sb.from('deduct_codes').upsert(c); }
+        if (bonusCodes.length === 0) { for (const c of DEFAULT_BONUS) await sb.from('bonus_codes').upsert(c); }
+        await loadData();
         populateAllSelects();
-    // 更新侧边栏用户信息
-    const infoDiv = document.getElementById('sidebar-user-info');
-    if (infoDiv && userProfile) {
-        infoDiv.innerHTML = `👤 ${userProfile.role} | <a href="#" onclick="window.logout()" style="color:#ef4444;">退出</a>`;
-    }
         refreshDashboard(); 
         window.loadRecentAttendance();
         renderRoster(); window.renderScoreLog(); renderWeeklyTable();
@@ -2294,9 +2005,9 @@ window.updateSelectAllState = function() {
 window.batchDeleteLogs = async function() {
     var checked = document.querySelectorAll('.log-checkbox:checked');
     if (checked.length === 0) { toast('请至少选择一条记录', 'error'); return; }
-    if (!canModify()) { await requestModification('批量删除操行分', '选中' + checked.length + '条记录'); return; }
     if (!confirm(`确定删除选中的 ${checked.length} 条记录吗？此操作不可恢复。`)) return;
     var ids = Array.from(checked).map(cb => parseInt(cb.value));
+    // 分批删除，避免URL过长
     for (let i = 0; i < ids.length; i += 50) {
         const batch = ids.slice(i, i + 50);
         const { error } = await sb.from('score_log').delete().in('id', batch);
@@ -2306,7 +2017,8 @@ window.batchDeleteLogs = async function() {
     window.renderScoreLog();
     refreshDashboard();
     toast(`成功删除 ${ids.length} 条记录`);
-};// 预警通知单自动计算
+};
+// 预警通知单自动计算
 // 实时更新操行分和预警等级
 // 根据学生姓名加载其最近的违纪记录到违纪事项下拉（多选）
 window.loadReasonsForStudent = function(studentName) {
@@ -2609,14 +2321,7 @@ function getCurrentAttendance() {
 
     const today = fmt(new Date());
     const todayLogs = logs.filter(l => l.date === today && l.basis === '缺旷登记');
-
-    // 晚自习只统计住校生，其他时段统计全部在读学生
-    let allActive = [];
-    if (periodInfo.timeLabel === '晚自习') {
-        allActive = students.filter(s => s.status === '在读' && s.zoudu !== '是'); // 只保留住校生
-    } else {
-        allActive = students.filter(s => s.status === '在读'); // 全部在读
-    }
+    const allActive = students.filter(s => s.status === '在读');
     const total = allActive.length;
 
     const absentSet = new Set();
@@ -2661,27 +2366,14 @@ function getCurrentAttendance() {
         // 迟到、早退、旷操等暂不视为当前节次缺勤
     }
 
-    // 对于晚自习，还需排除走读生的缺勤记录（缺旷登记中可能误选了走读生）
-    if (periodInfo.timeLabel === '晚自习') {
-        const zhuxiaoNames = new Set(allActive.map(s => s.name));
-        for (const absent of absentSet) {
-            if (!zhuxiaoNames.has(absent)) {
-                absentSet.delete(absent); // 移除走读生的缺勤标记
-            }
-        }
-    }
-
     const present = total - absentSet.size;
-    const label = periodInfo.timeLabel === '晚自习' 
-        ? periodInfo.name + '（住校）' 
-        : periodInfo.name;
-
     return {
-        label: label,
+        label: periodInfo.name,
         present: present,
         absent: absentSet.size
     };
-}// 渲染学生个人德育档案
+}
+// 渲染学生个人德育档案
 window.renderStudentProfile = function() {
     const name = document.getElementById('profile-select').value;
     const container = document.getElementById('profile-content');
@@ -2816,107 +2508,6 @@ window.generateProfileAdvice = async function(studentName) {
     } catch (e) {
         adviceDiv.textContent = '生成失败，请手动填写';
     }
-};
-window.deleteAlert = async function(id) {
-    if (!canModify()) { await requestModification('删除预警通知', '记录ID:' + id); return; }
-    if (!confirm('删除？')) return;
-    await sb.from('alerts').delete().eq('id', id);
-    await loadData();
-    renderAlerts();
-};
-// ========== 账号管理 ==========
-window.loadAccounts = async function() {
-    if (!canModify()) return;
-    const { data, error } = await sb.from('profiles').select('*').eq('role', '班委');
-    if (error) { toast('加载失败', 'error'); return; }
-    const tbody = document.getElementById('account-tbody');
-    if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4">暂无班委账号</td></tr>';
-        return;
-    }
-        tbody.innerHTML = data.map(p => `
-        <tr>
-            <td>${p.phone || '—'}</td>
-            <td>${p.role}</td>
-            <td>${p.status || 'active'}</td>
-            <td>
-                <button class="btn-sm" onclick="window.toggleAccountStatus('${p.user_id}','${p.status}')">${p.status==='active'?'禁用':'启用'}</button>
-                <button class="btn-sm btn-outline" onclick="window.openSupabaseDashboard()">🔧 后台管理</button>
-            </td>
-        </tr>
-    `).join('');
-};
-
-// 禁用/启用账号
-window.toggleAccountStatus = async function(userId, currentStatus) {
-    const newStatus = currentStatus === 'active' ? 'disabled' : 'active';
-    if (!confirm(`确定${newStatus==='active'?'启用':'禁用'}该账号吗？`)) return;
-    const { error } = await sb.from('profiles').update({ status: newStatus }).eq('user_id', userId);
-    if (error) { toast('操作失败', 'error'); return; }
-    toast('状态已更新');
-    window.loadAccounts();
-};
-
-// 重置密码（需 Edge Function）
-window.resetPassword = async function(phone) {
-    toast('重置密码需要后端支持，请联系开发者部署 Edge Function');
-    // 可调用 Edge Function 发送重置邮件
-    // 示例：await fetch('/api/reset-password', { method:'POST', body: JSON.stringify({ phone }) });
-};
-
-// 删除账号（需 Edge Function）
-window.deleteAccount = async function(userId) {
-    toast('删除账号需要后端支持，请联系开发者部署 Edge Function');
-    // 示例：await fetch('/api/delete-user', { method:'POST', body: JSON.stringify({ userId }) });
-};
-// 主题颜色切换
-window.changeTheme = function() {
-    const themeSelect = document.getElementById('theme-select');
-    if (!themeSelect) return;
-    const theme = themeSelect.value;
-    // 保存到 localStorage
-    localStorage.setItem('theme', theme);
-    
-    const root = document.documentElement;
-    if (theme === 'green') {
-        root.style.setProperty('--primary', '#059669');
-        root.style.setProperty('--primary-dark', '#047857');
-        root.style.setProperty('--bg', '#f0fdf4');
-        root.style.setProperty('--card', '#ffffff');
-        root.style.setProperty('--text', '#1e293b');
-        root.style.setProperty('--text-secondary', '#64748b');
-        root.style.setProperty('--border', '#bbf7d0');
-        root.style.setProperty('--sidebar-bg', '#065f46');
-    } else if (theme === 'dark') {
-        root.style.setProperty('--primary', '#6366f1');
-        root.style.setProperty('--primary-dark', '#4f46e5');
-        root.style.setProperty('--bg', '#0f172a');
-        root.style.setProperty('--card', '#1e293b');
-        root.style.setProperty('--text', '#e2e8f0');
-        root.style.setProperty('--text-secondary', '#94a3b8');
-        root.style.setProperty('--border', '#334155');
-        root.style.setProperty('--sidebar-bg', '#0f172a');
-    } else { // 默认蓝色
-        root.style.setProperty('--primary', '#1a73e8');
-        root.style.setProperty('--primary-dark', '#1557b0');
-        root.style.setProperty('--bg', '#f1f5f9');
-        root.style.setProperty('--card', '#ffffff');
-        root.style.setProperty('--text', '#1e293b');
-        root.style.setProperty('--text-secondary', '#64748b');
-        root.style.setProperty('--border', '#e2e8f0');
-        root.style.setProperty('--sidebar-bg', '#1e293b');
-    }
-};
-// 亮度调节（简单通过 body 透明度实现）
-window.changeBrightness = function(value) {
-    // 保存到 localStorage
-    localStorage.setItem('brightness', value);
-    document.body.style.filter = `brightness(${value}%)`;
-};
-// 打开 Supabase 后台（班主任手动管理用户）
-window.openSupabaseDashboard = function() {
-    window.open('https://supabase.com/dashboard/project/iqjyhoiwgawocxtcrcem/auth/users', '_blank');
-    toast('请在 Supabase 后台管理用户（重置密码、删除等）');
 };
 window.onload = init;
 })();
