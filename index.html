@@ -2321,7 +2321,14 @@ function getCurrentAttendance() {
 
     const today = fmt(new Date());
     const todayLogs = logs.filter(l => l.date === today && l.basis === '缺旷登记');
-    const allActive = students.filter(s => s.status === '在读');
+
+    // 晚自习只统计住校生，其他时段统计全部在读学生
+    let allActive = [];
+    if (periodInfo.timeLabel === '晚自习') {
+        allActive = students.filter(s => s.status === '在读' && s.zoudu !== '是'); // 只保留住校生
+    } else {
+        allActive = students.filter(s => s.status === '在读'); // 全部在读
+    }
     const total = allActive.length;
 
     const absentSet = new Set();
@@ -2366,14 +2373,27 @@ function getCurrentAttendance() {
         // 迟到、早退、旷操等暂不视为当前节次缺勤
     }
 
+    // 对于晚自习，还需排除走读生的缺勤记录（缺旷登记中可能误选了走读生）
+    if (periodInfo.timeLabel === '晚自习') {
+        const zhuxiaoNames = new Set(allActive.map(s => s.name));
+        for (const absent of absentSet) {
+            if (!zhuxiaoNames.has(absent)) {
+                absentSet.delete(absent); // 移除走读生的缺勤标记
+            }
+        }
+    }
+
     const present = total - absentSet.size;
+    const label = periodInfo.timeLabel === '晚自习' 
+        ? periodInfo.name + '（住校）' 
+        : periodInfo.name;
+
     return {
-        label: periodInfo.name,
+        label: label,
         present: present,
         absent: absentSet.size
     };
-}
-// 渲染学生个人德育档案
+}// 渲染学生个人德育档案
 window.renderStudentProfile = function() {
     const name = document.getElementById('profile-select').value;
     const container = document.getElementById('profile-content');
