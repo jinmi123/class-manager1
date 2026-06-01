@@ -1,0 +1,2516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>25级化学工艺1班 · 班级管理系统 v4.6.6</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --primary: #1a73e8; --primary-dark: #1557b0; --sidebar-bg: #1e293b; --sidebar-text: #cbd5e1; --bg: #f1f5f9; --card: #fff; --text: #1e293b; --text-secondary: #64748b; --border: #e2e8f0; --danger: #ef4444; --warning: #f59e0b; --success: #10b981; --radius: 10px; --radius-sm: 6px; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); display:flex; min-height:100vh; color:var(--text); }
+        .sidebar { width:240px; min-width:240px; background:var(--sidebar-bg); color:var(--sidebar-text); display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; z-index:100; box-shadow:2px 0 10px rgba(0,0,0,.15); }
+        .sidebar-header { padding:20px 18px; border-bottom:1px solid rgba(255,255,255,.1); text-align:center; }
+        .sidebar-header h2 { font-size:16px; font-weight:700; color:#fff; }
+        .sidebar-nav { flex:1; overflow-y:auto; padding:10px 0; list-style:none; }
+        .sidebar-nav li a { display:flex; align-items:center; gap:10px; padding:11px 18px; color:var(--sidebar-text); text-decoration:none; font-size:13.5px; border-left:3px solid transparent; cursor:pointer; transition:.2s; }
+        .sidebar-nav li a:hover { background:rgba(255,255,255,.05); color:#fff; }
+        .sidebar-nav li a.active { background:rgba(59,130,246,.2); color:#fff; border-left-color:#3b82f6; }
+        .main { margin-left:240px; flex:1; padding:24px 28px; overflow-y:auto; }
+        .page { display:none; } .page.active { display:block; }
+        @keyframes fadeIn { from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+        .card { background:var(--card); border-radius:var(--radius); padding:20px 24px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,.08); border:1px solid var(--border); }
+        .stats-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:16px; margin-bottom:20px; }
+        .stat-card { background:var(--card); padding:18px 20px; text-align:center; border-radius:var(--radius); box-shadow:0 1px 3px rgba(0,0,0,.08); }
+        .stat-card .num { font-size:2rem; font-weight:700; } .stat-card .label { font-size:12px; color:var(--text-secondary); margin-top:4px; }
+        table { width:100%; border-collapse:collapse; font-size:13px; } th, td { padding:10px 12px; border-bottom:1px solid var(--border); white-space:nowrap; } th { background:#f8fafc; font-weight:600; color:var(--text-secondary); }
+        .badge { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; } .badge-success { background:#d1fae5; color:#065f46; } .badge-warning { background:#fef3c7; color:#92400e; } .badge-danger { background:#fee2e2; color:#991b1b; } .badge-info { background:#dbeafe; color:#1e40af; }
+        button { cursor:pointer; border:none; border-radius:var(--radius-sm); padding:8px 16px; font-size:13px; font-weight:500; background:var(--primary); color:#fff; transition:.2s; } button:hover { background:var(--primary-dark); }
+        .btn-outline { background:#fff; border:1.5px solid var(--border); color:var(--text); }
+        .btn-danger { background:var(--danger); } .btn-sm { padding:5px 10px; font-size:11px; }
+        input, select, textarea { font-family:inherit; border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px; font-size:13px; background:#fff; }
+        input:focus, select:focus, textarea:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(26,115,232,.1); }
+        .toast { position:fixed; top:20px; right:20px; background:#1e293b; color:#fff; padding:12px 20px; border-radius:8px; font-size:13px; z-index:9999; opacity:0; transform:translateX(120px); transition:.3s; } .toast.show { opacity:1; transform:translateX(0); } .toast.success { background:#059669; } .toast.error { background:#dc2626; }
+        .modal { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.5); z-index:999; justify-content:center; align-items:center; } .modal.active { display:flex; }
+        .modal-content { background:#fff; border-radius:var(--radius); padding:24px; width:90%; max-width:550px; max-height:90vh; overflow-y:auto; }
+    </style>
+</head>
+<body>
+<aside class="sidebar"><div class="sidebar-header"><h2>📋 25化学工艺1班</h2></div>
+<ul class="sidebar-nav">
+    <li><a data-page="dashboard" class="active">📊 仪表盘</a></li>
+    <li><a data-page="roster">👥 学生名册</a></li>
+    <li><a data-page="score-log">📝 操行分明细</a></li>
+    <li><a data-page="weekly-table">📅 周违纪登记</a></li>
+    <li><a data-page="weekly-summary">📋 周操行汇总</a></li>
+    <li><a data-page="class-log">📖 课堂/班级日志</a></li>
+    <li><a data-page="alert-records">⚠️ 预警与谈话</a></li>
+    <li><a data-page="ai-report">🤖 AI周报</a></li>
+    <li><a data-page="code-table">📟 代码管理</a></li>
+    <li><a data-page="student-profile">📁 个人档案</a></li>
+    <li><a data-page="absence-log">📋 缺旷登记</a></li>
+    <li><a data-page="attendance-history">📊 出勤历史</a></li>
+    <li><a data-page="warning-notice">📄 预警通知单</a></li>
+    <li><a data-page="ai-advisor">🤖 <span>班级管理小助手</span></a></li>
+    <li><a data-page="system-upgrade">⬆️ 系统升级</a></li>
+</ul></aside>
+<div class="toast" id="toast"></div>
+<div class="main" id="mainContent"></div>
+
+<script>
+(function() {
+    const SUPABASE_URL = 'https://iqjyhoiwgawocxtcrcem.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_nsDhudLW5-QcylC2mGPUaw_cEBr3QNg';
+    const DEEPSEEK_KEY = 'sk-05ef4ee9d4ed4c808404aacb46ff5ab0';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const NETLIFY_SITE_ID = '179421d1-d65f-440b-83bb-756cda55daf2';
+    const NETLIFY_TOKEN = 'nfp_4xSyyb1T4EutUPqWcspznhcyvsmbu8fid502';
+
+    let students=[], logs=[], classLogs=[], dailyLogs=[], alerts=[], talks=[], weeklyData={}, deductCodes=[], bonusCodes=[];
+
+    window.toast = (msg, type='success') => {
+        const t = document.getElementById('toast'); t.textContent = msg;
+        t.className = 'toast ' + type + ' show';
+        setTimeout(() => t.className = 'toast', 2200);
+    };
+    window.closeModal = id => { const m = document.getElementById(id); if(m) m.classList.remove('active'); };
+    window.openModal = id => { const m = document.getElementById(id); if(m) m.classList.add('active'); };
+    const fmt = d => d ? new Date(d).toISOString().split('T')[0] : '';
+    // 从 localStorage 读取学期配置
+function getWeek() {
+    const saved = localStorage.getItem('semester_config');
+    if (saved) {
+        const cfg = JSON.parse(saved);
+        const start = new Date(cfg.startDate);      // 学期第一天
+        const total = parseInt(cfg.totalWeeks) || 20;
+        const now = new Date();
+        const diffDays = Math.floor((now - start) / (24 * 60 * 60 * 1000));
+        if (diffDays < 0) return 1;                 // 还没开学，显示第 1 周
+        const week = Math.ceil((diffDays + 1) / 7); // 第 1 周从开学第一天开始
+        return Math.min(week, total);               // 不能超过总周数
+    }
+    // 未配置时，回退到原来的 ISO 周次计算
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), 0, 1);
+    const days = Math.floor((now - firstDay) / (24 * 60 * 60 * 1000));
+    return Math.ceil((days + firstDay.getDay() + 1) / 7);
+}
+// 根据身份证号计算周岁年龄
+function getAgeFromIdcard(idcard) {
+    if (!idcard || idcard.length !== 18) return '';
+    const birthStr = idcard.substring(6, 14);
+    const birthYear = parseInt(birthStr.substring(0, 4));
+    const birthMonth = parseInt(birthStr.substring(4, 6)) - 1;
+    const birthDay = parseInt(birthStr.substring(6, 8));
+    const birthDate = new Date(birthYear, birthMonth, birthDay);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    return age;
+}
+    const calcScore = n => { let t=0; logs.filter(l=>l.student===n).forEach(l=>t+=l.value||0); return 100+t; };
+    const level = s => s>=90?'优秀':s>=80?'良好':s>=70?'关注':s>=60?'预警':s>=50?'警告':'严重';
+    const badgeClass = l => ({优秀:'badge-success',良好:'badge-info',关注:'badge-gray',预警:'badge-warning',警告:'badge-danger',严重:'badge-danger'}[l]||'badge-gray');
+
+    const DEFAULT_DEDUCT = [
+        {code:'A1',desc:'旷课',pt:-2},{code:'A2',desc:'迟到',pt:-0.5},{code:'A3',desc:'旷晚自习',pt:-5},{code:'A4',desc:'旷早操/集会',pt:-1},
+        {code:'B1',desc:'扰乱课堂',pt:-2},{code:'B2',desc:'不交作业',pt:-0.5},{code:'C1',desc:'抽烟',pt:-1},{code:'C2',desc:'喝酒/赌博',pt:-5},
+        {code:'C3',desc:'夜不归宿',pt:-10},{code:'C4',desc:'翻墙',pt:-10},{code:'C5',desc:'私拉电线',pt:-10},{code:'C6',desc:'私带外人',pt:-10},
+        {code:'C7',desc:'骑摩托车',pt:-10},{code:'C8',desc:'起哄',pt:-10},{code:'C9',desc:'打架',pt:-35},{code:'C10',desc:'顶撞老师',pt:-40},
+        {code:'C11',desc:'偷盗',pt:-40},{code:'C12',desc:'邀人打群架',pt:-50},{code:'D1',desc:'未穿校服',pt:-1},{code:'D2',desc:'衣着不整',pt:-0.5},
+        {code:'D3',desc:'染发浓妆',pt:-1},{code:'D4',desc:'穿拖鞋',pt:-0.5},{code:'D5',desc:'玩手机',pt:-1},{code:'E1',desc:'乱扔垃圾',pt:-1},
+        {code:'E2',desc:'教室值日不合格',pt:-1},{code:'E3',desc:'宿舍值日不合格',pt:-1},{code:'E4',desc:'破坏公物',pt:-5},{code:'F1',desc:'倒饭',pt:-1},
+        {code:'F2',desc:'插队',pt:-1},{code:'F3',desc:'不收碗',pt:-1},{code:'Z1',desc:'其他',pt:-3}
+    ];
+    const DEFAULT_BONUS = [
+        {code:'P1',desc:'全勤',pt:1},{code:'P2',desc:'好人好事',pt:2},{code:'P3',desc:'义务劳动',pt:1},{code:'P4',desc:'投稿/板报',pt:1},
+        {code:'P5',desc:'文明寝室',pt:1},{code:'P6',desc:'进步明显',pt:1}
+    ];
+    function getDeductCodes() { return deductCodes.length ? deductCodes : DEFAULT_DEDUCT; }
+    function getBonusCodes() { return bonusCodes.length ? bonusCodes : DEFAULT_BONUS; }
+
+    function buildUI() {
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('zh-CN', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+    document.getElementById('mainContent').innerHTML = `
+    <div style="text-align:center; padding:6px; color:var(--text-secondary); font-size:13px; background:var(--card); border-radius:6px; margin-bottom:12px;">${dateStr}</div>
+    <!-- 学期设置卡片作为独立区域 -->
+<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px;">
+    <label>📅 本学期设置：</label>
+    <label>开学日期</label>
+    <input type="date" id="semester-start" style="width:140px">
+    <label>总周数</label>
+    <input type="number" id="semester-weeks" value="20" style="width:70px" min="1" max="30">
+    <button class="btn-sm" onclick="window.saveSemesterConfig()">💾 保存配置</button>
+    <span style="font-size:12px; color:var(--text-secondary);">当前第 <span id="current-week-display">-</span> 周</span>
+</div>
+
+<!-- 真正的仪表盘页面 -->>
+        <div class="page active" id="page-dashboard">
+    <div class="stats-row">
+        <div class="stat-card"><div class="num" id="stat-total">-</div><div class="label">在读总人数</div></div>
+        <div class="stat-card"><div class="num" id="stat-zoudu">-</div><div class="label">走读生</div></div>
+        <div class="stat-card"><div class="num" id="stat-zhuxiao">-</div><div class="label">住校生</div></div>
+        <div class="stat-card"><div class="num" id="stat-leave">-</div><div class="label">请假</div></div>
+    </div>
+    <div class="stats-row">
+        <div class="stat-card"><div class="num" id="stat-am">-</div><div class="label">早上实到 / 缺旷</div></div>
+        <div class="stat-card"><div class="num" id="stat-pm">-</div><div class="label">下午实到 / 缺旷</div></div>
+        <div class="stat-card"><div class="num" id="stat-eve">-</div><div class="label">晚自习实到（住校）/ 缺旷</div></div>
+    </div>
+    <div class="stat-card"><div class="num" id="stat-current">-</div><div class="label" id="stat-current-label">当前节次</div></div>
+    <div class="stats-row">
+        <div class="stat-card"><div class="num" id="stat-excellent">-</div><div class="label">优秀</div></div>
+        <div class="stat-card"><div class="num" id="stat-warning">-</div><div class="label">预警</div></div>
+        <div class="stat-card"><div class="num" id="stat-danger">-</div><div class="label">警告</div></div>
+    </div>
+    <div class="card"><h2>⚠️ 重点关注</h2><table><tbody id="dashboard-alert-tbody"></tbody></table></div>
+    <div class="card"><h2>📋 最近变动</h2><table><tbody id="dashboard-recent-tbody"></tbody></table></div>
+
+    <!-- ✅ 新增：保存按钮 + 近7日表格 -->
+    <div style="text-align:right; margin-bottom:10px;">
+        <button id="btn-save-attendance" onclick="window.saveDailyAttendance()">📸 记录今日出勤</button>
+    </div>
+    <div class="card">
+        <h2>📅 近7日出勤记录</h2>
+        <table>
+            <thead><tr><th>日期</th><th>总人数</th><th>走读</th><th>住校</th><th>请假</th><th>早实到/缺</th><th>午实到/缺</th><th>晚实到/缺</th></tr></thead>
+            <tbody id="recent-attendance-tbody"><tr><td colspan="8">加载中...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+        <div class="page" id="page-roster">
+            <div class="card"><h2>👥 学生名册</h2><div class="search-bar"><input id="roster-search" placeholder="搜索" oninput="window.renderRoster()"><select id="roster-status-filter" onchange="window.renderRoster()"><option value="active">仅在读</option><option value="all">全部</option></select><button onclick="window.openStudentModal()">+ 新增</button></div>
+            <table><thead><tr><th>姓名</th><th>性别</th><th>年龄</th><th>走读/住校</th><th>身份证</th><th>家长</th><th>电话</th><th>状态</th><th>操行分</th><th>操作</th></tr></thead><tbody id="roster-tbody"></tbody></table></div>
+        </div>
+      <div class="page" id="page-score-log">
+    <div class="card">
+        <h2>📝 操行分流水</h2>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+            <button onclick="window.openAddScoreModal()">+ 新增</button>
+            <span style="flex:1;"></span>
+            <label><input type="checkbox" id="select-all-logs" onchange="window.toggleSelectAllLogs()"> 全选</label>
+            <button class="btn-danger btn-sm" onclick="window.batchDeleteLogs()">🗑 批量删除</button>
+        </div>
+        <div class="form-row">
+            <div><label>学生</label><select id="filter-student" onchange="window.renderScoreLog()"><option value="">全部</option></select></div>
+            <div><label>周次</label><input type="number" id="filter-week" style="width:80px"></div>
+            <div><label>类型</label><select id="filter-type"><option value="">全部</option><option value="deduct">扣分</option><option value="add">加分</option></select></div>
+            <div><button class="btn-sm btn-outline" onclick="window.renderScoreLog()">🔍 筛选</button></div>
+        </div>
+        <table>
+            <thead><tr>
+                <th style="width:30px;">选</th>
+                <th>日期</th><th>周</th><th>学生</th><th>代码</th><th>事由</th><th>分值</th><th>操作人</th><th>操作</th>
+            </tr></thead>
+            <tbody id="score-log-tbody"></tbody>
+        </table>
+    </div>
+</div>
+                <div class="page" id="page-weekly-table">
+            <div class="card">
+                <h2>📅 周违纪登记</h2>
+                <div>第 <input type="number" id="weekly-week-num" value="1" style="width:60px"> 周 
+                    <button onclick="window.renderWeeklyTable()">刷新</button> 
+                    <button class="btn-outline" onclick="window.saveWeeklyData()">💾 保存</button>
+                </div>
+                <div style="max-height:65vh; overflow-y:auto; border:1px solid var(--border); border-radius:var(--radius-sm);">
+                    <table style="border-collapse:separate; border-spacing:0;">
+                        <thead style="position:sticky; top:0; z-index:2; background:#f8fafc;">
+                            <tr>
+                                <th>姓名</th>
+                                <th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th>
+                                <th>加分事由</th><th>加分</th><th>净得分</th>
+                            </tr>
+                        </thead>
+                        <tbody id="weekly-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+                <div class="page" id="page-weekly-summary">
+            <div class="card">
+                <h2>📋 周操行汇总</h2>
+                <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
+                    <label>第</label>
+                    <input type="number" id="summary-week-num" value="1" style="width:70px" min="1">
+                    <label>周</label>
+                   <button onclick="window.renderWeeklySummary()">🔍 查询</button>
+<button class="btn-outline" onclick="window.exportWeeklySummary()">📥 导出Excel</button>
+<button class="btn-outline" onclick="window.autoAddWeeklyBonus()">🤖 自动识别加分</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table id="weekly-summary-table">
+                        <thead><tr><th>学生</th><th>本周操行记录（代码：事由，分值）</th><th>本周合计</th><th>当前操行分</th></tr></thead>
+                        <tbody id="weekly-summary-tbody">
+                            <tr><td colspan="2">请选择周次后查询</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+                <div class="page" id="page-class-log">
+            <div class="card">
+                <h2>📖 课堂日志</h2>
+                <div style="background:#f0f7ff; padding:10px; border-radius:6px; margin-bottom:10px; font-size:12px; color:#1e40af;">
+                    📌 纪律评级：<b>A</b>=课堂秩序好，无违纪；<b>B</b>=有零星违纪，教师已即时处理；<b>C</b>=违纪较多，需重点关注。
+                </div>
+                <button onclick="window.openClassLogModal()">+ 新增</button>
+                <table style="text-align:center;"><thead><tr><th>日期</th><th>节次</th><th>科目</th><th>教师</th><th>评级</th><th>违纪</th><th>措施</th><th>操作</th></tr></thead><tbody id="class-log-tbody"></tbody></table>
+            </div>
+            <div class="card">
+                <h2>📋 班级日志</h2>
+                <div style="background:#f0f7ff; padding:10px; border-radius:6px; margin-bottom:10px; font-size:12px; color:#1e40af;">
+                    📌 总评说明：<b>优</b>=全部课堂为A；<b>良</b>=1-2个B；<b>一般</b>=3个以上B；<b>需关注</b>=有C级课堂。
+                </div>
+                <button onclick="window.openDailyLogModal()">+ 新增</button>
+                <table style="text-align:center;"><thead><tr><th>日期</th><th>班干</th><th>总评</th><th>课间</th><th>卫生</th><th>好事</th><th>关注</th><th>操作</th></tr></thead><tbody id="daily-log-tbody"></tbody></table>
+            </div>
+        </div>
+        <div class="page" id="page-alert-records">
+            <div class="card"><h2>⚠️ 预警通知</h2><button onclick="window.openAlertModal()">+ 新增</button><table><table style="text-align:center;"><thead><tr><th>日期</th><th>学生</th><th>分数</th><th>等级</th><th>编号</th><th>反馈</th><th>建议处置</th><th>操作</th></tr></thead><tbody id="alert-tbody"></tbody></table></div>
+            <div class="card"><h2>💬 谈话记录</h2><button onclick="window.openTalkModal()">+ 新增</button><table><thead><tr><th>日期</th><th>学生</th><th>类型</th><th>事由</th><th>要点</th><th>表态</th><th>后续</th><th>操作</th></tr></thead><tbody id="talk-tbody"></tbody></table></div>
+        </div>
+        <div class="page" id="page-ai-report">
+            <div class="card"><h2>🤖 AI周报</h2><button id="btn-generate" onclick="window.generateAIReport()">✨ 生成</button><div class="ai-report-content" id="ai-report-text">点击生成</div></div>
+        </div>
+        <div class="page" id="page-code-table">
+            <div class="card"><h2>📟 违纪扣分代码</h2><button onclick="window.openDeductCodeModal()">+ 新增</button><table><thead><tr><th>代码</th><th>事项</th><th>扣分</th><th>操作</th></tr></thead><tbody id="code-tbody"></tbody></table></div>
+            <div class="card"><h2>⭐ 加分代码</h2><button onclick="window.openBonusCodeModal()">+ 新增</button><table><thead><tr><th>代码</th><th>事项</th><th>加分</th><th>操作</th></tr></thead><tbody id="bonus-code-tbody"></tbody></table></div>
+        </div>
+        <div class="page" id="page-student-profile">
+            <div class="card"><h2>📁 个人档案</h2><select id="profile-select" onchange="window.renderStudentProfile()"><option value="">-- 选择学生 --</option></select><div id="profile-content"></div></div>
+        </div>
+     <div class="page" id="page-absence-log">
+    <div class="card">
+        <h2>📋 缺旷登记</h2>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+            <label>日期</label><input type="date" id="absence-date" style="width:140px">
+            <label>周次</label><input type="number" id="absence-week" value="1" style="width:70px">
+            <button onclick="window.renderAbsenceTable()">刷新</button>
+            <button class="btn-outline" onclick="window.submitAbsence()">💾 提交</button>
+        </div>             
+        <div class="table-wrap" style="max-height: 65vh; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+    <table style="border-collapse: separate; border-spacing: 0;">
+        <thead style="position: sticky; top: 0; z-index: 2; background: #f8fafc;">
+            <tr>
+                <th style="position: sticky; left: 0; background: #f8fafc; z-index: 3;">选择</th>
+                <th style="position: sticky; left: 40px; background: #f8fafc; z-index: 3;">学生</th>
+                <th>旷课节次</th>
+                <th>迟到节次</th>
+                <th>早退节次</th>
+                <th>旷操节次</th>
+                <th>请假节次</th>
+                <th>自定义事项<br>(选时段+描述)</th>
+            </tr>
+        </thead>
+        <tbody id="absence-tbody"></tbody>
+    </table>
+</div>
+        <p style="font-size:11px;color:#666;">勾选节次表示旷课，勾选请假并填写天数。请假1天不扣分，超过1天每多1天扣1分。</p>
+    </div>
+    </div>
+
+    <!-- ✅ 新增：出勤历史页面 -->
+        <div class="page" id="page-attendance-history">
+        <div class="card">
+            <h2>📊 出勤历史</h2>
+            <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
+                <label>从</label><input type="date" id="att-history-start">
+                <label>到</label><input type="date" id="att-history-end">
+                <button onclick="window.loadAttendanceHistory()">🔍 查询</button>
+                <button class="btn-outline" onclick="window.exportAttendanceHistory()">📥 导出Excel</button>
+            </div>
+            <table id="att-history-table" style="text-align:center;">
+                <thead><tr>
+                    <th>日期</th><th>总人数</th><th>走读</th><th>住校</th><th>请假</th>
+                    <th>早实到</th><th>早缺</th><th>午实到</th><th>午缺</th>
+                    <th>晚实到</th><th>晚缺</th><th>优秀</th><th>预警</th><th>警告</th>
+                </tr></thead>
+                <tbody id="att-history-tbody">
+                    <tr><td colspan="14">请选择日期范围查询</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+                                <div class="page" id="page-warning-notice">
+            <div class="card">
+                <h2>📄 学生操行分预警通知单</h2>
+                <p style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">选择学生和违纪事项后，等级自动生成；处置建议可 AI 辅助。</p>
+                <div class="form-row" style="margin-bottom:8px;">
+                    <div style="flex:1;"><label>学生姓名</label>
+                        <select id="wn-student" onchange="window.updateWarningNotice()" data-last-student="">
+                            <option value="">-- 请选择学生 --</option>
+                        </select>
+                    </div>
+                    <div style="flex:1;"><label>班级</label><input type="text" id="wn-class" value="25级化学工艺1班" readonly></div>
+                </div>
+                <div class="form-row" style="margin-bottom:8px;">
+                    <div style="flex:1;"><label>违纪事项</label>
+                        <select id="wn-reason" multiple size="4" onchange="window.updateWarningNotice()" style="height:auto;">
+                            <option value="">-- 按住Ctrl可多选 --</option>
+                        </select>
+                    </div>
+                    <div style="flex:1;"><label>本次扣分</label><input type="number" id="wn-deduct" value="-5" step="0.5" oninput="window.updateWarningNotice()"></div>
+                </div>
+                <div class="form-row" style="margin-bottom:8px;">
+                    <div style="flex:1;"><label>基础分</label><input type="number" id="wn-base" value="100" readonly></div>
+                    <div style="flex:1;"><label>当前操行分</label><input type="text" id="wn-current" readonly></div>
+                </div>
+                <div class="form-row" style="margin-bottom:8px;">
+                    <div style="flex:1;"><label>预警等级</label><input type="text" id="wn-level" readonly></div>
+                    <div style="flex:1;"><label>处置措施简述</label><textarea id="wn-measure" rows="3" style="width:100%; resize:vertical;" placeholder="可点击按钮生成"></textarea></div>
+                </div>
+                <div style="text-align:right; margin-top:12px;">
+                    <button class="btn-outline btn-sm" onclick="window.generateWarningMeasureAI()">🤖 AI生成处置建议</button>
+                    <button class="btn-outline btn-sm" onclick="window.saveWarningNotice()">💾 保存存档</button>
+                    <button class="btn-outline" onclick="window.printWarningNotice()">🖨️ 打印通知单</button>
+                </div>
+            </div>
+            <div class="card">
+                <h3>📊 操行分预警等级对照表</h3>
+                <table style="text-align:center;">
+                    <thead><tr><th>当前操行分</th><th>预警等级</th><th>处置措施</th></tr></thead>
+                    <tbody>
+                        <tr><td>≥90</td><td>优秀</td><td>正常参评各项荣誉</td></tr>
+                        <tr><td>80-89</td><td>良好</td><td>注意保持，减少不必要扣分</td></tr>
+                        <tr><td>70-79</td><td>关注</td><td>班主任谈话提醒，密切关注扣分项</td></tr>
+                        <tr><td>60-69</td><td>预警</td><td>取消本学年评优资格，班内重点关注</td></tr>
+                        <tr><td>50-59</td><td>警告</td><td>告知家长，校内警告处分</td></tr>
+                        <tr><td>&lt;50</td><td>严重</td><td>上报德育处，启动劝退程序</td></tr>
+                    </tbody>
+                </table>
+                <div style="margin-top:10px; font-size:12px; color:var(--text-secondary);">
+                    📌 毕业参考线：<br/>
+                    • 低于80分：取消优秀毕业生评定<br/>
+                    • 低于70分：延迟半年发放毕业证<br/>
+                    • 低于60分：不予毕业
+                </div>
+            </div>
+            <div class="card">
+                <h3>🗄️ 已存档通知单</h3>
+                <div style="max-height:400px; overflow-y:auto;">
+                    <table>
+                        <thead><tr><th>日期</th><th>学生</th><th>扣分</th><th>预警等级</th><th>操作</th></tr></thead>
+                        <tbody id="wn-archive-tbody">
+                            <tr><td colspan="5">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+<div class="page" id="page-ai-advisor">    <div class="card">
+        <h2>🤖 班级管理小助手</h2>
+        <p style="color:var(--text-secondary); margin-bottom:12px;">我是您的专属班级管理小助手，精通教育法规、学生心理、班级管理。请告诉我您遇到的问题，我会提供专业的分析和建议。</p>
+    </div>
+
+    <!-- 功能一：智能预警分析 -->
+    <div class="card">
+        <h3>⚠️ 智能预警分析</h3>
+        <p style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">自动分析当前预警学生的具体情况，给出干预建议</p>
+        <select id="ai-warning-student" style="width:100%; margin-bottom:10px;">
+            <option value="">-- 选择预警学生 --</option>
+        </select>
+        <button onclick="window.aiWarningAnalysis()" style="width:100%;">🔍 分析该生并给出方案</button>
+        <div id="ai-warning-result" style="margin-top:10px; padding:12px; background:#f8fafc; border-radius:6px; white-space:pre-wrap; font-size:13px; display:none;"></div>
+    </div>
+
+    <!-- 功能二：法律法规查询 -->
+    <div class="card">
+        <h3>⚖️ 法律法规与纠纷处置</h3>
+        <p style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">输入您遇到的校园纠纷或违纪事件，AI 将提供相关法规依据和处置建议</p>
+        <textarea id="ai-law-input" placeholder="例如：学生在校内打架，双方家长到校闹事，该如何依法处置？" style="width:100%; height:80px; margin-bottom:10px;"></textarea>
+        <button onclick="window.aiLawQuery()" style="width:100%;">⚖️ 查询法规与处置方案</button>
+        <div id="ai-law-result" style="margin-top:10px; padding:12px; background:#f8fafc; border-radius:6px; white-space:pre-wrap; font-size:13px; display:none;"></div>
+    </div>
+
+    <!-- 功能三：个性化谈话策略 -->
+    <div class="card">
+        <h3>💬 个性化谈话策略</h3>
+        <p style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">针对不同类型的学生，AI 生成因材施教的谈话方案</p>
+        <div class="form-row">
+            <div><label>学生姓名</label><input type="text" id="ai-talk-student" placeholder="学生姓名"></div>
+            <div><label>问题类型</label><select id="ai-talk-type">
+                <option value="违纪">违纪问题</option>
+                <option value="厌学">厌学情绪</option>
+                <option value="人际">人际关系</option>
+                <option value="家庭">家庭问题</option>
+                <option value="心理">心理困扰</option>
+                <option value="其他">其他</option>
+            </select></div>
+        </div>
+        <textarea id="ai-talk-desc" placeholder="简要描述该生的情况..." style="width:100%; height:60px; margin-bottom:10px;"></textarea>
+        <button onclick="window.aiTalkStrategy()" style="width:100%;">💬 生成谈话策略</button>
+        <div id="ai-talk-result" style="margin-top:10px; padding:12px; background:#f8fafc; border-radius:6px; white-space:pre-wrap; font-size:13px; display:none;"></div>
+    </div>
+
+    <!-- 功能四：班级管理百宝箱 -->
+    <div class="card">
+        <h3>🧰 班级管理百宝箱</h3>
+        <p style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">任何班级管理问题，AI 都能帮您出谋划策</p>
+        <textarea id="ai-general-input" placeholder="例如：如何提高班级凝聚力？如何应对学生上课玩手机？..." style="width:100%; height:80px; margin-bottom:10px;"></textarea>
+        <button onclick="window.aiGeneralAdvice()" style="width:100%;">🧰 获取方案</button>
+        <div id="ai-general-result" style="margin-top:10px; padding:12px; background:#f8fafc; border-radius:6px; white-space:pre-wrap; font-size:13px; display:none;"></div>
+    </div>
+</div>
+        <div class="page" id="page-system-upgrade">
+            <div class="card"><h2>⬆️ 系统自动升级</h2><p>输入需求，AI生成并直接部署到 Netlify。</p><textarea id="upgrade-requirement" placeholder="例如：增加宿舍违纪登记..." style="width:100%;height:80px"></textarea><button id="btn-upgrade" onclick="window.autoUpgrade()">🚀 一键升级</button><div id="upgrade-status" style="margin-top:12px;"></div><pre id="upgrade-preview" style="background:#f8fafc;padding:16px;border-radius:6px;white-space:pre-wrap;font-size:13px;max-height:300px;overflow-y:auto;display:none;"></pre></div>
+        </div>`;
+    }
+
+    // 导航与模态框关闭
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.sidebar-nav a')) {
+            e.preventDefault();
+            const a = e.target.closest('.sidebar-nav a');
+            document.querySelectorAll('.sidebar-nav a').forEach(l => l.classList.remove('active'));
+            a.classList.add('active');
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + a.dataset.page).classList.add('active');
+            refreshPage(a.dataset.page);
+        }
+        if (e.target.classList.contains('modal')) e.target.classList.remove('active');
+    });
+    function refreshPage(p) {
+        if (p === 'dashboard') refreshDashboard();
+        if (p === 'roster') renderRoster();
+        if (p === 'score-log') window.renderScoreLog();
+        if (p === 'weekly-table') { document.getElementById('weekly-week-num').value = getWeek(); renderWeeklyTable(); }
+        if (p === 'class-log') { renderClassLogs(); renderDailyLogs(); }
+        if (p === 'alert-records') { renderAlerts(); renderTalks(); }
+        if (p === 'code-table') renderCodeTable();
+        if (p === 'student-profile') populateProfileSelect();
+        if (p === 'ai-advisor') populateAIWarningStudents();
+        if (p === 'absence-log') { document.getElementById('absence-week').value = getWeek(); renderAbsenceTable(); }
+        if (p === 'attendance-history') {
+    document.getElementById('att-history-start').value = '';
+    document.getElementById('att-history-end').value = '';
+}
+       if (p === 'warning-notice') {
+    // 填充学生下拉
+    const studentSel = document.getElementById('wn-student');
+    if (studentSel) {
+        studentSel.innerHTML = '<option value="">-- 请选择学生 --</option>';
+        students.filter(s => s.status === '在读').forEach(s => {
+            studentSel.innerHTML += `<option value="${s.name}">${s.name}</option>`;
+        });
+        studentSel.dataset.lastStudent = '';
+    }
+    window.loadWarningNoticesArchive();
+    // 违纪事项下拉初始置空（多选）
+    const reasonSel = document.getElementById('wn-reason');
+    if (reasonSel) {
+        reasonSel.innerHTML = '<option value="">-- 请先选择学生 --</option>';
+    }
+    document.getElementById('wn-deduct').value = '-5';
+    document.getElementById('wn-current').value = '';
+    document.getElementById('wn-level').value = '';
+    document.getElementById('wn-measure').value = '';
+}
+        if (p === 'weekly-summary') {
+    document.getElementById('summary-week-num').value = getWeek();
+    window.renderWeeklySummary();
+}
+    }
+
+    async function loadData() {
+        const [a,b,c,d,e,f,g,h,i] = await Promise.all([
+            sb.from('students').select('*').order('id'), sb.from('score_log').select('*').order('id'),
+            sb.from('class_logs').select('*').order('date'), sb.from('daily_logs').select('*').order('date'),
+            sb.from('alerts').select('*').order('date'), sb.from('talks').select('*').order('date'),
+            sb.from('weekly_data').select('*'), sb.from('deduct_codes').select('*').order('code'),
+            sb.from('bonus_codes').select('*').order('code')
+        ]);
+        students = a.data; logs = b.data; classLogs = c.data; dailyLogs = d.data;      
+        alerts = e.data; talks = f.data; weeklyData = {};
+        g.data.forEach(w => { if (!weeklyData[w.week]) weeklyData[w.week] = {}; weeklyData[w.week][w.student] = w; });
+        deductCodes = h.data.length ? h.data : DEFAULT_DEDUCT;
+        bonusCodes = i.data.length ? i.data : DEFAULT_BONUS;
+    }
+async function refreshDashboard() {
+    const today = fmt(new Date());
+    const todayLogs = logs.filter(l => l.date === today && l.basis === '缺旷登记');
+    const allActive = students.filter(s => s.status === '在读');
+    const zoudu = allActive.filter(s => s.zoudu === '是');
+    const zhuxiao = allActive.filter(s => s.zoudu !== '是');
+    const total = allActive.length;
+    const zouduCount = zoudu.length;
+    const zhuxiaoCount = zhuxiao.length;
+
+    // 缺勤集合
+    const absentAM = new Set();
+    const absentPM = new Set();
+    const absentEVE = new Set();
+    const leaveSet = new Set();
+
+    todayLogs.forEach(l => {
+    const student = l.student;
+    const reason = l.reason || '';
+
+    // 1. 请假（含连续请假合并记录）
+    if (l.code === '请假') {
+        leaveSet.add(student);
+        if (reason.includes('上午')) absentAM.add(student);
+        if (reason.includes('下午')) absentPM.add(student);
+        if (reason.includes('晚自习')) absentEVE.add(student);
+    }
+    // 2. 旷课（A1 / A3）—— 修正匹配关键字
+    else if (l.code === 'A1' || l.code === 'A3') {
+        if (reason.includes('上午')) absentAM.add(student);
+        if (reason.includes('下午')) absentPM.add(student);
+        if (reason.includes('晚自习')) absentEVE.add(student);
+    }
+    // 3. 迟到 / 早退 / 旷操 —— 默认影响上午和下午
+    else if (l.code === 'A2' || l.code === 'A4') {
+        absentAM.add(student);
+        absentPM.add(student);
+    }
+    // 4. 特殊事项（Z1 或 Z3）—— 兼容新旧格式
+    else if ((l.code === 'Z1' || l.code === 'Z3') && 
+             (reason.startsWith('特殊事项：') || reason.startsWith('走读/特殊事项：'))) {
+        const detail = reason.replace('特殊事项：', '').replace('走读/特殊事项：', '');
+        if (detail.includes('早上') || detail.includes('上午')) absentAM.add(student);
+        if (detail.includes('下午')) absentPM.add(student);
+        if (detail.includes('晚上') || detail.includes('晚自习')) absentEVE.add(student);
+    }
+});
+
+    // 计算实到人数
+    const presentAM = total - absentAM.size;
+    const presentPM = total - absentPM.size;
+    const zhuxiaoEveAbsent = [...absentEVE].filter(s => zhuxiao.some(z => z.name === s)).length;
+    const presentEVE = zhuxiaoCount - zhuxiaoEveAbsent;
+
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-zoudu').textContent = zouduCount;
+    document.getElementById('stat-zhuxiao').textContent = zhuxiaoCount;
+    document.getElementById('stat-leave').textContent = leaveSet.size;
+    document.getElementById('stat-am').textContent = presentAM + ' / ' + absentAM.size;
+    document.getElementById('stat-pm').textContent = presentPM + ' / ' + absentPM.size;
+    document.getElementById('stat-eve').textContent = presentEVE + '（住校） / ' + absentEVE.size;
+    // 更新当前节次卡片
+    const currentAtt = getCurrentAttendance();
+    const statCurrent = document.getElementById('stat-current');
+    const statCurrentLabel = document.getElementById('stat-current-label');
+    if (statCurrent && statCurrentLabel) {
+        statCurrent.textContent = (currentAtt.present === '-') ? '-' : currentAtt.present + ' / ' + currentAtt.absent;
+        statCurrentLabel.textContent = currentAtt.label + (currentAtt.present === '-' ? '' : ' 实到 / 缺旷');
+    }
+
+    // 优秀/预警/警告
+    let ex = 0, wn = 0, dg = 0;
+    allActive.forEach(s => {
+        const sc = calcScore(s.name), lv = level(sc);
+        if (lv === '优秀') ex++;
+        else if (lv === '预警') wn++;
+        else if (lv === '警告' || lv === '严重') dg++;
+    });
+    document.getElementById('stat-excellent').textContent = ex;
+    document.getElementById('stat-warning').textContent = wn;
+    document.getElementById('stat-danger').textContent = dg;
+
+    // 重点关注
+    const alertList = allActive.filter(s => calcScore(s.name) < 70);
+    document.getElementById('dashboard-alert-tbody').innerHTML = alertList.length
+        ? alertList.sort((a, b) => calcScore(a.name) - calcScore(b.name)).map(a => {
+            const sc = calcScore(a.name);
+            return `<tr><td>${a.name}</td><td><span class="badge ${badgeClass(level(sc))}">${sc}</span></td><td>${level(sc)}</td><td>${logs.filter(l => l.student === a.name && l.value < 0).pop()?.reason || '—'}</td></tr>`;
+        }).join('')
+        : '<tr><td colspan="4">✅ 暂无预警</td></tr>';
+
+    // 最近变动
+    const recent = [...logs].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+          document.getElementById('dashboard-recent-tbody').innerHTML = recent.length
+        ? recent.map(r => `<tr><td>${r.date}</td><td>${r.student}</td><td>${r.code || ''}</td><td>${r.reason || ''}</td><td style="color:${r.value < 0 ? '#ef4444' : '#10b981'}">${r.value > 0 ? '+' : ''}${r.value}</td></tr>`).join('')
+        : '<tr><td colspan="5">暂无</td></tr>';
+
+    // 自动保存今日出勤（如果还未保存）
+    window.autoSaveDailyAttendance();
+}
+    // 学生名册
+   function renderRoster() {
+    const q = (document.getElementById('roster-search')?.value||'').toLowerCase(),
+          st = document.getElementById('roster-status-filter')?.value||'active';
+    let list = students;
+    if(st==='active') list = list.filter(s=>s.status==='在读');
+    if(q) list = list.filter(s=>s.name.toLowerCase().includes(q) || (s.idcard||'').includes(q));
+
+    document.getElementById('roster-tbody').innerHTML = list.map(s => {
+        const sc = calcScore(s.name);
+        const age = getAgeFromIdcard(s.idcard);
+        const gender = s.gender || '';
+        const zoudu = (s.zoudu === '是') ? '走读' : '住校';
+        return `<tr>
+            <td>${s.name}</td>
+            <td>${gender}</td>
+            <td>${age}</td>
+            <td>${zoudu}</td>
+            <td>${s.idcard||''}</td>
+            <td>${s.parent||'—'}</td>
+            <td>${s.phone||'—'}</td>
+            <td>${s.status==='在读'?'✅在读':s.status}</td>
+            <td><span class="badge ${badgeClass(level(sc))}">${sc}</span></td>
+            <td>
+                <button class="btn-sm" onclick="window.editStudent('${s.idcard}')">编辑</button>
+                <button class="btn-sm btn-danger" onclick="window.toggleStudent('${s.idcard}')">${s.status==='在读'?'退学':'恢复'}</button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+    // 学生模态框和增删改
+    function openStudentModal(editId) {
+        if (!document.getElementById('modal-student')) {
+            document.body.insertAdjacentHTML('beforeend', `<div class="modal" id="modal-student"><div class="modal-content"><h3 id="stu-title">新增学生</h3><div class="form-row"><input id="stu-name" placeholder="姓名"><select id="stu-gender"><option>男</option><option>女</option></select></div><div class="form-row"><input id="stu-idcard" placeholder="身份证"><input id="stu-parent" placeholder="家长"></div><div class="form-row"><input id="stu-phone" placeholder="电话"><select id="stu-zoudu"><option>否</option><option>是</option></select></div><input type="hidden" id="stu-edit-id"><div style="text-align:right;margin-top:12px"><button class="btn-outline" onclick="window.closeModal('modal-student')">取消</button><button class="btn-primary" onclick="window.saveStudent()">保存</button></div></div></div>`);
+        }
+        document.getElementById('stu-title').textContent = editId ? '编辑学生' : '新增学生';
+        document.getElementById('stu-edit-id').value = editId || '';
+        if (editId) {
+            const s = students.find(st => st.idcard === editId);
+            if (s) {
+                document.getElementById('stu-name').value = s.name;
+                document.getElementById('stu-gender').value = s.gender;
+                document.getElementById('stu-idcard').value = s.idcard;
+                document.getElementById('stu-parent').value = s.parent||'';
+                document.getElementById('stu-phone').value = s.phone||'';
+                document.getElementById('stu-zoudu').value = s.zoudu||'否';
+            }
+        } else {
+            document.getElementById('stu-name').value = '';
+            document.getElementById('stu-idcard').value = '';
+            document.getElementById('stu-parent').value = '';
+            document.getElementById('stu-phone').value = '';
+        }
+        openModal('modal-student');
+    }
+    window.openStudentModal = () => openStudentModal(null);
+    window.editStudent = (id) => openStudentModal(id);
+    window.saveStudent = async function() {
+        const name = document.getElementById('stu-name').value.trim();
+        const idcard = document.getElementById('stu-idcard').value.trim();
+        if (!name || !idcard) { toast('姓名和身份证必填','error'); return; }
+        const editId = document.getElementById('stu-edit-id').value;
+        const data = { name, idcard, gender: document.getElementById('stu-gender').value, parent: document.getElementById('stu-parent').value, phone: document.getElementById('stu-phone').value, zoudu: document.getElementById('stu-zoudu').value, status: '在读' };
+        if (editId) await sb.from('students').update(data).eq('idcard', editId);
+        else await sb.from('students').insert(data);
+        closeModal('modal-student');
+        await loadData(); populateAllSelects(); renderRoster(); refreshDashboard();
+        toast('保存成功');
+    };
+    window.toggleStudent = async function(idcard) {
+        if (!confirm('确定变更状态？')) return;
+        const s = students.find(st => st.idcard === idcard);
+        if (s) {
+            await sb.from('students').update({ status: s.status === '在读' ? '退学' : '在读' }).eq('idcard', idcard);
+            await loadData(); populateAllSelects(); renderRoster();
+        }
+    };
+    // 保存学期配置
+window.saveSemesterConfig = function() {
+    const startDate = document.getElementById('semester-start').value;
+    const totalWeeks = document.getElementById('semester-weeks').value;
+    if (!startDate || !totalWeeks) {
+        toast('请填写完整的开学日期和总周数', 'error');
+        return;
+    } 
+    localStorage.setItem('semester_config', JSON.stringify({
+        startDate: startDate,
+        totalWeeks: totalWeeks
+    }));
+    // 更新显示
+    document.getElementById('current-week-display').textContent = getWeek();
+    toast('学期配置已保存，当前第 ' + getWeek() + ' 周');
+};
+    // 加载学期配置（修复空白页）
+window.loadSemesterConfig = function() {
+    const saved = localStorage.getItem('semester_config');
+    if (saved) {
+        const cfg = JSON.parse(saved);
+        document.getElementById('semester-start').value = cfg.startDate || '';
+        document.getElementById('semester-weeks').value = cfg.totalWeeks || 20;
+    }
+    document.getElementById('current-week-display').textContent = getWeek();
+};
+    // ==================== AI 助教 ====================
+    // 填充预警学生列表
+    function populateAIWarningStudents() {
+        const sel = document.getElementById('ai-warning-student');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">-- 选择预警学生 --</option>';
+        const active = students.filter(s => s.status === '在读');
+        const warned = active.filter(s => calcScore(s.name) < 70);
+        if (warned.length === 0) {
+            sel.innerHTML = '<option value="">暂无预警学生</option>';
+            return;
+        }
+        warned.forEach(s => {
+            const sc = calcScore(s.name);
+            const lv = level(sc);
+            sel.innerHTML += `<option value="${s.name}">${s.name} (${sc}分, ${lv})</option>`;
+        });
+    }
+
+    // AI 公共调用函数
+        // 清理 Markdown 标记，去除 AI 味道
+    function cleanMarkdown(text) {
+        if (!text) return text;
+        return text
+            .replace(/^#{1,6}\s/gm, '')      // 去除标题 #、## 等
+            .replace(/\*{1,2}([^*]+)\*{1,2}/g, '$1') // 去除加粗和斜体
+            .replace(/~~([^~]+)~~/g, '$1')   // 去除删除线
+            .replace(/`{1,3}[^`]*`{1,3}/g, '') // 去除行内代码
+            .replace(/^- /gm, '')            // 去除无序列表短横
+            .replace(/^\d+\. /gm, '')        // 去除有序列表数字
+            .replace(/\n{2,}/g, '\n\n')      // 减少连续空行
+            .trim();
+    }
+
+    // AI 公共调用函数（自动清洗结果）
+   async function callAI(systemPrompt, userPrompt, maxTokens = 20) {
+    try {
+        const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + DEEPSEEK_KEY
+            },
+            body: JSON.stringify({
+                model: 'deepseek-chat',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt }
+                ],
+                temperature: 0.1,
+                max_tokens: maxTokens
+            })
+        });
+        const data = await res.json();
+        return data.choices[0].message.content;
+    } catch (e) {
+        console.error('AI调用失败:', e);
+        return '否';
+    }
+}
+
+    // 功能一：智能预警分析
+    window.aiWarningAnalysis = async function() {
+        const student = document.getElementById('ai-warning-student').value;
+        if (!student) { toast('请选择学生', 'error'); return; }
+        const sc = calcScore(student);
+        const lv = level(sc);
+        const recentLogs = logs.filter(l => l.student === student).reverse().slice(0, 10);
+        const logText = recentLogs.map(l => `${l.date} [${l.code}] ${l.reason} (${l.value}分)`).join('\n');
+        const resultDiv = document.getElementById('ai-warning-result');
+        resultDiv.style.display = 'block';
+        resultDiv.textContent = '正在分析，请稍候...';
+
+        const systemPrompt = `你是一位拥有20年经验的资深中职学校班主任，精通教育心理学、青少年行为矫正、家庭教育指导。你的任务是为教师提供专业、具体、可操作的学生干预方案。请使用自然语气，不要使用markdown标记。`;
+        const userPrompt = `学生姓名：${student}，当前操行分：${sc}分，预警等级：${lv}。\n该生近期违纪记录：\n${logText || '暂无违纪记录'}\n\n请进行以下分析：\n1. 分析该生的问题根源（家庭、学习、人际、心理等方面）\n2. 给出具体的干预措施（谈话策略、家校沟通方案、班级帮扶计划）\n3. 后续跟进建议（如何评估干预效果，什么情况下需要升级处理）\n4. 如果需要，请引用相关教育法规或学生手册条款`;
+
+        const result = await callAI(systemPrompt, userPrompt);
+        resultDiv.textContent = result;
+    };
+
+    // 功能二：法律法规查询
+    window.aiLawQuery = async function() {
+        const input = document.getElementById('ai-law-input').value.trim();
+        if (!input) { toast('请输入您的问题', 'error'); return; }
+        const resultDiv = document.getElementById('ai-law-result');
+        resultDiv.style.display = 'block';
+        resultDiv.textContent = '正在查询法规，请稍候...';
+
+        const systemPrompt = `你是一位精通教育法律法规的专业顾问，熟悉《未成年人保护法》《预防未成年人犯罪法》《中小学教育惩戒规则》《学生伤害事故处理办法》等法规，也了解学校学生手册的规定。请用自然语言回答，不要使用markdown。回答内容包括：1.相关法规条款引用 2.学校层面的处置建议 3.与家长沟通的法律依据 4.后续法律风险提示`;
+        const userPrompt = input;
+
+        const result = await callAI(systemPrompt, userPrompt);
+        resultDiv.textContent = result;
+    };
+
+    // 功能三：个性化谈话策略
+    window.aiTalkStrategy = async function() {
+        const student = document.getElementById('ai-talk-student').value.trim();
+        const type = document.getElementById('ai-talk-type').value;
+        const desc = document.getElementById('ai-talk-desc').value.trim();
+        if (!student) { toast('请输入学生姓名', 'error'); return; }
+        const resultDiv = document.getElementById('ai-talk-result');
+        resultDiv.style.display = 'block';
+        resultDiv.textContent = '正在生成谈话策略，请稍候...';
+
+        const sc = calcScore(student) || 100;
+        const systemPrompt = `你是一位擅长因材施教的中职名班主任。你需要根据不同学生的特点，制定个性化的谈话方案。请用自然语言，分步骤给出建议。`;
+        const userPrompt = `学生：${student}，操行分约${sc}分。问题类型：${type}。补充描述：${desc || '无'}。\n\n请生成一份个性化谈话方案，包括：\n1. 谈话的切入点和语气建议\n2. 核心谈话要点（3-5个）\n3. 可能遇到的学生反应及应对方法\n4. 后续如何跟进和巩固效果`;
+
+        const result = await callAI(systemPrompt, userPrompt);
+        resultDiv.textContent = result;
+    };
+
+    // 功能四：班级管理百宝箱
+    window.aiGeneralAdvice = async function() {
+        const input = document.getElementById('ai-general-input').value.trim();
+        if (!input) { toast('请输入您的班级管理问题', 'error'); return; }
+        const resultDiv = document.getElementById('ai-general-result');
+        resultDiv.style.display = 'block';
+        resultDiv.textContent = '正在生成方案，请稍候...';
+
+        const systemPrompt = `你是一位经验丰富的中职学校名班主任，擅长处理各种班级管理难题。你了解中职学生的心理特点、行为模式，也掌握丰富的班级管理方法和技巧。请用自然语言，具体、可操作地回答问题。`;
+        const userPrompt = input;
+
+        const result = await callAI(systemPrompt, userPrompt);
+        resultDiv.textContent = result;
+    };
+    // ==================== 操行分流水 ====================
+       // ==================== 操行分流水 ====================
+    window.renderScoreLog = function() {
+        const fs = document.getElementById('filter-student')?.value || '';
+        const fw = document.getElementById('filter-week')?.value || '';
+        const ft = document.getElementById('filter-type')?.value || '';
+        let list = logs;
+        if (fs) list = list.filter(l => l.student === fs);
+        if (fw) list = list.filter(l => l.week === parseInt(fw));
+        if (ft === 'deduct') list = list.filter(l => l.value < 0);
+        if (ft === 'add') list = list.filter(l => l.value > 0);
+        list.reverse();
+        document.getElementById('score-log-tbody').innerHTML = list.length
+            ? list.map(r => `<tr>
+                <td><input type="checkbox" class="log-checkbox" value="${r.id}" onchange="window.updateSelectAllState()"></td>
+                <td>${r.date}</td><td>${r.week}</td><td>${r.student}</td><td>${r.code}</td>
+                <td>${r.reason || ''}</td>
+                <td style="color:${r.value < 0 ? '#ef4444' : '#10b981'}">${r.value > 0 ? '+' : ''}${r.value}</td>
+                <td>${r.operator || '—'}</td>
+                <td><button class="btn-danger btn-xs" onclick="window.deleteLog(${r.id})">删</button></td>
+            </tr>`).join('')
+            : '<tr><td colspan="9">暂无匹配记录</td></tr>';
+        // 重置全选框状态
+        var selectAll = document.getElementById('select-all-logs');
+        if (selectAll) selectAll.checked = false;
+    };
+
+    window.deleteLog = async function(id) {
+        if(!confirm('删除？')) return;
+        await sb.from('score_log').delete().eq('id', id);
+        await loadData();
+        window.renderScoreLog();
+        refreshDashboard();
+    };
+
+    window.openAddScoreModal = function() {
+        if (!document.getElementById('modal-score')) document.body.insertAdjacentHTML('beforeend', `<div class="modal" id="modal-score"><div class="modal-content"><h3>新增操行分</h3><div class="form-row"><select id="ms-student"></select><input type="date" id="ms-date"></div><div class="form-row"><input type="number" id="ms-week" value="1" style="width:70px"><select id="ms-code" onchange="window.onCodeChange()"></select><input type="number" id="ms-value" placeholder="分值" style="width:80px"></div><input id="ms-reason" placeholder="事由"><div class="form-row"><input id="ms-operator" value="班主任"><select id="ms-basis"><option>直接记录</option><option>课堂日志</option><option>班级日志</option></select></div><div style="text-align:right;margin-top:10px"><button class="btn-outline" onclick="window.closeModal('modal-score')">取消</button><button class="btn-primary" onclick="window.saveScoreRecord()">保存</button></div></div></div>`);
+        document.getElementById('ms-date').value = fmt(new Date());
+        document.getElementById('ms-value').value = '';
+        document.getElementById('ms-code').value = '';
+        const sSel = document.getElementById('ms-student'); sSel.innerHTML = '<option value="">-- 选择学生 --</option>'; students.filter(s => s.status === '在读').forEach(s => sSel.innerHTML += `<option value="${s.name}">${s.name}</option>`);
+        const codeSel = document.getElementById('ms-code'); codeSel.innerHTML = '<option value="">自定义</option><optgroup label="扣分">' + getDeductCodes().map(c => `<option value="${c.code}" data-pt="${c.pt}">${c.code} ${c.desc} (${c.pt})</option>`).join('') + '</optgroup><optgroup label="加分">' + getBonusCodes().map(c => `<option value="${c.code}" data-pt="${c.pt}">${c.code} ${c.desc} (+${c.pt})</option>`).join('') + '</optgroup>';
+        openModal('modal-score');
+    };
+
+    window.onCodeChange = function() {
+        const sel = document.getElementById('ms-code');
+        const pt = sel.options[sel.selectedIndex]?.dataset?.pt;
+        if (pt) document.getElementById('ms-value').value = pt;
+    };
+
+    window.saveScoreRecord = async function() {
+        const s = document.getElementById('ms-student').value,
+              d = document.getElementById('ms-date').value,
+              w = parseInt(document.getElementById('ms-week').value) || getWeek(),
+              code = document.getElementById('ms-code').value,
+              val = parseFloat(document.getElementById('ms-value').value),
+              reason = document.getElementById('ms-reason').value.trim(),
+              op = document.getElementById('ms-operator').value,
+              basis = document.getElementById('ms-basis').value;
+        if (!s || !d || isNaN(val)) { toast('请完整填写', 'error'); return; }
+        await sb.from('score_log').insert({
+            student: s, date: d, week: w,
+            code: code || '自定义', reason, value: val,
+            operator: op, basis
+        });
+        closeModal('modal-score');
+        await loadData();
+        window.renderScoreLog();
+        refreshDashboard();
+        toast('已记录');
+    };
+
+    // ==================== 周违纪登记 ====================
+    function renderWeeklyTable() {
+        const wk = parseInt(document.getElementById('weekly-week-num').value) || getWeek();
+        const active = students.filter(s => s.status === '在读');
+        const data = weeklyData[wk] || {};
+        const dedCodes = getDeductCodes(), bonCodes = getBonusCodes();
+        document.getElementById('weekly-tbody').innerHTML = active.map(s => {
+            const d = data[s.name] || {}, net = (parseFloat(d.bonus_score)||0) - (parseFloat(d.mon)||0) - (parseFloat(d.tue)||0) - (parseFloat(d.wed)||0) - (parseFloat(d.thu)||0) - (parseFloat(d.fri)||0);
+            const ic = (day) => `<input list="codeList" value="${d[day]||''}" data-student="${s.name}" data-day="${day}" style="width:80px;" placeholder="代码 分">`;
+            return `<tr><td>${s.name}</td><td>${ic('mon')}</td><td>${ic('tue')}</td><td>${ic('wed')}</td><td>${ic('thu')}</td><td>${ic('fri')}</td><td><input list="bonusList" value="${d.bonus_reason||''}" data-student="${s.name}" data-day="bonus_reason" style="width:90px;" placeholder="加分事由"></td><td><input type="number" value="${d.bonus_score||''}" data-student="${s.name}" data-day="bonus_score" style="width:60px;" placeholder="分值"></td><td style="font-weight:700;color:${net<0?'#ef4444':'#10b981'}">${net.toFixed(1)}</td></tr>`;
+        }).join('');
+        let dl = document.getElementById('codeList'); if (dl) dl.remove();
+        dl = document.createElement('datalist'); dl.id = 'codeList'; dedCodes.forEach(c => dl.innerHTML += `<option value="${c.code} ${c.pt}">${c.code} ${c.desc}</option>`); bonCodes.forEach(c => dl.innerHTML += `<option value="${c.code} +${c.pt}">${c.code} ${c.desc}</option>`); document.body.appendChild(dl);
+        let bl = document.getElementById('bonusList'); if (bl) bl.remove();
+        bl = document.createElement('datalist'); bl.id = 'bonusList'; bonCodes.forEach(c => bl.innerHTML += `<option value="${c.code}">${c.desc}</option>`); document.body.appendChild(bl);
+    }
+      window.saveWeeklyData = async function() {
+    const wk = parseInt(document.getElementById('weekly-week-num').value) || getWeek();
+    const entries = [];
+    document.querySelectorAll('#weekly-tbody tr').forEach(row => {
+        const inputs = row.querySelectorAll('input');
+        if (!inputs.length) return;
+        const name = inputs[0].dataset.student;
+        const d = { week: wk, student: name };
+        inputs.forEach(inp => { d[inp.dataset.day] = inp.value; });
+        entries.push(d);
+    });
+    await sb.from('weekly_data').delete().eq('week', wk);
+    if (entries.length) await sb.from('weekly_data').insert(entries);
+
+    const today = fmt(new Date());
+    const dayNames = { mon:'周一', tue:'周二', wed:'周三', thu:'周四', fri:'周五' };
+    const allDeduct = getDeductCodes();
+    const allBonus = getBonusCodes();
+
+    for (const e of entries) {
+        // 处理周一至周五的每个单元格
+        for (const day of ['mon', 'tue', 'wed', 'thu', 'fri']) {
+            const val = e[day]?.trim();
+            if (!val) continue;
+            const parts = val.split(/\s+/);
+            const code = parts[0];
+            const score = parseFloat(parts[1]);
+            if (!code || isNaN(score)) continue;
+
+            const deductItem = allDeduct.find(c => c.code === code);
+            const bonusItem = allBonus.find(c => c.code === code);
+            const desc = deductItem?.desc || bonusItem?.desc || '';
+            const action = score > 0 ? '加分' : '违纪';
+            const reasonText = desc
+                ? `${dayNames[day]}${action}：${desc}（${code}）`
+                : `${dayNames[day]}${action}（${code}）`;
+
+            await sb.from('score_log').insert({
+                student: e.student, date: today, week: wk,
+                code: code,
+                reason: reasonText,
+                value: score,
+                operator: '班干', basis: '周表'
+            });
+        }
+
+        // 处理独立的"加分事由"列
+        if (e.bonus_score && parseFloat(e.bonus_score) !== 0) {
+            const bonusCode = e.bonus_reason?.trim() || 'P2';
+            const bonusItem = allBonus.find(c => c.code === bonusCode);
+            const bonusDesc = bonusItem ? `${bonusItem.desc}（${bonusCode}）` : `加分（${bonusCode}）`;
+            await sb.from('score_log').insert({
+                student: e.student, date: today, week: wk,
+                code: bonusCode,
+                reason: `周加分：${bonusDesc}`,
+                value: Math.abs(parseFloat(e.bonus_score)),
+                operator: '班干', basis: '周表'
+            });
+        }
+    }
+    await loadData(); renderWeeklyTable(); window.renderScoreLog(); refreshDashboard();
+    toast('已保存并同步流水');
+};
+
+    // ==================== 课堂日志 ====================
+    function renderClassLogs() { document.getElementById('class-log-tbody').innerHTML = classLogs.length ? classLogs.map(l => `<tr><td>${l.date}</td><td>${l.period}</td><td>${l.subject||''}</td><td>${l.teacher||''}</td><td>${l.rating}</td><td>${l.violation||'—'}</td><td>${l.measure||'—'}</td><td><button class="btn-danger btn-xs" onclick="window.deleteClassLog(${l.id})">删</button></td></tr>`).join('') : '<tr><td colspan="8">暂无课堂日志</td></tr>'; }
+    window.deleteClassLog = async id => { await sb.from('class_logs').delete().eq('id', id); await loadData(); renderClassLogs(); };
+    window.openClassLogModal = function() { if(!document.getElementById('modal-class-log')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-class-log"><div class="modal-content"><h3>课堂日志</h3><div class="form-row"><input type="date" id="cl-date"><input type="number" id="cl-period" value="1" style="width:70px"></div><div class="form-row"><input id="cl-subject" placeholder="科目"><input id="cl-teacher" placeholder="教师"></div><div class="form-row"><select id="cl-rating"><option>A</option><option>B</option><option>C</option></select><input id="cl-monitor" value="唐雨馨"></div><textarea id="cl-violation" rows="2" placeholder="违纪记录"></textarea><textarea id="cl-measure" rows="2" placeholder="教师措施"></textarea><div style="text-align:right;margin-top:10px"><button class="btn-outline" onclick="window.closeModal('modal-class-log')">取消</button><button class="btn-primary" onclick="window.saveClassLog()">保存</button></div></div></div>`); document.getElementById('cl-date').value = fmt(new Date()); openModal('modal-class-log'); };
+    window.saveClassLog = async function() { const d = { date: document.getElementById('cl-date').value, period: parseInt(document.getElementById('cl-period').value)||1, subject: document.getElementById('cl-subject').value, teacher: document.getElementById('cl-teacher').value, rating: document.getElementById('cl-rating').value, monitor: document.getElementById('cl-monitor').value, violation: document.getElementById('cl-violation').value, measure: document.getElementById('cl-measure').value }; if(!d.date){ toast('请填写日期','error'); return; } await sb.from('class_logs').insert(d); closeModal('modal-class-log'); await loadData(); renderClassLogs(); toast('已保存'); };
+
+    // ==================== 班级日志 ====================
+    function renderDailyLogs() { document.getElementById('daily-log-tbody').innerHTML = dailyLogs.length ? dailyLogs.map(l => `<tr><td>${l.date}</td><td>${l.monitor||''}</td><td>${l.overall}</td><td>${l.recess||'—'}</td><td>${l.hygiene||'—'}</td><td>${l.good||'—'}</td><td>${l.concern||'—'}</td><td><button class="btn-danger btn-xs" onclick="window.deleteDailyLog(${l.id})">删</button></td></tr>`).join('') : '<tr><td colspan="8">暂无班级日志</td></tr>'; }
+    window.deleteDailyLog = async id => { await sb.from('daily_logs').delete().eq('id', id); await loadData(); renderDailyLogs(); };
+    window.openDailyLogModal = function() { if(!document.getElementById('modal-daily-log')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-daily-log"><div class="modal-content"><h3>班级日志</h3><div class="form-row"><input type="date" id="dl-date"><input id="dl-monitor" value="杨桂琼"></div><div class="form-row"><select id="dl-overall"><option>优</option><option>良</option><option>一般</option><option>需关注</option></select></div><textarea id="dl-recess" rows="1" placeholder="课间"></textarea><textarea id="dl-hygiene" rows="1" placeholder="卫生"></textarea><textarea id="dl-good" rows="2" placeholder="好事"></textarea><textarea id="dl-concern" rows="2" placeholder="关注"></textarea><div style="text-align:right;margin-top:10px"><button class="btn-outline" onclick="window.closeModal('modal-daily-log')">取消</button><button class="btn-primary" onclick="window.saveDailyLog()">保存</button></div></div></div>`); document.getElementById('dl-date').value = fmt(new Date()); openModal('modal-daily-log'); };
+    window.saveDailyLog = async function() { const d = { date: document.getElementById('dl-date').value, monitor: document.getElementById('dl-monitor').value, overall: document.getElementById('dl-overall').value, recess: document.getElementById('dl-recess').value, hygiene: document.getElementById('dl-hygiene').value, good: document.getElementById('dl-good').value, concern: document.getElementById('dl-concern').value }; if(!d.date){ toast('请填写日期','error'); return; } await sb.from('daily_logs').insert(d); closeModal('modal-daily-log'); await loadData(); renderDailyLogs(); toast('已保存'); };
+
+       // ==================== 预警通知（自动从操行分生成） ====================
+  function renderAlerts() {
+    const active = students.filter(s => s.status === '在读');
+    const autoAlerts = [];
+    active.forEach(s => {
+        const sc = calcScore(s.name);
+        if (sc < 70) {
+            const lv = sc >= 60 ? '关注' : sc >= 50 ? '预警' : sc >= 40 ? '警告' : '严重';
+            const lastLog = logs.filter(l => l.student === s.name && l.value < 0).pop();
+            // 根据学生手册计算建议处置
+            let measure = '';
+            if (sc < 50) measure = '劝退';
+            else if (sc < 60) measure = '告知家长，校内警告处分';
+            else if (sc < 70) measure = '班主任及政教处谈话，取消评优资格';
+            if (sc < 80) measure += '；取消优秀毕业生评定';
+            if (sc < 70) measure += '；延迟半年发放毕业证';
+            autoAlerts.push({
+                id: 'auto_' + s.name,
+                date: fmt(new Date()),
+                student: s.name,
+                score: sc,
+                level: lv,
+                no: '自动预警',
+                feedback: lastLog ? `最后违纪：${lastLog.reason || lastLog.code} (${lastLog.date})` : '暂无违纪记录',
+                measure: measure
+            });
+        }
+    });
+    const allAlerts = [...alerts, ...autoAlerts].sort((a, b) => a.score - b.score);
+    document.getElementById('alert-tbody').innerHTML = allAlerts.length
+        ? allAlerts.map(a => {
+            const isAuto = String(a.id).startsWith('auto_');
+            return `<tr>
+                <td>${a.date}</td>
+                <td>${a.student}</td>
+                <td><span class="badge ${badgeClass(a.level)}">${a.score}</span></td>
+                <td>${a.level}</td>
+                <td>${a.no || '—'}</td>
+                <td>${a.feedback || '—'}</td>
+                <td style="color:#c0392b;font-size:12px;">${a.measure || '—'}</td>
+                <td>${isAuto ? '<span style="font-size:11px;color:#888;">自动</span>' : `<button class="btn-danger btn-xs" onclick="window.deleteAlert(${a.id})">删</button>`}</td>
+            </tr>`;
+        }).join('')
+        : '<tr><td colspan="8">✅ 暂无预警学生</td></tr>';
+}
+    // ==================== 谈话记录 ====================
+    function renderTalks() { document.getElementById('talk-tbody').innerHTML = talks.length ? talks.map(t => `<tr><td>${t.date}</td><td>${t.student}</td><td>${t.type}</td><td>${t.reason||'—'}</td><td>${t.points||'—'}</td><td>${t.response||'—'}</td><td>${t.followup||'—'}</td><td><button class="btn-danger btn-xs" onclick="window.deleteTalk(${t.id})">删</button></td></tr>`).join('') : '<tr><td colspan="8">暂无谈话记录</td></tr>'; }
+    window.deleteTalk = async id => { await sb.from('talks').delete().eq('id', id); await loadData(); renderTalks(); };
+    window.openTalkModal = function() { if(!document.getElementById('modal-talk')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-talk"><div class="modal-content"><h3>新增谈话记录</h3><div class="form-row"><select id="talk-student"></select><input type="date" id="talk-date"></div><div class="form-row"><select id="talk-type"><option>个别谈话</option><option>家长沟通</option></select></div><input id="talk-reason" placeholder="事由"><textarea id="talk-points" rows="2" placeholder="要点"></textarea><textarea id="talk-response" rows="2" placeholder="表态"></textarea><input id="talk-followup" placeholder="后续跟进"><div style="display:flex;gap:8px;margin-top:8px"><button class="btn-outline btn-sm" onclick="window.aiGenerateTalk()">🤖 AI生成建议</button></div><div style="text-align:right;margin-top:10px"><button class="btn-outline" onclick="window.closeModal('modal-talk')">取消</button><button class="btn-primary" onclick="window.saveTalk()">保存</button></div></div></div>`); document.getElementById('talk-date').value = fmt(new Date()); const sel = document.getElementById('talk-student'); sel.innerHTML=''; students.filter(s=>s.status==='在读').forEach(s=>sel.innerHTML+=`<option value="${s.name}">${s.name}</option>`); openModal('modal-talk'); };
+    window.saveTalk = async function() { const s = document.getElementById('talk-student').value; if(!s){ toast('请选择学生','error'); return; } const d = { date: document.getElementById('talk-date').value, student: s, type: document.getElementById('talk-type').value, reason: document.getElementById('talk-reason').value, points: document.getElementById('talk-points').value, response: document.getElementById('talk-response').value, followup: document.getElementById('talk-followup').value }; await sb.from('talks').insert(d); closeModal('modal-talk'); await loadData(); renderTalks(); toast('已保存'); };
+    window.aiGenerateTalk = async function() { const student = document.getElementById('talk-student').value; const reason = document.getElementById('talk-reason').value.trim(); if(!student||!reason){ toast('请先选择学生并填写事由','error'); return; } const btn = document.querySelector('#modal-talk .btn-outline'); btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span>'; const prompt = `你是班主任助手。学生${student}因"${reason}"需要谈话，请生成谈话要点、学生可能表态、后续跟进策略。用【要点】、【表态】、【跟进】作为开头分三行。`; try { const res = await fetch('https://api.deepseek.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+DEEPSEEK_KEY},body:JSON.stringify({model:'deepseek-chat',messages:[{role:'user',content:prompt}],temperature:0.8,max_tokens:500})}); const data = await res.json(); const txt = data.choices[0].message.content; document.getElementById('talk-points').value = (txt.match(/【要点】\s*(.*?)(?:\n|$)/)?.[1]||'').trim(); document.getElementById('talk-response').value = (txt.match(/【表态】\s*(.*?)(?:\n|$)/)?.[1]||'').trim(); document.getElementById('talk-followup').value = (txt.match(/【跟进】\s*(.*?)(?:\n|$)/)?.[1]||'').trim(); } catch(e) { toast('AI生成失败','error'); } btn.disabled = false; btn.innerHTML = '🤖 AI生成建议'; };
+
+    // ==================== 代码管理 ====================
+    function renderCodeTable() { const dedCodes = getDeductCodes(), bonCodes = getBonusCodes(); document.getElementById('code-tbody').innerHTML = dedCodes.map(c => `<tr><td>${c.code}</td><td>${c.desc}</td><td style="color:#ef4444">${c.pt}</td><td><button class="btn-sm" onclick="window.openDeductCodeModal('${c.code}')">编辑</button> <button class="btn-sm btn-danger" onclick="window.deleteDeductCode('${c.code}')">删</button></td></tr>`).join(''); document.getElementById('bonus-code-tbody').innerHTML = bonCodes.map(c => `<tr><td>${c.code}</td><td>${c.desc}</td><td style="color:#10b981">+${c.pt}</td><td><button class="btn-sm" onclick="window.openBonusCodeModal('${c.code}')">编辑</button> <button class="btn-sm btn-danger" onclick="window.deleteBonusCode('${c.code}')">删</button></td></tr>`).join(''); }
+    window.openDeductCodeModal = function(code=null) { if(!document.getElementById('modal-deduct-code')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-deduct-code"><div class="modal-content"><h3>编辑扣分代码</h3><input id="dc-code" placeholder="代码"><input id="dc-desc" placeholder="事项描述"><input type="number" id="dc-pt" placeholder="扣分（负数）" step="0.5"><div style="margin-top:10px"><button class="btn-primary" onclick="window.saveDeductCode()">保存</button><button class="btn-outline" onclick="window.closeModal('modal-deduct-code')">取消</button></div></div></div>`); if(code){ const c = getDeductCodes().find(c=>c.code===code); document.getElementById('dc-code').value=c.code; document.getElementById('dc-desc').value=c.desc; document.getElementById('dc-pt').value=c.pt; } else { document.getElementById('dc-code').value=''; document.getElementById('dc-desc').value=''; document.getElementById('dc-pt').value=''; } openModal('modal-deduct-code'); };
+    window.saveDeductCode = async function() { const code = document.getElementById('dc-code').value.trim(), desc = document.getElementById('dc-desc').value.trim(), pt = parseFloat(document.getElementById('dc-pt').value); if(!code||!desc||isNaN(pt)){ toast('请完整填写','error'); return; } await sb.from('deduct_codes').upsert({code,desc,pt}); await loadData(); renderCodeTable(); closeModal('modal-deduct-code'); toast('代码已保存'); };
+    window.deleteDeductCode = async function(code) { if(!confirm('删除？')) return; await sb.from('deduct_codes').delete().eq('code',code); await loadData(); renderCodeTable(); };
+    window.openBonusCodeModal = function(code=null) { if(!document.getElementById('modal-bonus-code')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-bonus-code"><div class="modal-content"><h3>编辑加分代码</h3><input id="bc-code" placeholder="代码"><input id="bc-desc" placeholder="事项描述"><input type="number" id="bc-pt" placeholder="加分（正数）" step="0.5"><div style="margin-top:10px"><button class="btn-primary" onclick="window.saveBonusCode()">保存</button><button class="btn-outline" onclick="window.closeModal('modal-bonus-code')">取消</button></div></div></div>`); if(code){ const c = getBonusCodes().find(c=>c.code===code); document.getElementById('bc-code').value=c.code; document.getElementById('bc-desc').value=c.desc; document.getElementById('bc-pt').value=c.pt; } else { document.getElementById('bc-code').value=''; document.getElementById('bc-desc').value=''; document.getElementById('bc-pt').value=''; } openModal('modal-bonus-code'); };
+    window.saveBonusCode = async function() { const code = document.getElementById('bc-code').value.trim(), desc = document.getElementById('bc-desc').value.trim(), pt = parseFloat(document.getElementById('bc-pt').value); if(!code||!desc||isNaN(pt)){ toast('请完整填写','error'); return; } await sb.from('bonus_codes').upsert({code,desc,pt}); await loadData(); renderCodeTable(); closeModal('modal-bonus-code'); toast('代码已保存'); };
+    window.deleteBonusCode = async function(code) { if(!confirm('删除？')) return; await sb.from('bonus_codes').delete().eq('code',code); await loadData(); renderCodeTable(); };
+
+    // ==================== 缺旷登记 ====================
+window.renderAbsenceTable = function() {
+    const date = document.getElementById('absence-date').value || fmt(new Date());
+    const wk = parseInt(document.getElementById('absence-week').value) || getWeek();
+    document.getElementById('absence-week').value = wk;
+
+    // 显示星期几
+    const dayOfWeek = new Date(date).getDay();
+    const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    const weekdayStr = weekDays[dayOfWeek];
+    let weekLabel = document.getElementById('absence-weekday-label');
+    if (!weekLabel) {
+        weekLabel = document.createElement('span');
+        weekLabel.id = 'absence-weekday-label';
+        weekLabel.style.marginLeft = '10px'; weekLabel.style.fontWeight = 'bold';
+        weekLabel.style.color = 'var(--text-secondary)';
+        const card = document.querySelector('#page-absence-log .card');
+        card.insertBefore(weekLabel, card.querySelector('.table-wrap'));
+    }
+    weekLabel.textContent = '📅 ' + weekdayStr;
+
+    const active = students.filter(s => s.status === '在读');
+    const periodOptions = `
+        <optgroup label="上午（1-4节）">
+            <option value="1">第1节</option><option value="2">第2节</option><option value="3">第3节</option><option value="4">第4节</option>
+        </optgroup>
+        <optgroup label="下午（5-6节）">
+            <option value="5">第5节</option><option value="6">第6节</option>
+        </optgroup>
+        <optgroup label="晚自习（7-8节）">
+            <option value="7">第7节</option><option value="8">第8节</option>
+        </optgroup>
+    `;
+    // 自定义事项时段选项（早上、下午、晚上）
+    const customPeriodOptions = `
+        <option value="am">早上</option>
+        <option value="pm">下午</option>
+        <option value="eve">晚上</option>
+    `;
+
+    document.getElementById('absence-tbody').innerHTML = active.map(s => {
+        const truancy = `<td><select multiple size="4" data-student="${s.name}" data-type="TRUANCY" data-date="${date}" style="width:100px;" title="按住Ctrl多选">${periodOptions}</select></td>`;
+        const late = `<td><select multiple size="4" data-student="${s.name}" data-type="LATE" data-date="${date}" style="width:100px;" title="按住Ctrl多选">${periodOptions}</select></td>`;
+        const early = `<td><select multiple size="4" data-student="${s.name}" data-type="LEAVE_EARLY" data-date="${date}" style="width:100px;" title="按住Ctrl多选">${periodOptions}</select></td>`;
+        const noExercise = `<td><select multiple size="4" data-student="${s.name}" data-type="NO_EXERCISE" data-date="${date}" style="width:100px;" title="按住Ctrl多选">${periodOptions}</select></td>`;
+        const leavePeriod = `<td><select multiple size="4" data-student="${s.name}" data-type="LEAVE_PERIOD" data-date="${date}" style="width:100px;" title="按住Ctrl多选请假节次">${periodOptions}</select></td>`;
+        // 自定义事项：时段多选 + 描述输入
+        const custom = `<td style="min-width:200px;">
+            <select multiple size="3" data-student="${s.name}" data-type="CUSTOM_PERIOD" data-date="${date}" style="width:80px; display:inline-block;" title="选择时段">
+                ${customPeriodOptions}
+            </select>
+            <input type="text" placeholder="事项描述" style="width:110px; display:inline-block; margin-left:4px;" data-student="${s.name}" data-type="CUSTOM_DESC" data-date="${date}">
+        </td>`;
+
+        return `<tr>
+            <td><input type="checkbox" data-student="${s.name}"></td>
+            <td>${s.name}</td>
+            ${truancy}${late}${early}${noExercise}${leavePeriod}${custom}
+        </tr>`;
+    }).join('');
+};
+window.submitAbsence = async function() {
+    const wk = parseInt(document.getElementById('absence-week').value) || getWeek();
+    const date = document.getElementById('absence-date').value;
+    if (!date) { toast('请选择日期', 'error'); return; }
+
+    const checkedStudents = new Set();
+    document.querySelectorAll('#absence-tbody input[type="checkbox"][data-student]:checked').forEach(cb => {
+        checkedStudents.add(cb.dataset.student);
+    });
+    if (checkedStudents.size === 0) { toast('请至少勾选一名学生', 'error'); return; }
+
+    let totalRecords = 0;
+    const periodLabels = { am: '早上', pm: '下午', eve: '晚上' };
+
+    // 通用节次处理（旷课/迟到/早退/旷操）
+    async function processPeriods(student, periods, code, reasonPrefix, pt) {
+        if (!periods.length) return;
+        const am = periods.filter(p => p >= 1 && p <= 4);
+        const pm = periods.filter(p => p >= 5 && p <= 6);
+        const eve = periods.filter(p => p >= 7 && p <= 8);
+        const points = (code === 'A1' ? -2 : pt);
+        if (am.length) {
+            await sb.from('score_log').insert({ student, date, week: wk, code, reason: `${reasonPrefix}上午${am.length}节（第${am.join(',')}节）`, value: am.length * points, operator: '班主任', basis: '缺旷登记' });
+            totalRecords++;
+        }
+        if (pm.length) {
+            await sb.from('score_log').insert({ student, date, week: wk, code, reason: `${reasonPrefix}下午${pm.length}节（第${pm.join(',')}节）`, value: pm.length * points, operator: '班主任', basis: '缺旷登记' });
+            totalRecords++;
+        }
+        if (eve.length) {
+            const eveCode = (code === 'A1' ? 'A3' : code);
+            const evePoints = (code === 'A1' ? -5 : pt);
+            await sb.from('score_log').insert({ student, date, week: wk, code: eveCode, reason: `${reasonPrefix}晚自习${eve.length}节（第${eve.join(',')}节）`, value: eve.length * evePoints, operator: '班主任', basis: '缺旷登记' });
+            totalRecords++;
+        }
+    }
+
+    const allRows = document.querySelectorAll('#absence-tbody tr');
+    for (const row of allRows) {
+        const checkbox = row.querySelector('input[type="checkbox"][data-student]');
+        if (!checkbox || !checkbox.checked) continue;
+        const student = checkbox.dataset.student;
+
+        // 旷课
+        const truancySelect = row.querySelector('select[data-type="TRUANCY"]');
+        if (truancySelect) {
+            const selected = Array.from(truancySelect.selectedOptions).map(o => parseInt(o.value));
+            if (selected.length) await processPeriods(student, selected, 'A1', '旷课：', -2);
+        }
+        // 迟到
+        const lateSelect = row.querySelector('select[data-type="LATE"]');
+        if (lateSelect) {
+            const selected = Array.from(lateSelect.selectedOptions).map(o => parseInt(o.value));
+            if (selected.length) await processPeriods(student, selected, 'A2', '迟到：', -0.5);
+        }
+        // 早退
+        const earlySelect = row.querySelector('select[data-type="LEAVE_EARLY"]');
+        if (earlySelect) {
+            const selected = Array.from(earlySelect.selectedOptions).map(o => parseInt(o.value));
+            if (selected.length) await processPeriods(student, selected, 'A2', '早退：', -0.5);
+        }
+        // 旷操
+        const noExerciseSelect = row.querySelector('select[data-type="NO_EXERCISE"]');
+        if (noExerciseSelect) {
+            const selected = Array.from(noExerciseSelect.selectedOptions).map(o => parseInt(o.value));
+            if (selected.length) await processPeriods(student, selected, 'A4', '旷操：', -1);
+        }
+
+        // ========== 请假处理（支持节次合并 + 连续累计扣分） ==========
+        const leaveSelect = row.querySelector('select[data-type="LEAVE_PERIOD"]');
+        if (leaveSelect) {
+            const selected = Array.from(leaveSelect.selectedOptions).map(o => parseInt(o.value));
+            if (selected.length) {
+                // 当前选择的节次统计
+                const curAm = selected.filter(p => p >= 1 && p <= 4).length;
+                const curPm = selected.filter(p => p >= 5 && p <= 6).length;
+                const curEve = selected.filter(p => p >= 7 && p <= 8).length;
+
+                // 查询当天是否已有请假记录
+                const { data: existing } = await sb.from('score_log')
+                    .select('*')
+                    .eq('student', student)
+                    .eq('date', date)
+                    .eq('code', '请假')
+                    .maybeSingle();
+
+                let mergedAm = curAm, mergedPm = curPm, mergedEve = curEve;
+                if (existing) {
+                    // 解析旧记录中的节次（格式：上午X节，下午Y节，晚自习Z节）
+                    const oldReason = existing.reason || '';
+                    const parsePeriod = (text, keyword) => {
+                        const regex = new RegExp(`${keyword}(\\d+)节`);
+                        const match = text.match(regex);
+                        return match ? parseInt(match[1]) : 0;
+                    };
+                    mergedAm += parsePeriod(oldReason, '上午');
+                    mergedPm += parsePeriod(oldReason, '下午');
+                    mergedEve += parsePeriod(oldReason, '晚自习');
+                }
+
+                // 计算合并后的总天数
+                let totalDays = (mergedAm > 0 ? 0.5 : 0) + (mergedPm > 0 ? 0.5 : 0) + (mergedEve > 0 ? 0.5 : 0);
+
+                const amStr = mergedAm > 0 ? `上午${mergedAm}节` : '';
+                const pmStr = mergedPm > 0 ? `下午${mergedPm}节` : '';
+                const eveStr = mergedEve > 0 ? `晚自习${mergedEve}节` : '';
+                const desc = [amStr, pmStr, eveStr].filter(Boolean).join('，');
+
+                // 连续请假天数计算（扣除当天后查询历史，再累加）
+                let oldConsecutiveDays = 0;
+                const dateObj = new Date(date);
+                const yesterday = new Date(dateObj);
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yesterdayStr = fmt(yesterday);
+
+                // 查询该生所有历史请假记录（不包括当天，因为即将更新）
+                const { data: leaveHistory } = await sb.from('score_log')
+                    .select('date, reason')
+                    .eq('student', student)
+                    .eq('code', '请假')
+                    .neq('date', date)   // 排除当天
+                    .order('date', { ascending: true });
+
+                const parseDays = (reason) => {
+                    const match = reason.match(/合计([\d.]+)天/);
+                    return match ? parseFloat(match[1]) : 0;
+                };
+
+                const dailyMap = new Map();
+                if (leaveHistory) {
+                    leaveHistory.forEach(r => {
+                        const day = r.date;
+                        const days = parseDays(r.reason || '');
+                        dailyMap.set(day, (dailyMap.get(day) || 0) + days);
+                    });
+                }
+
+                if (dailyMap.has(yesterdayStr)) {
+                    let checkDate = new Date(yesterday);
+                    while (dailyMap.has(fmt(checkDate))) {
+                        oldConsecutiveDays += dailyMap.get(fmt(checkDate));
+                        checkDate.setDate(checkDate.getDate() - 1);
+                    }
+                }
+
+                const newTotalDays = oldConsecutiveDays + totalDays;
+                const oldOver = Math.max(0, oldConsecutiveDays - 1);
+                const newOver = Math.max(0, newTotalDays - 1);
+                const value = -(newOver - oldOver);
+
+                let reason = `请假：${desc}，合计${totalDays}天`;
+                if (newTotalDays > 1) {
+                    reason += `（连续累计${newTotalDays}天，超期${newOver.toFixed(1)}天，本次扣${Math.abs(value)}分）`;
+                }
+
+                // 删除当天旧记录（实现合并更新）
+                if (existing) {
+                    await sb.from('score_log').delete().eq('id', existing.id);
+                }
+
+                await sb.from('score_log').insert({
+                    student, date, week: wk, code: '请假',
+                    reason, value, operator: '班主任', basis: '缺旷登记'
+                });
+                totalRecords++;
+            }
+        }
+
+        // 自定义事项（多个时段合并为一条记录，代码Z3）
+        const customPeriodSelect = row.querySelector('select[data-type="CUSTOM_PERIOD"]');
+        const customDescInput = row.querySelector('input[data-type="CUSTOM_DESC"]');
+        if (customPeriodSelect && customDescInput) {
+            const selectedPeriods = Array.from(customPeriodSelect.selectedOptions).map(o => o.value);
+            const descText = customDescInput.value.trim();
+            if (selectedPeriods.length && descText) {
+                const allLabels = selectedPeriods.map(p => periodLabels[p] || p).join('、');
+                const mergedReason = `走读/特殊事项：${allLabels} ${descText}`;
+                await sb.from('score_log').insert({
+                    student, date, week: wk, code: 'Z3',
+                    reason: mergedReason,
+                    value: 0, operator: '班主任', basis: '缺旷登记'
+                });
+                totalRecords++;
+            }
+        }
+    }
+
+    if (totalRecords === 0) { toast('没有检测到有效登记数据', 'error'); return; }
+    await loadData(); renderAbsenceTable(); refreshDashboard(); window.renderScoreLog();
+    toast(`已提交 ${totalRecords} 条记录`);
+};// ==================== 周违纪登记 ====================
+    function renderWeeklyTable() {
+        const wk = parseInt(document.getElementById('weekly-week-num').value) || getWeek();
+        const active = students.filter(s => s.status === '在读');
+        const data = weeklyData[wk] || {};
+        const dedCodes = getDeductCodes();
+        const bonCodes = getBonusCodes();
+        document.getElementById('weekly-tbody').innerHTML = active.map(s => {
+            const d = data[s.name] || {};
+            const net = (parseFloat(d.bonus_score) || 0) - (parseFloat(d.mon) || 0) - (parseFloat(d.tue) || 0) - (parseFloat(d.wed) || 0) - (parseFloat(d.thu) || 0) - (parseFloat(d.fri) || 0);
+            const ic = (day) => `<input list="codeList" value="${d[day] || ''}" data-student="${s.name}" data-day="${day}" style="width:80px;" placeholder="代码 分">`;
+            return `<tr><td>${s.name}</td><td>${ic('mon')}</td><td>${ic('tue')}</td><td>${ic('wed')}</td><td>${ic('thu')}</td><td>${ic('fri')}</td><td><input list="bonusList" value="${d.bonus_reason || ''}" data-student="${s.name}" data-day="bonus_reason" style="width:90px;" placeholder="加分事由"></td><td><input type="number" value="${d.bonus_score || ''}" data-student="${s.name}" data-day="bonus_score" style="width:60px;" placeholder="分值"></td><td style="font-weight:700;color:${net < 0 ? '#ef4444' : '#10b981'}">${net.toFixed(1)}</td></tr>`;
+        }).join('');
+
+        let dl = document.getElementById('codeList');
+        if (dl) dl.remove();
+        dl = document.createElement('datalist');
+        dl.id = 'codeList';
+        dedCodes.forEach(c => { dl.innerHTML += `<option value="${c.code} ${c.pt}">${c.code} ${c.desc}</option>`; });
+        bonCodes.forEach(c => { dl.innerHTML += `<option value="${c.code} +${c.pt}">${c.code} ${c.desc}</option>`; });
+        document.body.appendChild(dl);
+
+        let bl = document.getElementById('bonusList');
+        if (bl) bl.remove();
+        bl = document.createElement('datalist');
+        bl.id = 'bonusList';
+        bonCodes.forEach(c => { bl.innerHTML += `<option value="${c.code}">${c.desc}</option>`; });
+        document.body.appendChild(bl);
+    }
+    window.saveWeeklyData = async function() {
+    const wk = parseInt(document.getElementById('weekly-week-num').value) || getWeek();
+    const entries = [];
+    document.querySelectorAll('#weekly-tbody tr').forEach(row => {
+        const inputs = row.querySelectorAll('input');
+        if (!inputs.length) return;
+        const name = inputs[0].dataset.student;
+        const d = { week: wk, student: name };
+        inputs.forEach(inp => { d[inp.dataset.day] = inp.value; });
+        entries.push(d);
+    });
+    await sb.from('weekly_data').delete().eq('week', wk);
+    if (entries.length) await sb.from('weekly_data').insert(entries);
+
+    const today = fmt(new Date());
+    const dayNames = { mon:'周一', tue:'周二', wed:'周三', thu:'周四', fri:'周五' };
+    const allDeduct = getDeductCodes();
+    const allBonus = getBonusCodes();
+
+    for (const e of entries) {
+        for (const day of ['mon', 'tue', 'wed', 'thu', 'fri']) {
+            const val = e[day]?.trim();
+            if (!val) continue;
+            const parts = val.split(/\s+/);
+            const code = parts[0];
+            const score = parseFloat(parts[1]);
+            if (!code || isNaN(score)) continue;
+
+            const deductItem = allDeduct.find(c => c.code === code);
+            const bonusItem = allBonus.find(c => c.code === code);
+            const desc = deductItem?.desc || bonusItem?.desc || '';
+            const action = score > 0 ? '加分' : '违纪';
+            const reasonText = desc
+                ? `${dayNames[day]}${action}：${desc}（${code}）`
+                : `${dayNames[day]}${action}（${code}）`;
+
+            await sb.from('score_log').insert({
+                student: e.student, date: today, week: wk,
+                code: code, reason: reasonText,
+                value: score, operator: '班干', basis: '周表'
+            });
+        }
+
+        if (e.bonus_score && parseFloat(e.bonus_score) !== 0) {
+            const bonusCode = e.bonus_reason?.trim() || 'P2';
+            const bonusItem = allBonus.find(c => c.code === bonusCode);
+            const bonusDesc = bonusItem ? `${bonusItem.desc}（${bonusCode}）` : `加分（${bonusCode}）`;
+            await sb.from('score_log').insert({
+                student: e.student, date: today, week: wk,
+                code: bonusCode, reason: `周加分：${bonusDesc}`,
+                value: Math.abs(parseFloat(e.bonus_score)), operator: '班干', basis: '周表'
+            });
+        }
+    }
+    await loadData(); renderWeeklyTable(); window.renderScoreLog(); refreshDashboard();
+    toast('已保存并同步流水');
+};
+    // ==================== 课堂日志 ====================
+    function renderClassLogs() {
+        document.getElementById('class-log-tbody').innerHTML = classLogs.length
+            ? classLogs.map(l => `<tr><td>${l.date}</td><td>${l.period}</td><td>${l.subject || ''}</td><td>${l.teacher || ''}</td><td>${l.rating}</td><td>${l.violation || '—'}</td><td>${l.measure || '—'}</td><td><button class="btn-danger btn-xs" onclick="window.deleteClassLog(${l.id})">删</button></td></tr>`).join('')
+            : '<tr><td colspan="8">暂无课堂日志</td></tr>';
+    }
+    window.deleteClassLog = async id => {
+        await sb.from('class_logs').delete().eq('id', id);
+        await loadData();
+        renderClassLogs();
+    };
+    window.openClassLogModal = function() {
+        if (!document.getElementById('modal-class-log')) {
+            document.body.insertAdjacentHTML('beforeend', `<div class="modal" id="modal-class-log"><div class="modal-content"><h3>课堂日志</h3><div class="form-row"><input type="date" id="cl-date"><input type="number" id="cl-period" value="1" style="width:70px"></div><div class="form-row"><input id="cl-subject" placeholder="科目"><input id="cl-teacher" placeholder="教师"></div><div class="form-row"><select id="cl-rating"><option>A</option><option>B</option><option>C</option></select><input id="cl-monitor" value="唐雨馨"></div><textarea id="cl-violation" rows="2" placeholder="违纪记录"></textarea><textarea id="cl-measure" rows="2" placeholder="教师措施"></textarea><div style="text-align:right;margin-top:10px"><button class="btn-outline" onclick="window.closeModal('modal-class-log')">取消</button><button class="btn-primary" onclick="window.saveClassLog()">保存</button></div></div></div>`);
+        }
+        document.getElementById('cl-date').value = fmt(new Date());
+        openModal('modal-class-log');
+    };
+    window.saveClassLog = async function() {
+        const d = {
+            date: document.getElementById('cl-date').value,
+            period: parseInt(document.getElementById('cl-period').value) || 1,
+            subject: document.getElementById('cl-subject').value,
+            teacher: document.getElementById('cl-teacher').value,
+            rating: document.getElementById('cl-rating').value,
+            monitor: document.getElementById('cl-monitor').value,
+            violation: document.getElementById('cl-violation').value,
+            measure: document.getElementById('cl-measure').value
+        };
+        if (!d.date) { toast('请填写日期', 'error'); return; }
+        await sb.from('class_logs').insert(d);
+        closeModal('modal-class-log');
+        await loadData();
+        renderClassLogs();
+        toast('课堂日志已保存');
+    };
+    // ==================== 班级日志 ====================
+    function renderDailyLogs() {
+        document.getElementById('daily-log-tbody').innerHTML = dailyLogs.length
+            ? dailyLogs.map(l => `<tr><td>${l.date}</td><td>${l.monitor || ''}</td><td>${l.overall}</td><td>${l.recess || '—'}</td><td>${l.hygiene || '—'}</td><td>${l.good || '—'}</td><td>${l.concern || '—'}</td><td><button class="btn-danger btn-xs" onclick="window.deleteDailyLog(${l.id})">删</button></td></tr>`).join('')
+            : '<tr><td colspan="8">暂无班级日志</td></tr>';
+    }
+    window.deleteDailyLog = async id => {
+        await sb.from('daily_logs').delete().eq('id', id);
+        await loadData();
+        renderDailyLogs();
+    };
+    window.openDailyLogModal = function() {
+        if (!document.getElementById('modal-daily-log')) {
+            document.body.insertAdjacentHTML('beforeend', `<div class="modal" id="modal-daily-log"><div class="modal-content"><h3>班级日志</h3><div class="form-row"><input type="date" id="dl-date"><input id="dl-monitor" value="杨桂琼"></div><div class="form-row"><select id="dl-overall"><option>优</option><option>良</option><option>一般</option><option>需关注</option></select></div><textarea id="dl-recess" rows="1" placeholder="课间"></textarea><textarea id="dl-hygiene" rows="1" placeholder="卫生"></textarea><textarea id="dl-good" rows="2" placeholder="好事"></textarea><textarea id="dl-concern" rows="2" placeholder="关注"></textarea><div style="text-align:right;margin-top:10px"><button class="btn-outline" onclick="window.closeModal('modal-daily-log')">取消</button><button class="btn-primary" onclick="window.saveDailyLog()">保存</button></div></div></div>`);
+        }
+        document.getElementById('dl-date').value = fmt(new Date());
+        openModal('modal-daily-log');
+    };
+    window.saveDailyLog = async function() {
+        const d = {
+            date: document.getElementById('dl-date').value,
+            monitor: document.getElementById('dl-monitor').value,
+            overall: document.getElementById('dl-overall').value,
+            recess: document.getElementById('dl-recess').value,
+            hygiene: document.getElementById('dl-hygiene').value,
+            good: document.getElementById('dl-good').value,
+            concern: document.getElementById('dl-concern').value
+        };    
+        if (!d.date) { toast('请填写日期', 'error'); return; }
+        await sb.from('daily_logs').insert(d);
+        closeModal('modal-daily-log');
+        await loadData();
+        renderDailyLogs();
+        toast('班级日志已保存');
+    };
+
+    async function init() {
+        buildUI();
+    window.loadSemesterConfig();
+        await loadData();
+        if (students.length === 0) {
+            const preset = [ /* 35名学生数据 */ ];
+            await sb.from('students').insert(preset.map(s => ({...s, status:'在读'})));
+            await loadData();
+        }
+        if (deductCodes.length === 0) { for (const c of DEFAULT_DEDUCT) await sb.from('deduct_codes').upsert(c); }
+        if (bonusCodes.length === 0) { for (const c of DEFAULT_BONUS) await sb.from('bonus_codes').upsert(c); }
+        await loadData();
+        populateAllSelects();
+        refreshDashboard(); 
+        window.loadRecentAttendance();
+        renderRoster(); window.renderScoreLog(); renderWeeklyTable();
+        renderClassLogs(); renderDailyLogs(); renderAlerts(); renderTalks(); renderCodeTable();
+        document.getElementById('weekly-week-num').value = getWeek();
+        document.getElementById('absence-date').value = fmt(new Date());
+        document.getElementById('absence-week').value = getWeek();
+        renderAbsenceTable();
+    }
+window.saveDailyAttendance = async function() {
+    const today = fmt(new Date());
+    // 先查是否已有今日记录
+    const { data: exist } = await sb.from('daily_attendance').select('id').eq('date', today).limit(1);
+    if (exist && exist.length > 0) {
+        if (!confirm('今日出勤已记录，是否覆盖？')) return;
+        await sb.from('daily_attendance').delete().eq('date', today);
+    }
+
+    const total = parseInt(document.getElementById('stat-total')?.textContent) || 0;
+    const zoudu = parseInt(document.getElementById('stat-zoudu')?.textContent) || 0;
+    const zhuxiao = parseInt(document.getElementById('stat-zhuxiao')?.textContent) || 0;
+    const leaveCount = parseInt(document.getElementById('stat-leave')?.textContent) || 0;
+    const [presentAM, absentAM] = (document.getElementById('stat-am')?.textContent || '0 / 0').split(' / ').map(Number);
+    const [presentPM, absentPM] = (document.getElementById('stat-pm')?.textContent || '0 / 0').split(' / ').map(Number);
+    const eveText = document.getElementById('stat-eve')?.textContent || '0（住校） / 0';
+    const eveMatch = eveText.match(/(\d+)（住校）\s*\/\s*(\d+)/);
+    const presentEVE = eveMatch ? parseInt(eveMatch[1]) : 0;
+    const absentEVE = eveMatch ? parseInt(eveMatch[2]) : 0;
+    const excellent = parseInt(document.getElementById('stat-excellent')?.textContent) || 0;
+    const warning = parseInt(document.getElementById('stat-warning')?.textContent) || 0;
+    const danger = parseInt(document.getElementById('stat-danger')?.textContent) || 0;
+
+    await sb.from('daily_attendance').insert({
+        date: today, total, zoudu, zhuxiao, leave_count: leaveCount,
+        present_am: presentAM, absent_am: absentAM,
+        present_pm: presentPM, absent_pm: absentPM,
+        present_eve: presentEVE, absent_eve: absentEVE,
+        excellent, warning, danger
+    });
+    toast('今日出勤已保存');
+    window.loadRecentAttendance();
+};
+window.loadRecentAttendance = async function() {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+    const { data } = await sb.from('daily_attendance')
+        .select('*')
+        .gte('date', fmt(sevenDaysAgo))
+        .order('date', { ascending: false });
+    const tbody = document.getElementById('recent-attendance-tbody');
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8">暂无记录</td></tr>';
+        return;
+    }
+    tbody.innerHTML = data.map(r => `<tr>
+        <td>${r.date}</td><td>${r.total}</td><td>${r.zoudu}</td><td>${r.zhuxiao}</td><td>${r.leave_count}</td>
+        <td>${r.present_am} / ${r.absent_am}</td><td>${r.present_pm} / ${r.absent_pm}</td><td>${r.present_eve} / ${r.absent_eve}</td>
+    </tr>`).join('');
+};
+// 自动保存今日出勤（如果当天未保存过）
+window.autoSaveDailyAttendance = async function() {
+    const today = fmt(new Date());
+    const { data } = await sb.from('daily_attendance').select('id').eq('date', today).limit(1);
+    if (!data || data.length === 0) {
+        await window.saveDailyAttendance();
+    }
+};
+window.loadAttendanceHistory = async function() {
+    const start = document.getElementById('att-history-start').value;
+    const end = document.getElementById('att-history-end').value;
+    if (!start || !end) { toast('请选择日期范围', 'error'); return; }
+    const { data } = await sb.from('daily_attendance')
+        .select('*')
+        .gte('date', start)
+        .lte('date', end)
+        .order('date', { ascending: false });
+    const tbody = document.getElementById('att-history-tbody');
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="14">该时间段暂无记录</td></tr>';
+        return;
+    }
+        tbody.innerHTML = data.map(r => `<tr>
+        <td>${r.date}</td>
+        <td>${r.total}</td>
+        <td>${r.zoudu}</td>
+        <td>${r.zhuxiao}</td>
+        <td style="cursor:pointer; color:var(--primary); text-decoration:underline;" 
+            onclick="window.showAttendanceDetail('${r.date}','leave')">${r.leave_count}</td>
+        <td style="cursor:pointer; color:var(--primary); text-decoration:underline;" 
+            onclick="window.showAttendanceDetail('${r.date}','absent_am')">${r.present_am}</td>
+        <td style="cursor:pointer; color:var(--primary); text-decoration:underline;" 
+            onclick="window.showAttendanceDetail('${r.date}','absent_am')">${r.absent_am}</td>
+        <td style="cursor:pointer; color:var(--primary); text-decoration:underline;" 
+            onclick="window.showAttendanceDetail('${r.date}','absent_pm')">${r.present_pm}</td>
+        <td style="cursor:pointer; color:var(--primary); text-decoration:underline;" 
+            onclick="window.showAttendanceDetail('${r.date}','absent_pm')">${r.absent_pm}</td>
+        <td style="cursor:pointer; color:var(--primary); text-decoration:underline;" 
+            onclick="window.showAttendanceDetail('${r.date}','absent_eve')">${r.present_eve}</td>
+        <td style="cursor:pointer; color:var(--primary); text-decoration:underline;" 
+            onclick="window.showAttendanceDetail('${r.date}','absent_eve')">${r.absent_eve}</td>
+        <td>${r.excellent}</td><td>${r.warning}</td><td>${r.danger}</td>
+    </tr>`).join('');
+};
+function populateAllSelects() {
+    // 为筛选下拉框和学生选择器填充数据
+    const filterStudent = document.getElementById('filter-student');
+    if (filterStudent) {
+        filterStudent.innerHTML = '<option value="">全部</option>';
+        students.filter(s => s.status === '在读').forEach(s => {
+            filterStudent.innerHTML += `<option value="${s.name}">${s.name}</option>`;
+        });
+    }
+    const profileSelect = document.getElementById('profile-select');
+    if (profileSelect) {
+        profileSelect.innerHTML = '<option value="">-- 选择学生 --</option>';
+        students.filter(s => s.status === '在读').forEach(s => {
+            profileSelect.innerHTML += `<option value="${s.name}">${s.name}</option>`;
+        });
+    }
+}
+// 点击出勤历史人数，弹窗查看具体学生名单
+window.showAttendanceDetail = async function(date, field) {
+    // 动态创建模态框（若不存在）
+    let modal = document.getElementById('modal-attendance-detail');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modal-attendance-detail';
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width:400px;">
+                <h3 id="att-detail-title">学生名单</h3>
+                <div id="att-detail-list" style="max-height:60vh; overflow-y:auto; margin-bottom:12px;"></div>
+                <button class="btn-outline" onclick="window.closeModal('modal-attendance-detail')">关闭</button>
+            </div>`;
+        document.body.appendChild(modal);
+    }
+
+    const titleEl = document.getElementById('att-detail-title');
+    const listEl = document.getElementById('att-detail-list');
+    titleEl.textContent = '加载中...';
+    listEl.innerHTML = '<p>正在查询...</p>';
+    openModal('modal-attendance-detail');
+
+    try {
+        // 查询当天所有缺旷登记记录
+        const { data: dayLogs, error } = await sb.from('score_log')
+            .select('*')
+            .eq('date', date)
+            .eq('basis', '缺旷登记');
+        if (error) throw error;
+
+        const absentAM = new Set();
+        const absentPM = new Set();
+        const absentEVE = new Set();
+        const leaveSet = new Set();
+
+        (dayLogs || []).forEach(l => {
+            const student = l.student;
+            const reason = l.reason || '';
+
+            if (l.code === '请假') {
+                leaveSet.add(student);
+                if (reason.includes('上午')) absentAM.add(student);
+                if (reason.includes('下午')) absentPM.add(student);
+                if (reason.includes('晚自习')) absentEVE.add(student);
+            } else if (l.code === 'A1' || l.code === 'A3') {
+                if (reason.includes('上午')) absentAM.add(student);
+                if (reason.includes('下午')) absentPM.add(student);
+                if (reason.includes('晚自习')) absentEVE.add(student);
+            } else if (l.code === 'A2' || l.code === 'A4') {
+                absentAM.add(student);
+                absentPM.add(student);
+            } else if ((l.code === 'Z1' || l.code === 'Z3') && 
+                     (reason.startsWith('特殊事项：') || reason.startsWith('走读/特殊事项：'))) {
+                const detail = reason.replace('特殊事项：', '').replace('走读/特殊事项：', '');
+                if (detail.includes('早上') || detail.includes('上午')) absentAM.add(student);
+                if (detail.includes('下午')) absentPM.add(student);
+                if (detail.includes('晚上') || detail.includes('晚自习')) absentEVE.add(student);
+            }
+        });
+
+        let selectedSet;
+        let typeText;
+        if (field === 'leave') {
+            selectedSet = leaveSet;
+            typeText = '请假';
+        } else if (field === 'absent_am') {
+            selectedSet = absentAM;
+            typeText = '上午缺勤/请假';
+        } else if (field === 'absent_pm') {
+            selectedSet = absentPM;
+            typeText = '下午缺勤/请假';
+        } else if (field === 'absent_eve') {
+            selectedSet = absentEVE;
+            typeText = '晚自习缺勤/请假';
+        } else {
+            selectedSet = new Set();
+            typeText = '未知';
+        }
+
+        const names = Array.from(selectedSet).sort();
+        titleEl.textContent = `${date} ${typeText}名单 (${names.length}人)`;
+        listEl.innerHTML = names.length
+            ? names.map(n => `<div style="padding:4px 0; border-bottom:1px solid #eee;">${n}</div>`).join('')
+            : '<p>无</p>';
+    } catch (e) {
+        console.error(e);
+        titleEl.textContent = '查询出错';
+        listEl.innerHTML = `<p style="color:red;">${e.message || e}</p>`;
+    }
+};
+window.renderWeeklySummary = function() {
+    const wk = parseInt(document.getElementById('summary-week-num').value);
+    if (isNaN(wk)) { toast('请输入周次', 'error'); return; }
+
+    const weekLogs = logs.filter(l => l.week === wk);
+    // 按学生分组
+    const groups = {};
+    weekLogs.forEach(l => {
+        if (!groups[l.student]) groups[l.student] = [];
+        groups[l.student].push(l);
+    });
+
+    // 生成表格内容
+    const activeStudents = students.filter(s => s.status === '在读');
+    const tbody = document.getElementById('weekly-summary-tbody');
+    if (activeStudents.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2">暂无在读学生</td></tr>';
+        return;
+    }
+
+        let html = '';
+    activeStudents.forEach(s => {
+        const records = groups[s.name] || [];
+        // 计算本周合计
+        const weekTotal = records.reduce((sum, r) => sum + (r.value || 0), 0);
+        const weekTotalStr = weekTotal === 0 ? '0' : (weekTotal > 0 ? '+' + weekTotal : weekTotal.toString());
+        // 当前操行分
+        const currentScore = calcScore(s.name);
+        
+        if (records.length === 0) {
+            html += `<tr><td>${s.name}</td><td style="color:var(--text-secondary);">无记录</td><td>0</td><td>${currentScore}</td></tr>`;
+        } else {
+            records.sort((a, b) => new Date(a.date) - new Date(b.date));
+            const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            const items = records.map((r, i) => {
+                const d = new Date(r.date);
+                const weekday = dayNames[d.getDay()];
+                const codeDesc = r.code ? ` ${r.code}：` : '';
+                const reason = r.reason || '';
+                const value = r.value || 0;
+                const valueStr = value !== 0 ? `（${value > 0 ? '+' : ''}${value}分）` : '';
+                return `${i + 1}.${weekday}${codeDesc}${reason}${valueStr}`;
+            });
+            const summary = items.join('；');
+            html += `<tr><td>${s.name}</td><td style="white-space:pre-wrap;">${summary}</td><td style="font-weight:bold; color:${weekTotal >= 0 ? '#10b981' : '#ef4444'}">${weekTotalStr}</td><td>${currentScore}</td></tr>`;
+        }
+    });
+    tbody.innerHTML = html;
+};
+// 导出周操行汇总为 Excel (CSV)
+window.exportWeeklySummary = function() {
+    const table = document.getElementById('weekly-summary-table');
+    if (!table) return;
+    const rows = table.querySelectorAll('tr');
+    if (rows.length <= 1) { toast('没有数据可导出', 'error'); return; }
+
+    // 构建CSV内容
+    let csvContent = '\uFEFF'; // BOM for Chinese
+    rows.forEach(row => {
+        const cols = row.querySelectorAll('th, td');
+        const rowData = [];
+        cols.forEach(col => {
+            // 处理单元格内可能存在的逗号或引号
+            let text = col.innerText || '';
+            text = text.replace(/"/g, '""'); // 双引号转义
+            if (text.includes(',') || text.includes('"') || text.includes('\n')) {
+                text = `"${text}"`;
+            }
+            rowData.push(text);
+        });
+        csvContent += rowData.join(',') + '\n';
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const wk = document.getElementById('summary-week-num')?.value || '';
+    link.download = `周操行汇总_第${wk}周.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast('导出成功');
+};
+// 导出出勤历史为 Excel (CSV)
+window.exportAttendanceHistory = function() {
+    const table = document.getElementById('att-history-table');
+    if (!table) return;
+    const rows = table.querySelectorAll('tr');
+    if (rows.length <= 1) { toast('没有数据可导出', 'error'); return; }
+
+    let csvContent = '\uFEFF'; // BOM 支持中文
+    rows.forEach(row => {
+        const cols = row.querySelectorAll('th, td');
+        const rowData = [];
+        cols.forEach(col => {
+            let text = col.innerText || '';
+            text = text.replace(/"/g, '""'); // 转义双引号
+            if (text.includes(',') || text.includes('"') || text.includes('\n')) {
+                text = `"${text}"`;
+            }
+            rowData.push(text);
+        });
+        csvContent += rowData.join(',') + '\n';
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const start = document.getElementById('att-history-start')?.value || '';
+    const end = document.getElementById('att-history-end')?.value || '';
+    link.download = `出勤历史_${start}_至_${end}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast('导出成功');
+};
+// 自动识别周/月奖励（全勤按周，团结/进步按月，自动去重，严格时间）
+window.autoAddWeeklyBonus = async function() {
+    // 防连点锁
+    if (window._addingBonusLock) { toast('正在处理中，请稍候...', 'warning'); return; }
+    window._addingBonusLock = true;
+
+    try {
+        const wk = parseInt(document.getElementById('summary-week-num').value);
+        if (isNaN(wk)) { toast('请先选择周次', 'error'); return; }
+
+        const saved = localStorage.getItem('semester_config');
+        if (!saved) { toast('请先设置学期开学日期', 'error'); return; }
+        const cfg = JSON.parse(saved);
+        const semesterStart = new Date(cfg.startDate);
+        
+        // 本周起止（周一~周日 23:59:59）
+        const weekStart = new Date(semesterStart);
+        weekStart.setDate(weekStart.getDate() + (wk - 1) * 7);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        weekEnd.setHours(23, 59, 59, 999);
+
+        const now = new Date();
+        const isWeekOver = now >= weekEnd;
+
+        // 月份信息
+        const month = weekStart.getMonth() + 1;
+        const year = weekStart.getFullYear();
+        const monthStart = `${year}-${String(month).padStart(2,'0')}-01`;
+        // 本月最后一天 23:59:59
+        const lastDayOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
+        const monthEndStr = lastDayOfMonth.toISOString().split('T')[0];
+        const isMonthOver = now >= lastDayOfMonth;
+
+        const activeStudents = students.filter(s => s.status === '在读');
+        const weekLogs = logs.filter(l => l.week === wk);
+        const allLogs = logs;
+
+        let addedCount = 0;
+
+        for (const s of activeStudents) {
+            const name = s.name;
+            const myWeekLogs = weekLogs.filter(l => l.student === name);
+            const myMonthLogs = allLogs.filter(l => 
+                l.student === name && l.date >= monthStart && l.date <= monthEndStr
+            );
+
+            // ========== 全勤奖：本周无扣分、无请假、有记录，且周已过 ==========
+            if (isWeekOver) {
+                const hasDeduction = myWeekLogs.some(l => l.value < 0);
+                const hasLeave = myWeekLogs.some(l => l.code === '请假');
+                const hasRecord = myWeekLogs.length > 0;
+                
+                if (hasRecord && !hasDeduction && !hasLeave) {
+                    // 先删除该生本周所有 P1 自动加分记录，再插入一条（保证唯一）
+                    await sb.from('score_log').delete()
+                        .eq('student', name)
+                        .eq('week', wk)
+                        .eq('code', 'P1')
+                        .eq('basis', '自动加分');
+                    
+                    await sb.from('score_log').insert({
+                        student: name,
+                        date: fmt(weekEnd),
+                        week: wk,
+                        code: 'P1',
+                        reason: `第${wk}周全勤（自动识别）`,
+                        value: 1,
+                        operator: '系统',
+                        basis: '自动加分'
+                    });
+                    addedCount++;
+                }
+            }
+
+            // ========== 团结奖：当月无冲突代码，且月已过 ==========
+            if (isMonthOver) {
+                const conflictCodes = ['C9', 'C10', 'C12'];
+                const hasConflict = myMonthLogs.some(l => conflictCodes.includes(l.code));
+                
+                if (!hasConflict) {
+                    // 删除该生本月所有 U1 自动加分记录，再插入
+                    await sb.from('score_log').delete()
+                        .eq('student', name)
+                        .gte('date', monthStart)
+                        .lte('date', monthEndStr)
+                        .eq('code', 'U1')
+                        .eq('basis', '自动加分');
+                    
+                    await sb.from('score_log').insert({
+                        student: name,
+                        date: monthEndStr,
+                        week: wk,
+                        code: 'U1',
+                        reason: `${month}月团结无纠纷（自动识别）`,
+                        value: 1,
+                        operator: '系统',
+                        basis: '自动加分'
+                    });
+                    addedCount++;
+                }
+            }
+
+            // ========== 进步奖：当月有扣分且加分，月已过 ==========
+            if (isMonthOver) {
+                const hasDeductionMonth = myMonthLogs.some(l => l.value < 0);
+                const hasBonusMonth = myMonthLogs.some(l => l.value > 0);
+                
+                if (hasDeductionMonth && hasBonusMonth) {
+                    // 删除该生本月所有 U2 自动加分记录，再插入
+                    await sb.from('score_log').delete()
+                        .eq('student', name)
+                        .gte('date', monthStart)
+                        .lte('date', monthEndStr)
+                        .eq('code', 'U2')
+                        .eq('basis', '自动加分');
+                    
+                    await sb.from('score_log').insert({
+                        student: name,
+                        date: monthEndStr,
+                        week: wk,
+                        code: 'U2',
+                        reason: `${month}月表现进步（自动识别，班主任可调整）`,
+                        value: 2,
+                        operator: '系统',
+                        basis: '自动加分'
+                    });
+                    addedCount++;
+                }
+            }
+        }
+
+        await loadData();
+        window.renderWeeklySummary();
+        
+        let msg = `自动识别完成，新增 ${addedCount} 人次奖励。`;
+        if (!isWeekOver) msg += '（本周未结束，全勤暂不处理）';
+        if (!isMonthOver) msg += '（本月未结束，团结/进步暂不处理）';
+        toast(msg);
+    } catch (e) {
+        console.error(e);
+        toast('自动加分出错：' + e.message, 'error');
+    } finally {
+        window._addingBonusLock = false;
+    }
+};  
+// 全选/取消全选
+window.toggleSelectAllLogs = function() {
+    var checked = document.getElementById('select-all-logs').checked;
+    document.querySelectorAll('.log-checkbox').forEach(cb => cb.checked = checked);
+};
+// 更新全选框状态（当单个复选框变化时）
+window.updateSelectAllState = function() {
+    var all = document.querySelectorAll('.log-checkbox');
+    var checkedCount = document.querySelectorAll('.log-checkbox:checked').length;
+    var selectAll = document.getElementById('select-all-logs');
+    if (selectAll) {
+        selectAll.checked = all.length > 0 && checkedCount === all.length;
+        selectAll.indeterminate = checkedCount > 0 && checkedCount < all.length;
+    }
+};
+// 批量删除
+window.batchDeleteLogs = async function() {
+    var checked = document.querySelectorAll('.log-checkbox:checked');
+    if (checked.length === 0) { toast('请至少选择一条记录', 'error'); return; }
+    if (!confirm(`确定删除选中的 ${checked.length} 条记录吗？此操作不可恢复。`)) return;
+    var ids = Array.from(checked).map(cb => parseInt(cb.value));
+    // 分批删除，避免URL过长
+    for (let i = 0; i < ids.length; i += 50) {
+        const batch = ids.slice(i, i + 50);
+        const { error } = await sb.from('score_log').delete().in('id', batch);
+        if (error) { toast('删除失败: ' + error.message, 'error'); return; }
+    }
+    await loadData();
+    window.renderScoreLog();
+    refreshDashboard();
+    toast(`成功删除 ${ids.length} 条记录`);
+};
+// 预警通知单自动计算
+// 实时更新操行分和预警等级
+// 根据学生姓名加载其最近的违纪记录到违纪事项下拉（多选）
+window.loadReasonsForStudent = function(studentName) {
+    const reasonSel = document.getElementById('wn-reason');
+    if (!reasonSel) return;
+    if (!studentName) {
+        reasonSel.innerHTML = '<option value="">-- 请先选择学生 --</option>';
+        return;
+    }
+    const studentDeducts = logs
+        .filter(l => l.student === studentName && l.value < 0)
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 20);
+    if (studentDeducts.length === 0) {
+        reasonSel.innerHTML = '<option value="">该生暂无违纪记录</option>';
+        return;
+    }
+    let html = '<option value="">-- 按住Ctrl可多选 --</option>';
+    studentDeducts.forEach(l => {
+        const label = `${l.date} ${l.code} ${l.reason || ''} (${l.value}分)`;
+        html += `<option value="${l.value}" data-reason="${label}">${label}</option>`;
+    });
+    reasonSel.innerHTML = html;
+};
+window.updateWarningNotice = function() {
+    const studentName = document.getElementById('wn-student').value;
+    const deductInput = document.getElementById('wn-deduct');
+    const reasonSel = document.getElementById('wn-reason');
+    
+    // 检测学生是否变化，变化则重新加载违纪事项
+    const lastStudent = document.getElementById('wn-student').dataset.lastStudent;
+    if (studentName !== lastStudent) {
+        document.getElementById('wn-student').dataset.lastStudent = studentName;
+        window.loadReasonsForStudent(studentName);
+        deductInput.value = '-5';
+        document.getElementById('wn-current').value = '';
+        document.getElementById('wn-level').value = '';
+        return; // 等待用户选择违纪事项
+    }
+    
+    // 累加所有选中项的扣分
+    if (reasonSel && reasonSel.selectedOptions.length > 1) {
+        // 排除第一个 placeholder 选项
+        let totalDeduct = 0;
+        for (const opt of reasonSel.selectedOptions) {
+            if (opt.value && opt.value !== '') {
+                totalDeduct += parseFloat(opt.value);
+            }
+        }
+        deductInput.value = totalDeduct.toFixed(1);
+    } else if (reasonSel && reasonSel.selectedOptions.length === 1) {
+        const selectedOption = reasonSel.selectedOptions[0];
+        if (selectedOption.value && selectedOption.value !== '') {
+            deductInput.value = selectedOption.value;
+        } else {
+            deductInput.value = '-5';
+        }
+    } else {
+        deductInput.value = '-5';
+    }
+    
+    // 计算当前操行分和预警等级
+    const deduct = parseFloat(deductInput.value) || 0;
+    if (studentName) {
+        const totalScore = calcScore(studentName);
+        const afterScore = totalScore + deduct;
+        document.getElementById('wn-current').value = totalScore;
+        let level = '';
+        if (afterScore >= 90) level = '优秀';
+        else if (afterScore >= 80) level = '良好';
+        else if (afterScore >= 70) level = '关注';
+        else if (afterScore >= 60) level = '预警';
+        else if (afterScore >= 50) level = '警告';
+        else level = '严重';
+        document.getElementById('wn-level').value = level;
+    } else {
+        document.getElementById('wn-current').value = '';
+        document.getElementById('wn-level').value = '';
+    }
+};
+// AI 生成处置建议（去除 markdown 标记）
+window.generateWarningMeasureAI = async function() {
+    const studentName = document.getElementById('wn-student').value;
+    const reasonSel = document.getElementById('wn-reason');
+    let reason = '';
+    if (reasonSel && reasonSel.selectedOptions.length > 0) {
+        const selectedTexts = [];
+        for (const opt of reasonSel.selectedOptions) {
+            if (opt.value && opt.value !== '') {
+                selectedTexts.push(opt.getAttribute('data-reason') || opt.text);
+            }
+        }
+        reason = selectedTexts.join('；');
+    }
+    const deduct = document.getElementById('wn-deduct').value;
+    const currentScore = document.getElementById('wn-current').value;
+    const level = document.getElementById('wn-level').value;
+    
+    if (!studentName || !reason) {
+        toast('请先选择学生并选违纪事项', 'error');
+        return;
+    }
+    
+    const measureInput = document.getElementById('wn-measure');
+    measureInput.value = '正在生成...';
+    
+    const systemPrompt = '你是一位中职班主任助手。请根据违纪情况，用一句完整的话给出处置措施建议（不超过80字）。直接给出内容，不要使用任何Markdown格式。';
+    const userPrompt = `学生：${studentName}，违纪事项：${reason}，本次扣分：${deduct}分，当前操行分：${currentScore}分，预警等级：${level}。请给出合理的处置措施建议。`;
+    
+    try {
+        const raw = await callAI(systemPrompt, userPrompt, 500);
+        // 清洗 Markdown 并保留完整句子
+        let cleaned = cleanMarkdown(raw).replace(/\n+/g, ' ').trim();
+        // 如果末尾不是句号，说明可能被截断，只保留最后一个完整句子
+        if (!/[。！？]$/.test(cleaned)) {
+            const lastPeriod = Math.max(cleaned.lastIndexOf('。'), cleaned.lastIndexOf('！'), cleaned.lastIndexOf('？'));
+            if (lastPeriod > 0) cleaned = cleaned.substring(0, lastPeriod + 1);
+        }
+        measureInput.value = cleaned || '已生成建议，请手动调整';
+    } catch (e) {
+        console.error(e);
+        measureInput.value = 'AI 生成失败，请手动填写';
+    }
+};
+// 打印通知单（保持原逻辑，但使用当前页面值）
+window.printWarningNotice = function() {
+    const student = document.getElementById('wn-student').value || '________';
+    const reasonSel = document.getElementById('wn-reason');
+    let reason = '________';
+    if (reasonSel && reasonSel.selectedOptions.length > 0) {
+        const selectedTexts = [];
+        for (const opt of reasonSel.selectedOptions) {
+            if (opt.value && opt.value !== '') {
+                selectedTexts.push(opt.getAttribute('data-reason') || opt.text);
+            }
+        }
+        if (selectedTexts.length > 0) reason = selectedTexts.join('；');
+    }
+    const deduct = document.getElementById('wn-deduct').value || '____';
+    const currentScore = document.getElementById('wn-current').value || '____';
+    const level = document.getElementById('wn-level').value || '____';
+   const measureRaw = document.getElementById('wn-measure').value || '________';
+const measure = measureRaw.replace(/\n/g, '<br>');
+    
+    const printContent = `
+        <div style="font-family: SimSun; padding: 20px; max-width: 700px; margin: auto; line-height: 1.8;">
+            <h2 style="text-align: center;">学生操行分预警通知单</h2>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+                <tr>
+                    <td style="padding: 5px;"><b>学生姓名：</b>${student}</td>
+                    <td style="padding: 5px;"><b>班级：</b>25级化学工艺1班</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px;"><b>日期：</b>${new Date().toLocaleDateString()}</td>
+                    <td style="padding: 5px;"><b>本次扣分：</b>${deduct} 分</td>
+                </tr>
+            </table>
+            <p><b>违纪事项：</b><br>${reason.replace(/；/g, '；<br>')}</p>
+            <p><b>基础分：</b>100 分</p>
+            <p><b>当前操行分：</b>${currentScore} 分</p>
+            <p><b>预警等级：</b>${level}</p>
+            <p><b>处置措施简述：</b><br>${measure}</p>
+            <p style="margin-top: 40px;"><b>学生签字：</b>______________ &nbsp;&nbsp;&nbsp; <b>班主任签字：</b>______________</p>
+            <p><b>家长意见/签字：</b>______________ （请于 ___年___月___日前交回）</p>
+        </div>
+    `;
+    const printWindow = window.open('', '_blank', 'width=750,height=600');
+    printWindow.document.write(`<html><head><title>预警通知单</title></head><body>${printContent}</body></html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => printWindow.print(), 500);
+}
+// 保存当前通知单存档
+window.saveWarningNotice = async function() {
+    const student = document.getElementById('wn-student').value;
+    const date = fmt(new Date());
+    const reasonSel = document.getElementById('wn-reason');
+    let reason = '';
+    if (reasonSel && reasonSel.selectedOptions.length > 0) {
+        const selectedTexts = [];
+        for (const opt of reasonSel.selectedOptions) {
+            if (opt.value && opt.value !== '') {
+                selectedTexts.push(opt.getAttribute('data-reason') || opt.text);
+            }
+        }
+        reason = selectedTexts.join('；');
+    }
+    const deduct = parseFloat(document.getElementById('wn-deduct').value) || 0;
+    const currentScore = parseFloat(document.getElementById('wn-current').value) || 100;
+    const level = document.getElementById('wn-level').value;
+    const measure = document.getElementById('wn-measure').value;
+    
+    if (!student) { toast('请选择学生', 'error'); return; }
+    if (!reason) { toast('请选择违纪事项', 'error'); return; }
+    
+    const { error } = await sb.from('warning_notices').insert({
+        student,
+        class: '25级化学工艺1班',
+        date,
+        reason,
+        deduct,
+        current_score: currentScore,
+        level,
+        measure
+    });
+    if (error) {
+        toast('保存失败：' + error.message, 'error');
+    } else {
+        toast('存档已保存');
+        window.loadWarningNoticesArchive(); // 刷新列表
+    }
+};
+
+// 查看电子档（弹窗）
+window.viewWarningNotice = async function(id) {
+    const { data, error } = await sb.from('warning_notices').select('*').eq('id', id).single();
+    if (error || !data) { toast('查看失败', 'error'); return; }
+    
+    const content = `
+        <div style="font-family: SimSun; line-height:1.8;">
+            <p><b>学生姓名：</b>${data.student} &nbsp;&nbsp; <b>班级：</b>${data.class} &nbsp;&nbsp; <b>日期：</b>${data.date}</p>
+            <p><b>违纪事项：</b><br>${(data.reason || '').replace(/；/g, '；<br>')}</p>
+            <p><b>本次扣分：</b>${data.deduct} 分 &nbsp;&nbsp; <b>基础分：</b>100 分 &nbsp;&nbsp; <b>当前操行分：</b>${data.current_score} 分</p>
+            <p><b>预警等级：</b>${data.level}</p>
+            <p><b>处置措施简述：</b><br>${data.measure || '—'}</p>
+        </div>
+    `;
+    
+    // 复用已有模态框样式
+    let modal = document.getElementById('modal-wn-view');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modal-wn-view';
+        modal.className = 'modal';
+        modal.innerHTML = `<div class="modal-content" style="max-width:600px;"><h3>📄 预警通知单（电子档）</h3><div id="wn-view-content"></div><button class="btn-outline" onclick="window.closeModal('modal-wn-view')">关闭</button></div>`;
+        document.body.appendChild(modal);
+    }
+    document.getElementById('wn-view-content').innerHTML = content;
+    openModal('modal-wn-view');
+};
+
+// 加载存档列表
+window.loadWarningNoticesArchive = async function() {
+    const tbody = document.getElementById('wn-archive-tbody');
+    if (!tbody) return;
+    const { data, error } = await sb.from('warning_notices').select('*').order('created_at', { ascending: false }).limit(50);
+    if (error) {
+        tbody.innerHTML = '<tr><td colspan="5">加载失败</td></tr>';
+        return;
+    }
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5">暂无存档</td></tr>';
+        return;
+    }
+    tbody.innerHTML = data.map(n => `
+        <tr>
+            <td>${n.date}</td>
+            <td>${n.student}</td>
+            <td>${n.deduct}</td>
+            <td>${n.level}</td>
+            <td><button class="btn-sm" onclick="window.viewWarningNotice(${n.id})">📄 查看</button></td>
+        </tr>
+    `).join('');
+};
+;// 作息时间表（基于福泉市中等职业学校作息时间）
+const schedule = [
+    { name: '第一节',   start: [8,30], end: [9,10], period: 1, timeLabel: '上午' },
+    { name: '第二节',   start: [9,20], end: [10,0], period: 2, timeLabel: '上午' },
+    { name: '课间操',   start: [10,0], end: [10,30], period: null, timeLabel: null },
+    { name: '第三节',   start: [10,30], end: [11,10], period: 3, timeLabel: '上午' },
+    { name: '第四节',   start: [11,20], end: [12,0], period: 4, timeLabel: '上午' },
+    { name: '第五节',   start: [14,30], end: [15,10], period: 5, timeLabel: '下午' },
+    { name: '第六节',   start: [15,20], end: [16,0], period: 6, timeLabel: '下午' },
+    { name: '第七节',   start: [16,10], end: [16,50], period: 7, timeLabel: '下午' },
+    { name: '晚自习一', start: [19,0], end: [19,50], period: 1, timeLabel: '晚自习' },   // 晚自习内部节次重新编号为1、2
+    { name: '晚自习二', start: [20,0], end: [21,0], period: 2, timeLabel: '晚自习' }
+];
+// 根据当前时间获取当前节次信息
+function getCurrentPeriod() {
+    const now = new Date();
+    const h = now.getHours();
+    const m = now.getMinutes();
+    for (const item of schedule) {
+        const [sh, sm] = item.start;
+        const [eh, em] = item.end;
+        if (h > sh || (h === sh && m >= sm)) {
+            if (h < eh || (h === eh && m < em)) {
+                return item;
+            }
+        }
+    }
+    return null; // 非上课时间
+}
+// 计算当前节次的实到和缺旷人数
+function getCurrentAttendance() {
+    const periodInfo = getCurrentPeriod();
+    if (!periodInfo || !periodInfo.period) {
+        return { label: '非上课时间', present: '-', absent: '-' };
+    }
+
+    const today = fmt(new Date());
+    const todayLogs = logs.filter(l => l.date === today && l.basis === '缺旷登记');
+    const allActive = students.filter(s => s.status === '在读');
+    const total = allActive.length;
+
+    const absentSet = new Set();
+    for (const l of todayLogs) {
+        const student = l.student;
+        const code = l.code;
+        const reason = l.reason || '';
+
+        // 请假：只要原因中包含当前时段标签（上午/下午/晚自习），则该生该时段所有节次视为缺勤
+        if (code === '请假') {
+            if (periodInfo.timeLabel === '上午' && reason.includes('上午')) {
+                absentSet.add(student);
+            } else if (periodInfo.timeLabel === '下午' && reason.includes('下午')) {
+                absentSet.add(student);
+            } else if (periodInfo.timeLabel === '晚自习' && reason.includes('晚自习')) {
+                absentSet.add(student);
+            }
+            continue;
+        }
+
+        // 旷课（A1、A3）：时段匹配且节次匹配
+        if (code === 'A1' || code === 'A3') {
+            let timeLabel = null;
+            if (reason.includes('上午')) timeLabel = '上午';
+            else if (reason.includes('下午')) timeLabel = '下午';
+            else if (reason.includes('晚自习')) timeLabel = '晚自习';
+            if (timeLabel !== periodInfo.timeLabel) continue;
+
+            const periodMatch = reason.match(/第([\d,]+)节/);
+            if (periodMatch) {
+                const periods = periodMatch[1].split(',').map(Number);
+                if (periods.includes(periodInfo.period)) {
+                    absentSet.add(student);
+                }
+            } else {
+                // 没有具体节次，默认该时段所有节次缺勤
+                absentSet.add(student);
+            }
+            continue;
+        }
+
+        // 迟到、早退、旷操等暂不视为当前节次缺勤
+    }
+
+    const present = total - absentSet.size;
+    return {
+        label: periodInfo.name,
+        present: present,
+        absent: absentSet.size
+    };
+}
+// 渲染学生个人德育档案
+window.renderStudentProfile = function() {
+    const name = document.getElementById('profile-select').value;
+    const container = document.getElementById('profile-content');
+    if (!name) {
+        container.innerHTML = '<div class="card"><p style="color:var(--text-secondary);">请选择一个学生查看档案</p></div>';
+        return;
+    }
+    const student = students.find(s => s.name === name);
+    if (!student) {
+        container.innerHTML = '<div class="card"><p style="color:var(--text-secondary);">学生信息未找到</p></div>';
+        return;
+    }
+
+    const sc = calcScore(name);
+    const lv = level(sc);
+    const lvClass = badgeClass(lv);
+    const age = getAgeFromIdcard(student.idcard);
+    const zouduText = student.zoudu === '是' ? '走读' : '住校';
+
+    const allMyLogs = logs.filter(l => l.student === name).sort((a, b) => new Date(b.date) - new Date(a.date));
+    const recentLogs = allMyLogs.slice(0, 20);
+    const deductLogs = allMyLogs.filter(l => l.value < 0);
+    const bonusLogs = allMyLogs.filter(l => l.value > 0);
+    const totalDeduct = deductLogs.reduce((s, l) => s + l.value, 0);
+    const totalBonus = bonusLogs.reduce((s, l) => s + l.value, 0);
+
+    const deductMap = {};
+    deductLogs.forEach(l => {
+        const key = l.code || '无代码';
+        deductMap[key] = (deductMap[key] || 0) + l.value;
+    });
+    const topDeductCodes = Object.entries(deductMap).sort((a, b) => a[1] - b[1]).slice(0, 5);
+    const deductSummary = topDeductCodes.length
+        ? topDeductCodes.map(([code, val]) => `${code}(${val}分)`).join('、')
+        : '无';
+
+    const lvColor = lv === '优秀' ? '#10b981' : lv === '良好' ? '#3b82f6' : lv === '关注' ? '#f59e0b' : lv === '预警' ? '#ef4444' : '#dc2626';
+
+    // 趋势计算
+    const now = new Date();
+    const oneWeek = 7 * 24 * 60 * 60 * 1000;
+    const twoWeeksAgo = new Date(now - 2 * oneWeek);
+    const fourWeeksAgo = new Date(now - 4 * oneWeek);
+    const recentTwo = allMyLogs.filter(l => new Date(l.date) >= twoWeeksAgo && l.value < 0).reduce((s, l) => s + l.value, 0);
+    const olderTwo = allMyLogs.filter(l => new Date(l.date) >= fourWeeksAgo && new Date(l.date) < twoWeeksAgo && l.value < 0).reduce((s, l) => s + l.value, 0);
+    let trendText = '';
+    if (recentTwo === 0 && olderTwo === 0) {
+        trendText = '近期无扣分，表现稳定。';
+    } else if (recentTwo > olderTwo) {
+        trendText = `近两周扣分（${recentTwo}分）比前两周（${olderTwo}分）有所增加，呈下降趋势。`;
+    } else if (recentTwo < olderTwo) {
+        trendText = `近两周扣分（${recentTwo}分）比前两周（${olderTwo}分）减少，表现有所进步。`;
+    } else {
+        trendText = '扣分情况与前两周持平，无明显变化。';
+    }
+
+    container.innerHTML = `
+        <div class="card">
+            <h3>🧑 基本信息</h3>
+            <table style="width:100%;">
+                <tr><td style="width:80px;">姓名</td><td><b>${student.name}</b></td><td style="width:80px;">性别</td><td>${student.gender || '—'}</td></tr>
+                <tr><td>年龄</td><td>${age}</td><td>身份证</td><td>${student.idcard || '—'}</td></tr>
+                <tr><td>走读/住校</td><td>${zouduText}</td><td>家长</td><td>${student.parent || '—'}</td></tr>
+                <tr><td>联系电话</td><td>${student.phone || '—'}</td><td>状态</td><td>${student.status === '在读' ? '✅ 在读' : student.status}</td></tr>
+            </table>
+        </div>
+        <div class="card">
+            <h3>📊 操行分概况</h3>
+            <div style="display:flex; align-items:center; gap:20px;">
+                <div style="font-size:3rem; font-weight:700; color:${lvColor};">${sc}</div>
+                <div>
+                    <div class="badge ${lvClass}" style="font-size:14px;">${lv}</div>
+                    <div style="margin-top:8px; font-size:13px; color:var(--text-secondary);">
+                        本学期扣分合计：<span style="color:#ef4444;">${totalDeduct}分</span><br>
+                        本学期加分合计：<span style="color:#10b981;">+${totalBonus}分</span>
+                    </div>
+                </div>
+            </div>
+            ${sc < 70 ? `<div style="margin-top:10px; padding:8px; background:#fff3cd; border-radius:4px; color:#856404; font-size:13px;">
+                ⚠️ 该生处于${lv}状态，请加强关注。主要扣分代码：${deductSummary}
+            </div>` : ''}
+        </div>
+        <div class="card">
+            <h3>📋 近期操行记录（最近20条）</h3>
+            ${recentLogs.length === 0 ? '<p style="color:var(--text-secondary);">暂无记录</p>' : `
+            <table>
+                <thead><tr><th>日期</th><th>周</th><th>代码</th><th>事由</th><th>分值</th><th>操作人</th></tr></thead>
+                <tbody>
+                    ${recentLogs.map(l => `
+                        <tr>
+                            <td>${l.date}</td>
+                            <td>${l.week}</td>
+                            <td>${l.code || '—'}</td>
+                            <td>${l.reason || ''}</td>
+                            <td style="color:${l.value < 0 ? '#ef4444' : '#10b981'}">${l.value > 0 ? '+' : ''}${l.value}</td>
+                            <td>${l.operator || '—'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>`}
+        </div>
+        <div class="card">
+            <h3>📈 德育分析摘要</h3>
+            <p><b>趋势分析：</b>${trendText}</p>
+            <div style="margin-top:10px;">
+                <button class="btn-outline btn-sm" onclick="window.generateProfileAdvice('${name}')">🤖 AI生成个性化教育建议</button>
+                <div id="profile-advice" style="margin-top:10px; padding:10px; background:#f8fafc; border-radius:6px; font-size:13px; white-space:pre-wrap; max-height:300px; overflow-y:auto;"></div>
+            </div>
+        </div>
+    `;
+};
+// AI 生成个性化教育建议（确保完整输出）
+window.generateProfileAdvice = async function(studentName) {
+    const adviceDiv = document.getElementById('profile-advice');
+    if (!adviceDiv) return;
+    adviceDiv.textContent = '正在生成建议...';
+
+    const student = students.find(s => s.name === studentName);
+    if (!student) { adviceDiv.textContent = '未找到学生信息'; return; }
+    const sc = calcScore(studentName);
+    const lv = level(sc);
+    const allMyLogs = logs.filter(l => l.student === studentName).sort((a, b) => new Date(b.date) - new Date(a.date));
+    const recentLogs = allMyLogs.slice(0, 10);
+    const logText = recentLogs.map(l => `${l.date} [${l.code}] ${l.reason} (${l.value}分)`).join('；');
+
+    const systemPrompt = '你是中职班主任，请根据学生情况给出个性化教育建议，包括问题根源、教育策略、家校沟通方案，需要完整可执行。直接给出内容，不要使用Markdown。';
+    const userPrompt = `学生：${studentName}，操行分：${sc}，等级：${lv}。近期记录：${logText || '无违纪记录'}。请给出建议。`;
+    try {
+        const raw = await callAI(systemPrompt, userPrompt, 500);  // 确保第三个参数 500
+        const cleaned = cleanMarkdown(raw).replace(/\n+/g, '\n').trim();
+        adviceDiv.textContent = cleaned || '已生成建议，请手动调整';
+    } catch (e) {
+        adviceDiv.textContent = '生成失败，请手动填写';
+    }
+};
+window.onload = init;
+})();
+</script>
+</body>
+</html>
