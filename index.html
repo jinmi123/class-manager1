@@ -337,7 +337,7 @@ function getAgeFromIdcard(idcard) {
             </table>
         </div>
     </div>
-                                <div class="page" id="page-warning-notice">
+       <div class="page" id="page-warning-notice">
             <div class="card">
                 <h2>📄 学生操行分预警通知单</h2>
                 <p style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">选择学生和违纪事项后，等级自动生成；处置建议可 AI 辅助。</p>
@@ -365,12 +365,8 @@ function getAgeFromIdcard(idcard) {
                     <div style="flex:1;"><label>预警等级</label><input type="text" id="wn-level" readonly></div>
                     <div style="flex:1;"><label>处置措施简述</label><textarea id="wn-measure" rows="3" style="width:100%; resize:vertical;" placeholder="可点击按钮生成"></textarea></div>
                 </div>
-                <div style="text-align:right; margin-top:12px;">
-                    <button class="btn-outline btn-sm" onclick="window.generateWarningMeasureAI()">🤖 AI生成处置建议</button>
-                    <button class="btn-outline btn-sm" onclick="window.saveWarningNotice()">💾 保存存档</button>
-                    <button class="btn-outline" onclick="window.printWarningNotice()">🖨️ 打印通知单</button>
-                </div>
             </div>
+
             <div class="card">
                 <h3>📊 操行分预警等级对照表</h3>
                 <table style="text-align:center;">
@@ -391,6 +387,7 @@ function getAgeFromIdcard(idcard) {
                     • 低于60分：不予毕业
                 </div>
             </div>
+
             <div class="card">
                 <h3>🗄️ 已存档通知单</h3>
                 <div style="max-height:400px; overflow-y:auto;">
@@ -402,6 +399,15 @@ function getAgeFromIdcard(idcard) {
                     </table>
                 </div>
             </div>
+
+            <!-- 操作按钮靠左 -->
+            <div style="text-align:left; margin-bottom:20px;">
+                <button class="btn-outline btn-sm" onclick="window.generateWarningMeasureAI()">🤖 AI生成处置建议</button>
+                <button class="btn-outline btn-sm" onclick="window.saveWarningNotice()">💾 保存存档</button>
+                <button class="btn-outline" onclick="window.printWarningNotice()">🖨️ 打印通知单</button>
+            </div>
+
+            <!-- 累计处分预警 -->
             <div class="card">
                 <h3>⚖️ 累计处分预警</h3>
                 <p style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">
@@ -409,13 +415,31 @@ function getAgeFromIdcard(idcard) {
                 </p>
                 <div style="max-height:400px; overflow-y:auto;">
                     <table id="discipline-table">
-                        <thead><tr><th>学生</th><th>旷课(节)</th><th>事假(节)</th><th>处分建议</th></tr></thead>
+                        <thead><tr><th>学生</th><th>旷课(节)</th><th>事假(节)</th><th>病假(节)</th><th>处分建议</th></tr></thead>
                         <tbody id="discipline-tbody">
-                            <tr><td colspan="4">请选择学生或点击刷新</td></tr>
+                            <tr><td colspan="5">点击刷新按钮生成统计</td></tr>
                         </tbody>
                     </table>
                 </div>
                 <button class="btn-sm btn-outline" onclick="window.renderDisciplineWarning()" style="margin-top:10px;">🔄 刷新统计</button>
+            </div>
+
+            <!-- 手机管理处分预警 -->
+            <div class="card">
+                <h3>📱 手机管理处分预警</h3>
+                <p style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">
+                    根据《手机使用管理规定》第十条，自动统计手机违规次数及处分建议。
+                </p>
+                <div style="max-height:400px; overflow-y:auto;">
+                    <table id="phone-discipline-table">
+                        <thead><tr><th>学生</th><th>违规次数</th><th>处分建议</th></tr></thead>
+                        <tbody id="phone-discipline-tbody">
+                            <tr><td colspan="3">点击刷新按钮生成统计</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn-sm btn-outline" onclick="window.renderPhoneDiscipline()" style="margin-top:10px;">🔄 刷新统计</button>
+                <button class="btn-sm" onclick="window.openAddPhoneViolation()" style="margin-top:10px; margin-left:5px;">📝 快速登记手机违规</button>
             </div>
         </div>
 <div class="page" id="page-ai-advisor">    <div class="card">
@@ -577,6 +601,8 @@ function getAgeFromIdcard(idcard) {
     document.getElementById('wn-current').value = '';
     document.getElementById('wn-level').value = '';
     document.getElementById('wn-measure').value = '';
+    window.renderDisciplineWarning();
+    window.renderPhoneDiscipline();
 }
         if (p === 'weekly-summary') {
     document.getElementById('summary-week-num').value = getWeek();
@@ -1214,7 +1240,13 @@ window.renderAbsenceTable = function() {
         const late = `<td><select multiple size="4" data-student="${s.name}" data-type="LATE" data-date="${date}" style="width:100px;" title="按住Ctrl多选">${periodOptions}</select></td>`;
         const early = `<td><select multiple size="4" data-student="${s.name}" data-type="LEAVE_EARLY" data-date="${date}" style="width:100px;" title="按住Ctrl多选">${periodOptions}</select></td>`;
         const noExercise = `<td><select multiple size="4" data-student="${s.name}" data-type="NO_EXERCISE" data-date="${date}" style="width:100px;" title="按住Ctrl多选">${periodOptions}</select></td>`;
-        const leavePeriod = `<td><select multiple size="4" data-student="${s.name}" data-type="LEAVE_PERIOD" data-date="${date}" style="width:100px;" title="按住Ctrl多选请假节次">${periodOptions}</select></td>`;
+                const leavePeriod = `<td style="min-width:180px;">
+            <select multiple size="4" data-student="${s.name}" data-type="LEAVE_PERIOD" data-date="${date}" style="width:100px;" title="按住Ctrl多选请假节次">${periodOptions}</select>
+            <select data-student="${s.name}" data-type="LEAVE_TYPE" style="width:70px; display:inline-block; margin-left:4px;">
+                <option value="事假">事假</option>
+                <option value="病假">病假</option>
+            </select>
+        </td>`;
         // 自定义事项：时段多选 + 描述输入
         const custom = `<td style="min-width:200px;">
             <select multiple size="3" data-student="${s.name}" data-type="CUSTOM_PERIOD" data-date="${date}" style="width:80px; display:inline-block;" title="选择时段">
@@ -1380,7 +1412,12 @@ window.submitAbsence = async function() {
                 const newOver = Math.max(0, newTotalDays - 1);
                 const value = -(newOver - oldOver);
 
-                let reason = `请假：${desc}，合计${totalDays}天`;
+                                // 获取请假类型
+                const leaveTypeSelect = row.querySelector('select[data-type="LEAVE_TYPE"]');
+                const leaveType = leaveTypeSelect ? leaveTypeSelect.value : '事假';
+                const leaveTypePrefix = leaveType === '病假' ? '【病假】' : '【事假】';
+                
+                let reason = `${leaveTypePrefix}请假：${desc}，合计${totalDays}天`;
                 if (newTotalDays > 1) {
                     reason += `（连续累计${newTotalDays}天，超期${newOver.toFixed(1)}天，本次扣${Math.abs(value)}分）`;
                 }
@@ -2166,19 +2203,19 @@ window.updateWarningNotice = function() {
     const deduct = parseFloat(deductInput.value) || 0;
     if (studentName) {
         const totalScore = calcScore(studentName);
-        const afterScore = totalScore + deduct;
+         // 当前操行分（违纪前）用于判定等级，符合手册对照表
         document.getElementById('wn-current').value = totalScore;
-        let level = '';
-        if (afterScore >= 90) level = '优秀';
-        else if (afterScore >= 80) level = '良好';
-        else if (afterScore >= 70) level = '关注';
-        else if (afterScore >= 60) level = '预警';
-        else if (afterScore >= 50) level = '警告';
-        else level = '严重';
+        let level = '', measureText = '';
+        if (totalScore >= 90) { level = '优秀'; measureText = '正常参评各项荣誉'; }
+        else if (totalScore >= 80) { level = '良好'; measureText = '注意保持，减少不必要扣分'; }
+        else if (totalScore >= 70) { level = '关注'; measureText = '班主任谈话提醒，密切关注扣分项'; }
+        else if (totalScore >= 60) { level = '预警'; measureText = '取消本学年评优资格，班内重点关注'; }
+        else if (totalScore >= 50) { level = '警告'; measureText = '告知家长，校内警告处分'; }
+        else { level = '严重'; measureText = '上报德育处，启动劝退程序'; }
         document.getElementById('wn-level').value = level;
-    } else {
-        document.getElementById('wn-current').value = '';
-        document.getElementById('wn-level').value = '';
+        // 若页面有 measure-text 元素则填充（可选）
+        var mt = document.getElementById('wn-measure-text');
+        if (mt) mt.value = measureText; // 如果需要显示处置措施文本
     }
 };
 // AI 生成处置建议（去除 markdown 标记）
@@ -2242,79 +2279,166 @@ window.printWarningNotice = function() {
     const deduct = document.getElementById('wn-deduct').value || '____';
     const currentScore = document.getElementById('wn-current').value || '____';
     const level = document.getElementById('wn-level').value || '____';
-   const measureRaw = document.getElementById('wn-measure').value || '________';
-const measure = measureRaw.replace(/\n/g, '<br>');
-    
-    const printContent = `
-        <div style="font-family: SimSun; padding: 20px; max-width: 700px; margin: auto; line-height: 1.8;">
-            <h2 style="text-align: center;">学生操行分预警通知单</h2>
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
-                <tr>
-                    <td style="padding: 5px;"><b>学生姓名：</b>${student}</td>
-                    <td style="padding: 5px;"><b>班级：</b>25级化学工艺1班</td>
-                </tr>
-                <tr>
-                    <td style="padding: 5px;"><b>日期：</b>${new Date().toLocaleDateString()}</td>
-                    <td style="padding: 5px;"><b>本次扣分：</b>${deduct} 分</td>
-                </tr>
-            </table>
-            <p><b>违纪事项：</b><br>${reason.replace(/；/g, '；<br>')}</p>
-            <p><b>基础分：</b>100 分</p>
-            <p><b>当前操行分：</b>${currentScore} 分</p>
-            <p><b>预警等级：</b>${level}</p>
-            <p><b>处置措施简述：</b><br>${measure}</p>
-            <p style="margin-top: 40px;"><b>学生签字：</b>______________ &nbsp;&nbsp;&nbsp; <b>班主任签字：</b>______________</p>
-            <p><b>家长意见/签字：</b>______________ （请于 ___年___月___日前交回）</p>
-        </div>
-    `;
-    const printWindow = window.open('', '_blank', 'width=750,height=600');
-    printWindow.document.write(`<html><head><title>预警通知单</title></head><body>${printContent}</body></html>`);
+    const measureRaw = document.getElementById('wn-measure').value || '________';
+    const measure = measureRaw.replace(/\n/g, '<br>');
+
+    let disciplineDetail = '—';
+    let phoneDetail = '—';
+    let otherViolationsDetail = '—';
+    let finalDiscipline = '无';
+
+    if (student !== '________') {
+        const myLogs = logs.filter(l => l.student === student);
+
+        // 1. 累计考勤处分
+        let absentPeriods = 0, personalLeave = 0, sickLeave = 0, lateEarlyCount = 0;
+        myLogs.forEach(l => {
+            const r = l.reason || '';
+            if (l.code === 'A1' || l.code === 'A3') {
+                const am = parseInt((r.match(/上午(\d+)节/) || [0,0])[1]);
+                const pm = parseInt((r.match(/下午(\d+)节/) || [0,0])[1]);
+                const eve = parseInt((r.match(/晚自习(\d+)节/) || [0,0])[1]);
+                absentPeriods += am + pm + eve;
+            } else if (l.code === 'A2' || l.code === 'A4') {
+                lateEarlyCount++;
+            } else if (l.code === '请假') {
+                const isSick = r.startsWith('【病假】');
+                const am = parseInt((r.match(/上午(\d+)节/) || [0,0])[1]);
+                const pm = parseInt((r.match(/下午(\d+)节/) || [0,0])[1]);
+                const eve = parseInt((r.match(/晚自习(\d+)节/) || [0,0])[1]);
+                const periods = am + pm + eve;
+                if (isSick) sickLeave += periods;
+                else personalLeave += periods;
+            }
+        });
+        absentPeriods += Math.floor(lateEarlyCount / 2);
+        let attendanceLevel = '无';
+        if (absentPeriods >= 90 || personalLeave >= 90) attendanceLevel = '自动退学';
+        else if (absentPeriods >= 80 || personalLeave >= 80) attendanceLevel = '留校察看处分';
+        else if (absentPeriods >= 50 || personalLeave >= 70) attendanceLevel = '记过处分';
+        else if (absentPeriods >= 35 || personalLeave >= 56) attendanceLevel = '严重警告处分';
+        else if (absentPeriods >= 21 || personalLeave >= 35) attendanceLevel = '警告处分';
+        disciplineDetail = `旷课 ${absentPeriods} 节，事假 ${personalLeave} 节，病假 ${sickLeave} 节 → ${attendanceLevel}`;
+
+        // 2. 手机管理处分
+        const phoneCodes = ['M1','M2','C13','C14','C15'];
+        const phoneViolations = myLogs.filter(l => phoneCodes.includes(l.code)).length;
+        const hasResistPhone = myLogs.some(l => l.code === 'C10' && (l.reason || '').includes('收缴手机'));
+        let phoneLevel = '无';
+        if (hasResistPhone) {
+            phoneLevel = '记过/留校察看/劝退';
+            phoneDetail = `违规 ${phoneViolations} 次，存在顶撞教师行为 → ${phoneLevel}`;
+        } else if (phoneViolations >= 4) {
+            phoneLevel = '记过/记大过处分';
+            phoneDetail = `违规 ${phoneViolations} 次 → ${phoneLevel}`;
+        } else if (phoneViolations >= 3) {
+            phoneLevel = '警告/严重警告处分';
+            phoneDetail = `违规 ${phoneViolations} 次 → ${phoneLevel}`;
+        } else if (phoneViolations >= 2) {
+            phoneLevel = '通报批评（含扣分）';
+            phoneDetail = `违规 ${phoneViolations} 次 → ${phoneLevel}`;
+        } else if (phoneViolations >= 1) {
+            phoneLevel = '批评教育';
+            phoneDetail = `违规 ${phoneViolations} 次 → ${phoneLevel}`;
+        } else {
+            phoneDetail = `违规 0 次 → 无处分`;
+        }
+
+        // 3. 其他违纪行为
+        const violationMap = {
+            'C1': '抽烟', 'C2': '喝酒/赌博', 'C3': '夜不归宿', 'C4': '翻墙',
+            'C5': '私拉电线', 'C6': '私带外人', 'C7': '骑摩托车', 'C8': '起哄',
+            'C9': '打架', 'C10': '顶撞老师', 'C11': '偷盗', 'C12': '邀人打群架'
+        };
+        const otherLogs = myLogs.filter(l => ['C1','C2','C3','C4','C5','C6','C7','C8','C9','C10','C11','C12'].includes(l.code));
+        let otherLevel = '无';
+        const otherItems = [];
+        otherLogs.forEach(l => {
+            const desc = violationMap[l.code] || l.code;
+            otherItems.push(`${desc}(${l.date})`);
+        });
+        const hasFight = myLogs.some(l => l.code === 'C9');
+        const hasTheft = myLogs.some(l => l.code === 'C11');
+        const hasGangFight = myLogs.some(l => l.code === 'C12');
+        const hasResistTeacher = myLogs.some(l => l.code === 'C10');
+        const hasSmoke = myLogs.filter(l => l.code === 'C1').length;
+        const hasAlcohol = myLogs.some(l => l.code === 'C2');
+        const hasNightOut = myLogs.filter(l => l.code === 'C3').length;
+        const hasClimbWall = myLogs.some(l => l.code === 'C4');
+
+        if (hasGangFight || hasTheft) otherLevel = '留校察看以上';
+        else if (hasFight) otherLevel = '记过以上';
+        else if (hasResistTeacher) otherLevel = '记过/留校察看';
+        else if (hasAlcohol || hasClimbWall) otherLevel = '记过以上';
+        else if (hasSmoke >= 2 || hasNightOut >= 2) otherLevel = '记过以上';
+        else if (hasSmoke >= 1 || hasNightOut >= 1) otherLevel = '警告以上';
+        otherViolationsDetail = otherItems.length > 0 ? otherItems.join('、') + ` → ${otherLevel}` : '无违纪行为';
+
+                // 4. 最终处分决定（按手册梯度）
+        const severityMap = {
+            '无':0, '批评教育':1, '通报批评（含扣分）':2, '警告以上':3, '警告处分':3.5,
+            '严重警告处分':4, '警告/严重警告处分':4.5, '记过处分':5, '记过以上':5.5,
+            '记过/记大过处分':6, '记过/留校察看':6.5, '留校察看处分':7, '留校察看以上':7.5,
+            '自动退学':8, '记过/留校察看/劝退':8.5
+        };
+        const sevAttendance = severityMap[attendanceLevel] || 0;
+        const sevPhone = severityMap[phoneLevel] || 0;
+        const sevOther = severityMap[otherLevel] || 0;
+        // 预警等级维度
+        let sevAlert = 0;
+        if (level === '优秀' || level === '良好') sevAlert = 0;
+        else if (level === '关注') sevAlert = 1;
+        else if (level === '预警') sevAlert = 2;
+        else if (level === '警告') sevAlert = 3.5;
+        else if (level === '严重') sevAlert = 7;  // 严重 → 留校察看，而非直接劝退
+        // 操行分维度（严格按手册）
+        let sevScore = 0;
+        const currScore = parseFloat(currentScore);
+        if (!isNaN(currScore)) {
+            if (currScore < 50) sevScore = 7;  // 低于50分 → 留校察看，启动劝退程序
+            else if (currScore < 60) sevScore = 4;  // 低于60分 → 警告
+            else if (currScore < 70) sevScore = 2;  // 低于70分 → 预警
+        }
+        const maxSev = Math.max(sevAttendance, sevPhone, sevOther, sevAlert, sevScore);
+        if (maxSev >= 8) finalDiscipline = '自动退学处理';
+        else if (maxSev >= 7) finalDiscipline = '留校察看处分，启动劝退程序';
+        else if (maxSev >= 6) finalDiscipline = '记过/记大过处分';
+        else if (maxSev >= 4.5) finalDiscipline = '警告/严重警告处分';
+        else if (maxSev >= 3) finalDiscipline = '警告处分，告知家长';
+        else if (maxSev >= 2) finalDiscipline = '预警：取消本学年评优资格，班内重点关注';
+        else if (maxSev >= 1) finalDiscipline = '班主任谈话提醒，加强关注';
+    }
+
+        const printContent = `
+        <html><head><title>预警通知单</title>
+        <style>body{font-family:SimSun;font-size:14px;line-height:1.5;margin:0;padding:10mm;} 
+        table{border-collapse:collapse;width:100%;margin-bottom:5mm;}
+        td{padding:3px 5px;}
+        h2{text-align:center;margin:0 0 5mm 0;font-size:18px;}
+        p{margin:3mm 0;}
+        hr{margin:5mm 0;}
+        @page{size:A4;margin:10mm;}
+        @media print{body{-webkit-print-color-adjust:exact;}}
+        </style></head><body>
+        <h2>学生操行分预警通知单</h2>
+        <table><tr><td><b>学生：</b>${student}</td><td><b>班级：</b>25级化学工艺1班</td></tr>
+        <tr><td><b>日期：</b>${new Date().toLocaleDateString()}</td><td><b>本次扣分：</b>${deduct} 分</td></tr></table>
+        <p><b>违纪事项：</b>${reason.replace(/；/g, '；<br>')}</p>
+        <p><b>基础分：</b>100 分 &nbsp; <b>当前操行分：</b>${currentScore} 分 &nbsp; <b>预警等级：</b>${level}</p>
+        <p><b>处置措施：</b>${measure}</p>
+        <hr><p><b>累计考勤：</b>${disciplineDetail}</p>
+        <p><b>手机管理：</b>${phoneDetail}</p>
+        <p><b>其他违纪：</b>${otherViolationsDetail}</p>
+        <hr><p style="font-size:15px;font-weight:bold;color:#c0392b;">最终处分决定：${finalDiscipline}</p>
+        <br><p>学生签字：______________ &nbsp;&nbsp; 班主任签字：______________</p>
+        <p>家长意见/签字：______________（请于 ___年___月___日前交回）</p>
+        </body></html>`;
+    const printWindow = window.open('', '_blank', 'width=700,height=500');
+    printWindow.document.write(printContent);
     printWindow.document.close();
     printWindow.focus();
-    setTimeout(() => printWindow.print(), 500);
-}
-// 保存当前通知单存档
-window.saveWarningNotice = async function() {
-    const student = document.getElementById('wn-student').value;
-    const date = fmt(new Date());
-    const reasonSel = document.getElementById('wn-reason');
-    let reason = '';
-    if (reasonSel && reasonSel.selectedOptions.length > 0) {
-        const selectedTexts = [];
-        for (const opt of reasonSel.selectedOptions) {
-            if (opt.value && opt.value !== '') {
-                selectedTexts.push(opt.getAttribute('data-reason') || opt.text);
-            }
-        }
-        reason = selectedTexts.join('；');
-    }
-    const deduct = parseFloat(document.getElementById('wn-deduct').value) || 0;
-    const currentScore = parseFloat(document.getElementById('wn-current').value) || 100;
-    const level = document.getElementById('wn-level').value;
-    const measure = document.getElementById('wn-measure').value;
-    
-    if (!student) { toast('请选择学生', 'error'); return; }
-    if (!reason) { toast('请选择违纪事项', 'error'); return; }
-    
-    const { error } = await sb.from('warning_notices').insert({
-        student,
-        class: '25级化学工艺1班',
-        date,
-        reason,
-        deduct,
-        current_score: currentScore,
-        level,
-        measure
-    });
-    if (error) {
-        toast('保存失败：' + error.message, 'error');
-    } else {
-        toast('存档已保存');
-        window.loadWarningNoticesArchive(); // 刷新列表
-    }
-};
-
-// 查看电子档（弹窗）
+    setTimeout(() => { printWindow.print(); printWindow.close(); }, 300);
+};// 查看电子档（弹窗）
 window.viewWarningNotice = async function(id) {
     const { data, error } = await sb.from('warning_notices').select('*').eq('id', id).single();
     if (error || !data) { toast('查看失败', 'error'); return; }
@@ -2624,44 +2748,45 @@ window.generateProfileAdvice = async function(studentName) {
 };
 // ========== 累计处分预警 ==========
 window.renderDisciplineWarning = function() {
-    // 统计每个学生的本学期累计旷课节数和事假节数
     const activeStudents = students.filter(s => s.status === '在读');
     const result = [];
 
     activeStudents.forEach(s => {
         const myLogs = logs.filter(l => l.student === s.name);
-        let absentPeriods = 0; // 旷课节数
-        let leavePeriods = 0;  // 事假节数
-        let lateEarlyCount = 0; // 迟到/早退次数
+        let absentPeriods = 0;   // 旷课节数
+        let personalLeave = 0;   // 事假节数
+        let sickLeave = 0;       // 病假节数
+        let lateEarlyCount = 0;  // 迟到/早退次数
 
         myLogs.forEach(l => {
             const reason = l.reason || '';
             if (l.code === 'A1' || l.code === 'A3') {
-                // 统计节数：从reason中提取“上午X节”、“下午X节”、“晚自习X节”
-                const amMatch = reason.match(/上午(\d+)节/);
-                const pmMatch = reason.match(/下午(\d+)节/);
-                const eveMatch = reason.match(/晚自习(\d+)节/);
-                if (amMatch) absentPeriods += parseInt(amMatch[1]);
-                if (pmMatch) absentPeriods += parseInt(pmMatch[1]);
-                if (eveMatch) absentPeriods += parseInt(eveMatch[1]);
+                // 旷课：提取节数
+                const am = (reason.match(/上午(\d+)节/) || [0,0])[1];
+                const pm = (reason.match(/下午(\d+)节/) || [0,0])[1];
+                const eve = (reason.match(/晚自习(\d+)节/) || [0,0])[1];
+                absentPeriods += parseInt(am) + parseInt(pm) + parseInt(eve);
             } else if (l.code === 'A2' || l.code === 'A4') {
-                lateEarlyCount++; // 迟到或早退算一次
+                lateEarlyCount++;
             } else if (l.code === '请假') {
-                const amMatch = reason.match(/上午(\d+)节/);
-                const pmMatch = reason.match(/下午(\d+)节/);
-                const eveMatch = reason.match(/晚自习(\d+)节/);
-                if (amMatch) leavePeriods += parseInt(amMatch[1]);
-                if (pmMatch) leavePeriods += parseInt(pmMatch[1]);
-                if (eveMatch) leavePeriods += parseInt(eveMatch[1]);
+                 // 若没有【事假】或【病假】前缀，旧记录默认视为病假
+                const isSick = reason.startsWith('【病假】') || (!reason.startsWith('【事假】') && !reason.startsWith('【病假】'));
+                const am = (reason.match(/上午(\d+)节/) || [0,0])[1];
+                const pm = (reason.match(/下午(\d+)节/) || [0,0])[1];
+                const eve = (reason.match(/晚自习(\d+)节/) || [0,0])[1];
+                const periods = parseInt(am) + parseInt(pm) + parseInt(eve);
+                if (isSick) {
+                    sickLeave += periods;
+                } else {
+                    personalLeave += periods;
+                }
             }
         });
 
         // 迟到/早退2次折合1节旷课
         absentPeriods += Math.floor(lateEarlyCount / 2);
 
-        // 事假10节折合1节旷课（用于处分累计，但原制度是分开的，这里可同时显示）
-        // 根据制度：累计旷课达到X节 或 请事假累计达到Y节 给予相应处分
-        // 我们分别判断旷课和事假，取较严重者作为建议
+        // 处分判断（仅针对事假和旷课）
         const disciplineLevels = [
             { maxAbsent: 21, maxLeave: 35, level: '警告处分' },
             { maxAbsent: 35, maxLeave: 56, level: '严重警告处分' },
@@ -2672,14 +2797,18 @@ window.renderDisciplineWarning = function() {
 
         let suggestion = '—';
         for (const level of disciplineLevels) {
-            if (absentPeriods >= level.maxAbsent || leavePeriods >= level.maxLeave) {
+            if (absentPeriods >= level.maxAbsent || personalLeave >= level.maxLeave) {
                 suggestion = level.level;
-            } else {
-                break;
             }
         }
 
-        result.push({ name: s.name, absent: absentPeriods, leave: leavePeriods, suggestion });
+        result.push({ 
+            name: s.name, 
+            absent: absentPeriods, 
+            personal: personalLeave, 
+            sick: sickLeave, 
+            suggestion 
+        });
     });
 
     // 渲染表格
@@ -2689,10 +2818,103 @@ window.renderDisciplineWarning = function() {
         <tr>
             <td>${r.name}</td>
             <td>${r.absent}</td>
-            <td>${r.leave}</td>
+            <td>${r.personal}</td>
+            <td>${r.sick}</td>
             <td style="color:${r.suggestion === '—' ? '#10b981' : '#ef4444'}; font-weight:bold;">${r.suggestion}</td>
         </tr>
     `).join('');
+};
+// ========== 手机管理处分预警 ==========
+window.renderPhoneDiscipline = function() {
+    const activeStudents = students.filter(s => s.status === '在读');
+    const result = [];
+    // 手机违规代码
+    const phoneCodes = ['M1','M2','C13','C14','C15'];
+
+    activeStudents.forEach(s => {
+        const myLogs = logs.filter(l => l.student === s.name);
+        // 统计所有手机违规代码的次数
+        const phoneLogs = myLogs.filter(l => phoneCodes.includes(l.code));
+        const totalViolations = phoneLogs.length;
+
+        let suggestion = '—';
+        if (totalViolations >= 1) suggestion = '第1次：代管手机一周，批评教育';
+        if (totalViolations >= 2) suggestion = '第2次：代管手机两周，通报批评，扣5-15分';
+        if (totalViolations >= 3) suggestion = '第3次：代管手机一个月，全校通报，警告/严重警告处分';
+        if (totalViolations >= 4) suggestion = '第4次：代管手机一学期，记过/记大过处分';
+        // 检查顶撞相关代码（C10）
+        const hasResist = myLogs.some(l => l.code === 'C10' && (l.reason || '').includes('收缴手机'));
+        if (hasResist) suggestion = '拒不交出/顶撞教师：记过/留校察看，情节严重可劝退';
+
+        result.push({ name: s.name, violations: totalViolations, suggestion });
+    });
+
+    const tbody = document.getElementById('phone-discipline-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = result.map(r => `
+        <tr>
+            <td>${r.name}</td>
+            <td>${r.violations}</td>
+            <td style="color:${r.suggestion === '—' ? '#10b981' : '#ef4444'}; font-weight:bold;">${r.suggestion}</td>
+        </tr>
+    `).join('');
+};
+// 快速登记手机违规（弹出模态框）
+window.openAddPhoneViolation = function() {
+    // 创建模态框
+    if (!document.getElementById('modal-phone-violation')) {
+        document.body.insertAdjacentHTML('beforeend', `
+            <div class="modal" id="modal-phone-violation">
+                <div class="modal-content">
+                    <h3>📱 登记手机违规</h3>
+                    <div class="form-row">
+                        <div><label>学生</label><select id="pv-student"></select></div>
+                        <div><label>违规次数</label><select id="pv-times">
+                            <option value="1">第1次</option>
+                            <option value="2">第2次</option>
+                            <option value="3">第3次</option>
+                            <option value="4">第4次及以上</option>
+                        </select></div>
+                    </div>
+                    <input id="pv-reason" placeholder="补充说明（可选）">
+                    <div style="text-align:right; margin-top:12px;">
+                        <button class="btn-outline" onclick="window.closeModal('modal-phone-violation')">取消</button>
+                        <button class="btn-primary" onclick="window.savePhoneViolation()">保存</button>
+                    </div>
+                </div>
+            </div>
+        `);
+    }
+    // 填充学生列表
+    const sel = document.getElementById('pv-student');
+    sel.innerHTML = '<option value="">-- 选择学生 --</option>';
+    students.filter(s => s.status === '在读').forEach(s => {
+        sel.innerHTML += `<option value="${s.name}">${s.name}</option>`;
+    });
+    openModal('modal-phone-violation');
+};
+
+window.savePhoneViolation = async function() {
+    const student = document.getElementById('pv-student').value;
+    const times = document.getElementById('pv-times').value;
+    const reason = document.getElementById('pv-reason').value.trim();
+    if (!student) { toast('请选择学生', 'error'); return; }
+
+    const code = times === '1' ? 'M1' : 'M2';
+    const desc = times === '1' ? '手机违规第1次（代管一周）' : `手机违规第${times}次`;
+    const pt = times === '1' ? 0 : -10;
+
+    const { error } = await sb.from('score_log').insert({
+        student, date: fmt(new Date()), week: getWeek(), code,
+        reason: reason ? `${desc} - ${reason}` : desc,
+        value: pt, operator: '班主任', basis: '直接记录'
+    });
+    if (error) { toast('保存失败：' + error.message, 'error'); return; }
+
+    closeModal('modal-phone-violation');
+    await loadData();
+    window.renderPhoneDiscipline();
+    toast('手机违规已登记');
 };
 
 window.onload = init;
