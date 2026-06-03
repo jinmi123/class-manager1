@@ -52,6 +52,7 @@
     <li><a data-page="attendance-history">📊 出勤历史</a></li>
     <li><a data-page="warning-notice">📄 预警通知单</a></li>
     <li><a data-page="ai-advisor">🤖 <span>班级管理小助手</span></a></li>
+    <li><a data-page="rules">📜 规章制度</a></li>
     <li><a data-page="system-upgrade">⬆️ 系统升级</a></li>
 </ul></aside>
 <div class="toast" id="toast"></div>
@@ -401,6 +402,21 @@ function getAgeFromIdcard(idcard) {
                     </table>
                 </div>
             </div>
+            <div class="card">
+                <h3>⚖️ 累计处分预警</h3>
+                <p style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">
+                    根据《学生考勤制度》第五条，自动计算本学期旷课/事假课时并给出处分建议。
+                </p>
+                <div style="max-height:400px; overflow-y:auto;">
+                    <table id="discipline-table">
+                        <thead><tr><th>学生</th><th>旷课(节)</th><th>事假(节)</th><th>处分建议</th></tr></thead>
+                        <tbody id="discipline-tbody">
+                            <tr><td colspan="4">请选择学生或点击刷新</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn-sm btn-outline" onclick="window.renderDisciplineWarning()" style="margin-top:10px;">🔄 刷新统计</button>
+            </div>
         </div>
 <div class="page" id="page-ai-advisor">    <div class="card">
         <h2>🤖 班级管理小助手</h2>
@@ -456,7 +472,59 @@ function getAgeFromIdcard(idcard) {
         <div id="ai-general-result" style="margin-top:10px; padding:12px; background:#f8fafc; border-radius:6px; white-space:pre-wrap; font-size:13px; display:none;"></div>
     </div>
 </div>
-        <div class="page" id="page-system-upgrade">
+                <div class="page" id="page-rules">
+            <div class="card">
+                <h2>📜 学生考勤制度</h2>
+                <div style="font-size:13px; line-height:1.8; white-space:pre-wrap;">
+（一）学生必须遵守学校各项规章制度，按时到校上课，凡因病、因事不能上课者，应和班主任老师请假，否则作旷课处理；上课前擅离教室（或现场）者作早退处理。
+
+（二）每班设立教学日志。每节课（包括自习、劳动、集合等）均应由班主任、任课老师点名登记，学生考勤每周由班主任在班内公布一次，每月由政教处向全校公布一次，学期结束时，须将学生出勤情况记入学生学籍表和学生档案。
+
+（三）学生请病、事假须有家长或医生证明，请假三天以内的由班主任签核实意见后送政教处审批，请假三天以上，征得家长意见后，由校级领导审批，学生因急事或因病来不及请假者，应在回校两天内持证办理补假手续。
+
+（四）有慢性病不能坚持学习的学生，凭医院证明申请休学一年，休学期满后应回校办理复学手续，经医院证明病未愈，不能复学者，可继续休学一年。
+
+（五）一学期累计旷课达到21课时，或请事假累计达到35课时者，给予警告处分；累计旷课达到35课时，或请事假累计达到56课时者，给予严重警告处分；累计旷课达到50课时，或请事假累计达到70课时者，给予记过处分；累计旷课达到80课时，或请事假累计达到90课时者，给予留校察看处分；累计旷课达到90课时，或无故离校连续两周者，作自动退学处理。自动退学的学生，从处分之日起，取消其学籍。
+
+（六）迟到、早退2次当旷课一节，请事假10节当旷课一节。
+                </div>
+            </div>
+            <div class="card">
+                <h2>📱 手机使用管理规定（试行）</h2>
+                <div style="font-size:13px; line-height:1.8; white-space:pre-wrap;">
+中职学生正值集中精力、努力学习的时期，学校一直不提倡学生追求生活的奢侈。学生使用手机在方便联络的同时，也给学生的学习、财物的保管、学校的管理和课堂教学的正常秩序带来很大的负面影响。根据大部分家长的要求并结合我校的实际情况，特制订学生携带手机暨使用管理规定，请全体同学自觉遵守。
+
+第一条 学校绝不提倡学生在校期间使用手机，确实需要使用的要妥善保管好自己的手机，如有丢失由学生个人负责。
+
+第二条 原则上不带手机到校，如需带手机到学校的学生请在指定地点（寝室）和指点时间（晚上9.00-10.30）内使用。（出寝室时请自觉放保管柜，由教官、宿管代管。）禁止学生带手机到教室。
+
+第三条 禁止学生在教学时间（考试、实习、自习、上课等）使用手机。
+
+第四条 禁止学生在集会时间（早操、课间操、校会、升旗仪式等）使用手机。
+
+第五条 禁止学生在走路时使用手机玩游戏、看小说等长时间使用手机。
+
+第六条 学生晚上熄灯22：30分之后，应将手机关机或设为静音状态放回手机柜，严禁使用手机在宿舍区聊天、大声喧哗，影响他人休息。
+
+第七条 学生中午午休13:00分之后，应将手机关机或设为静音状态，严禁使用手机在宿舍区聊天、大声喧哗。
+
+第八条 手机不可带到教室内、实训实验室。
+
+第九条 特殊情况下可以在老师的寝室或办公室给手机充电，但必须经过老师的同意。
+
+第十条 学生违反使用手机管理规定，按下列要求予以处罚：
+1. 第一次违规带到教室使用，班主任代管手机一周，班主任对学生单独进行批评教育。
+2. 第二次违规带到教室使用，班主任代管手机两周，班主任在班级对学生进行通报批评，并扣德育操行分5—15分。
+3. 第三次违规带到教室使用，班主任代管手机一个月，一个月后由其家长领回手机，并予以全校通报批评、警告或严重警告处分。
+4. 第四次违规使用，学校代管手机一个学期，学期结束后由其家长领回手机，对违纪学生予以记过、记大过处分。
+5. 对拒不交出手机或因收缴而顶撞教师，视情节轻重对违纪学生予以记过、留校察看处分，情节特别严重的依据学校预警制——红色预警（取消学籍，劝其退学）。
+6. 学校值班教师、教官将不定期抽查，对于违规使用手机，学校一律代管手机两周。
+
+第十一条 本规定自2023年8月23日起执行！
+                </div>
+            </div>
+        </div>
+         <div class="page" id="page-system-upgrade">
             <div class="card"><h2>⬆️ 系统自动升级</h2><p>输入需求，AI生成并直接部署到 Netlify。</p><textarea id="upgrade-requirement" placeholder="例如：增加宿舍违纪登记..." style="width:100%;height:80px"></textarea><button id="btn-upgrade" onclick="window.autoUpgrade()">🚀 一键升级</button><div id="upgrade-status" style="margin-top:12px;"></div><pre id="upgrade-preview" style="background:#f8fafc;padding:16px;border-radius:6px;white-space:pre-wrap;font-size:13px;max-height:300px;overflow-y:auto;display:none;"></pre></div>
         </div>`;
     }
@@ -491,7 +559,7 @@ function getAgeFromIdcard(idcard) {
 }
        if (p === 'warning-notice') {
     // 填充学生下拉
-    const studentSel = document.getElementById('wn-student');
+    const studentSel = document.getElementById('wn-student');window.renderDisciplineWarning();
     if (studentSel) {
         studentSel.innerHTML = '<option value="">-- 请选择学生 --</option>';
         students.filter(s => s.status === '在读').forEach(s => {
@@ -709,28 +777,42 @@ async function refreshDashboard() {
         }
     };
     // 保存学期配置
-window.saveSemesterConfig = function() {
+window.saveSemesterConfig = async function() {
     const startDate = document.getElementById('semester-start').value;
     const totalWeeks = document.getElementById('semester-weeks').value;
     if (!startDate || !totalWeeks) {
         toast('请填写完整的开学日期和总周数', 'error');
         return;
-    } 
-    localStorage.setItem('semester_config', JSON.stringify({
-        startDate: startDate,
-        totalWeeks: totalWeeks
-    }));
-    // 更新显示
+    }
+    const data = { id: 1, start_date: startDate, total_weeks: parseInt(totalWeeks), updated_at: new Date().toISOString() };
+    // 保存到 Supabase
+    const { error } = await sb.from('semester_config').upsert(data);
+    if (error) {
+        toast('保存到云端失败：' + error.message, 'error');
+        return;
+    }
+    // 同时缓存到本地（方便离线或快速读取）
+    localStorage.setItem('semester_config', JSON.stringify({ startDate, totalWeeks }));
     document.getElementById('current-week-display').textContent = getWeek();
-    toast('学期配置已保存，当前第 ' + getWeek() + ' 周');
+    toast('学期配置已保存（云端同步）');
 };
     // 加载学期配置（修复空白页）
-window.loadSemesterConfig = function() {
-    const saved = localStorage.getItem('semester_config');
-    if (saved) {
-        const cfg = JSON.parse(saved);
-        document.getElementById('semester-start').value = cfg.startDate || '';
-        document.getElementById('semester-weeks').value = cfg.totalWeeks || 20;
+window.loadSemesterConfig = async function() {
+    // 先从 Supabase 加载
+    const { data, error } = await sb.from('semester_config').select('*').eq('id', 1).single();
+    if (!error && data) {
+        // 云端有数据，更新本地缓存并填充界面
+        localStorage.setItem('semester_config', JSON.stringify({ startDate: data.start_date, totalWeeks: data.total_weeks }));
+        document.getElementById('semester-start').value = data.start_date;
+        document.getElementById('semester-weeks').value = data.total_weeks;
+    } else {
+        // 云端无数据，尝试从本地加载
+        const saved = localStorage.getItem('semester_config');
+        if (saved) {
+            const cfg = JSON.parse(saved);
+            document.getElementById('semester-start').value = cfg.startDate || '';
+            document.getElementById('semester-weeks').value = cfg.totalWeeks || 20;
+        }
     }
     document.getElementById('current-week-display').textContent = getWeek();
 };
@@ -2321,7 +2403,14 @@ function getCurrentAttendance() {
 
     const today = fmt(new Date());
     const todayLogs = logs.filter(l => l.date === today && l.basis === '缺旷登记');
-    const allActive = students.filter(s => s.status === '在读');
+
+    // 晚自习只统计住校生，其他时段统计全部在读学生
+    let allActive = [];
+    if (periodInfo.timeLabel === '晚自习') {
+        allActive = students.filter(s => s.status === '在读' && s.zoudu !== '是');
+    } else {
+        allActive = students.filter(s => s.status === '在读');
+    }
     const total = allActive.length;
 
     const absentSet = new Set();
@@ -2330,19 +2419,15 @@ function getCurrentAttendance() {
         const code = l.code;
         const reason = l.reason || '';
 
-        // 请假：只要原因中包含当前时段标签（上午/下午/晚自习），则该生该时段所有节次视为缺勤
+        // 1. 请假：时段匹配
         if (code === '请假') {
-            if (periodInfo.timeLabel === '上午' && reason.includes('上午')) {
-                absentSet.add(student);
-            } else if (periodInfo.timeLabel === '下午' && reason.includes('下午')) {
-                absentSet.add(student);
-            } else if (periodInfo.timeLabel === '晚自习' && reason.includes('晚自习')) {
-                absentSet.add(student);
-            }
+            if (periodInfo.timeLabel === '上午' && reason.includes('上午')) absentSet.add(student);
+            else if (periodInfo.timeLabel === '下午' && reason.includes('下午')) absentSet.add(student);
+            else if (periodInfo.timeLabel === '晚自习' && reason.includes('晚自习')) absentSet.add(student);
             continue;
         }
 
-        // 旷课（A1、A3）：时段匹配且节次匹配
+        // 2. 旷课（A1/A3）：时段匹配且节次匹配（若没有节次则默认整时段缺勤）
         if (code === 'A1' || code === 'A3') {
             let timeLabel = null;
             if (reason.includes('上午')) timeLabel = '上午';
@@ -2353,22 +2438,50 @@ function getCurrentAttendance() {
             const periodMatch = reason.match(/第([\d,]+)节/);
             if (periodMatch) {
                 const periods = periodMatch[1].split(',').map(Number);
-                if (periods.includes(periodInfo.period)) {
-                    absentSet.add(student);
-                }
+                if (periods.includes(periodInfo.period)) absentSet.add(student);
             } else {
-                // 没有具体节次，默认该时段所有节次缺勤
+                absentSet.add(student); // 无具体节次，默认该时段缺勤
+            }
+            continue;
+        }
+
+        // 3. 迟到/早退/旷操（A2/A4）：影响所在整个时段（仅限上午/下午）
+        if (code === 'A2' || code === 'A4') {
+            if (periodInfo.timeLabel === '上午' || periodInfo.timeLabel === '下午') {
                 absentSet.add(student);
             }
             continue;
         }
 
-        // 迟到、早退、旷操等暂不视为当前节次缺勤
+        // 4. 自定义事项（Z1/Z3）：根据时段描述计入缺勤（与仪表盘规则一致）
+        if ((code === 'Z1' || code === 'Z3') && 
+            (reason.startsWith('特殊事项：') || reason.startsWith('走读/特殊事项：'))) {
+            const detail = reason.replace('特殊事项：', '').replace('走读/特殊事项：', '');
+            if (periodInfo.timeLabel === '上午' && (detail.includes('早上') || detail.includes('上午'))) {
+                absentSet.add(student);
+            } else if (periodInfo.timeLabel === '下午' && detail.includes('下午')) {
+                absentSet.add(student);
+            } else if (periodInfo.timeLabel === '晚自习' && (detail.includes('晚上') || detail.includes('晚自习'))) {
+                absentSet.add(student);
+            }
+        }
+    }
+
+    // 晚自习剔除走读生（防止误登记走读生晚自习缺勤）
+    if (periodInfo.timeLabel === '晚自习') {
+        const zhuxiaoNames = new Set(allActive.map(s => s.name));
+        for (const absent of absentSet) {
+            if (!zhuxiaoNames.has(absent)) absentSet.delete(absent);
+        }
     }
 
     const present = total - absentSet.size;
+    const label = periodInfo.timeLabel === '晚自习' 
+        ? periodInfo.name + '（住校）' 
+        : periodInfo.name;
+
     return {
-        label: periodInfo.name,
+        label: label,
         present: present,
         absent: absentSet.size
     };
@@ -2509,6 +2622,79 @@ window.generateProfileAdvice = async function(studentName) {
         adviceDiv.textContent = '生成失败，请手动填写';
     }
 };
+// ========== 累计处分预警 ==========
+window.renderDisciplineWarning = function() {
+    // 统计每个学生的本学期累计旷课节数和事假节数
+    const activeStudents = students.filter(s => s.status === '在读');
+    const result = [];
+
+    activeStudents.forEach(s => {
+        const myLogs = logs.filter(l => l.student === s.name);
+        let absentPeriods = 0; // 旷课节数
+        let leavePeriods = 0;  // 事假节数
+        let lateEarlyCount = 0; // 迟到/早退次数
+
+        myLogs.forEach(l => {
+            const reason = l.reason || '';
+            if (l.code === 'A1' || l.code === 'A3') {
+                // 统计节数：从reason中提取“上午X节”、“下午X节”、“晚自习X节”
+                const amMatch = reason.match(/上午(\d+)节/);
+                const pmMatch = reason.match(/下午(\d+)节/);
+                const eveMatch = reason.match(/晚自习(\d+)节/);
+                if (amMatch) absentPeriods += parseInt(amMatch[1]);
+                if (pmMatch) absentPeriods += parseInt(pmMatch[1]);
+                if (eveMatch) absentPeriods += parseInt(eveMatch[1]);
+            } else if (l.code === 'A2' || l.code === 'A4') {
+                lateEarlyCount++; // 迟到或早退算一次
+            } else if (l.code === '请假') {
+                const amMatch = reason.match(/上午(\d+)节/);
+                const pmMatch = reason.match(/下午(\d+)节/);
+                const eveMatch = reason.match(/晚自习(\d+)节/);
+                if (amMatch) leavePeriods += parseInt(amMatch[1]);
+                if (pmMatch) leavePeriods += parseInt(pmMatch[1]);
+                if (eveMatch) leavePeriods += parseInt(eveMatch[1]);
+            }
+        });
+
+        // 迟到/早退2次折合1节旷课
+        absentPeriods += Math.floor(lateEarlyCount / 2);
+
+        // 事假10节折合1节旷课（用于处分累计，但原制度是分开的，这里可同时显示）
+        // 根据制度：累计旷课达到X节 或 请事假累计达到Y节 给予相应处分
+        // 我们分别判断旷课和事假，取较严重者作为建议
+        const disciplineLevels = [
+            { maxAbsent: 21, maxLeave: 35, level: '警告处分' },
+            { maxAbsent: 35, maxLeave: 56, level: '严重警告处分' },
+            { maxAbsent: 50, maxLeave: 70, level: '记过处分' },
+            { maxAbsent: 80, maxLeave: 90, level: '留校察看处分' },
+            { maxAbsent: 90, maxLeave: 999, level: '自动退学' }
+        ];
+
+        let suggestion = '—';
+        for (const level of disciplineLevels) {
+            if (absentPeriods >= level.maxAbsent || leavePeriods >= level.maxLeave) {
+                suggestion = level.level;
+            } else {
+                break;
+            }
+        }
+
+        result.push({ name: s.name, absent: absentPeriods, leave: leavePeriods, suggestion });
+    });
+
+    // 渲染表格
+    const tbody = document.getElementById('discipline-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = result.map(r => `
+        <tr>
+            <td>${r.name}</td>
+            <td>${r.absent}</td>
+            <td>${r.leave}</td>
+            <td style="color:${r.suggestion === '—' ? '#10b981' : '#ef4444'}; font-weight:bold;">${r.suggestion}</td>
+        </tr>
+    `).join('');
+};
+
 window.onload = init;
 })();
 </script>
