@@ -972,29 +972,41 @@ window.loadSemesterConfig = async function() {
     // ==================== 操行分流水 ====================
        // ==================== 操行分流水 ====================
     window.renderScoreLog = function() {
-        const fs = document.getElementById('filter-student')?.value || '';
-        const fw = document.getElementById('filter-week')?.value || '';
-        const ft = document.getElementById('filter-type')?.value || '';
-        let list = logs;
-        if (fs) list = list.filter(l => l.student === fs);
-        if (fw) list = list.filter(l => l.week === parseInt(fw));
-        if (ft === 'deduct') list = list.filter(l => l.value < 0);
-        if (ft === 'add') list = list.filter(l => l.value > 0);
-        list.reverse();
-        document.getElementById('score-log-tbody').innerHTML = list.length
-            ? list.map(r => `<tr>
+    const fs = document.getElementById('filter-student')?.value || '';
+    const fw = document.getElementById('filter-week')?.value || '';
+    const ft = document.getElementById('filter-type')?.value || '';
+    let list = logs;
+    if (fs) list = list.filter(l => l.student === fs);
+    if (fw) list = list.filter(l => l.week === parseInt(fw));
+    if (ft === 'deduct') list = list.filter(l => l.value < 0);
+    if (ft === 'add') list = list.filter(l => l.value > 0);
+    list.reverse();
+    
+    // 星期数组
+    const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    
+    document.getElementById('score-log-tbody').innerHTML = list.length
+        ? list.map(r => {
+            const d = new Date(r.date);
+            const weekday = weekDays[d.getDay()];
+            return `<tr>
                 <td><input type="checkbox" class="log-checkbox" value="${r.id}" onchange="window.updateSelectAllState()"></td>
-                <td>${r.date}</td><td>${r.week}</td><td>${r.student}</td><td>${r.code}</td>
-                <td>${r.reason || ''}</td>
+                <td>${r.date} (${weekday})</td>
+                <td>${r.week}</td>
+                <td>${r.student}</td>
+                <td>${r.code}</td>
+                <td>${weekday} ${r.code}：${r.reason || ''}</td>
                 <td style="color:${r.value < 0 ? '#ef4444' : '#10b981'}">${r.value > 0 ? '+' : ''}${r.value}</td>
                 <td>${r.operator || '—'}</td>
                 <td><button class="btn-danger btn-xs" onclick="window.deleteLog(${r.id})">删</button></td>
-            </tr>`).join('')
-            : '<tr><td colspan="9">暂无匹配记录</td></tr>';
-        // 重置全选框状态
-        var selectAll = document.getElementById('select-all-logs');
-        if (selectAll) selectAll.checked = false;
-    };
+            </tr>`;
+        }).join('')
+        : '<tr><td colspan="9">暂无匹配记录</td></tr>';
+    
+    // 重置全选框状态
+    var selectAll = document.getElementById('select-all-logs');
+    if (selectAll) selectAll.checked = false;
+};
 
     window.deleteLog = async function(id) {
         if(!confirm('删除？')) return;
@@ -2244,7 +2256,7 @@ window.generateWarningMeasureAI = async function() {
     const measureInput = document.getElementById('wn-measure');
     measureInput.value = '正在生成...';
     
-    const systemPrompt = '你是一位中职班主任助手。请根据违纪情况，用一句完整的话给出处置措施建议（不超过80字）。直接给出内容，不要使用任何Markdown格式。';
+        const systemPrompt = '你是一名中职班主任。请以班主任的身份，用专业、正式的口吻，针对以下违纪情况，给出具体的处置措施（包括约谈、书面检讨、家校沟通、行为矫正等），一句话完整表述，不超过500字。直接给出内容，不使用Markdown。';
     const userPrompt = `学生：${studentName}，违纪事项：${reason}，本次扣分：${deduct}分，当前操行分：${currentScore}分，预警等级：${level}。请给出合理的处置措施建议。`;
     
     try {
@@ -2311,6 +2323,13 @@ window.printWarningNotice = function() {
                 else personalLeave += periods;
             }
         });
+        // 处理没有具体节数的旷课记录：按扣分值推算（旷课1节扣2分）
+        myLogs.forEach(l => {
+            if ((l.code === 'A1' || l.code === 'A3') && (l.reason || '').indexOf('上午') === -1 && (l.reason || '').indexOf('下午') === -1 && (l.reason || '').indexOf('晚自习') === -1) {
+                absentPeriods += Math.abs((l.value || 0) / 2);
+            }
+        });
+        // 迟到/早退2次折算为1节旷课（已在上面统计了lateEarlyCount）
         absentPeriods += Math.floor(lateEarlyCount / 2);
         let attendanceLevel = '无';
         if (absentPeriods >= 90 || personalLeave >= 90) attendanceLevel = '自动退学';
