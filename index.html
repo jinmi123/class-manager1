@@ -23,7 +23,11 @@
         .stats-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:16px; margin-bottom:20px; }
         .stat-card { background:var(--card); padding:18px 20px; text-align:center; border-radius:var(--radius); box-shadow:0 1px 3px rgba(0,0,0,.08); }
         .stat-card .num { font-size:2rem; font-weight:700; } .stat-card .label { font-size:12px; color:var(--text-secondary); margin-top:4px; }
-        table { width:100%; border-collapse:collapse; font-size:13px; } th, td { padding:10px 12px; border-bottom:1px solid var(--border); white-space:nowrap; } th { background:#f8fafc; font-weight:600; color:var(--text-secondary); }
+                        table { width:100%; border-collapse:collapse; font-size:13px; max-width:100%; }
+        th, td { padding:10px 12px; border-bottom:1px solid var(--border); white-space:nowrap; }        td.talk-content { white-space:pre-wrap; word-break:break-word; min-width:150px; }
+        th { background:#f8fafc; font-weight:600; color:var(--text-secondary); }
+        /* 在移动端，让表格容器可滚动（配合外层 div） */
+        .table-responsive { overflow-x:auto; max-width:100%; }
         .badge { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; } .badge-success { background:#d1fae5; color:#065f46; } .badge-warning { background:#fef3c7; color:#92400e; } .badge-danger { background:#fee2e2; color:#991b1b; } .badge-info { background:#dbeafe; color:#1e40af; }
         button { cursor:pointer; border:none; border-radius:var(--radius-sm); padding:8px 16px; font-size:13px; font-weight:500; background:var(--primary); color:#fff; transition:.2s; } button:hover { background:var(--primary-dark); }
         .btn-outline { background:#fff; border:1.5px solid var(--border); color:var(--text); }
@@ -33,6 +37,21 @@
         .toast { position:fixed; top:20px; right:20px; background:#1e293b; color:#fff; padding:12px 20px; border-radius:8px; font-size:13px; z-index:9999; opacity:0; transform:translateX(120px); transition:.3s; } .toast.show { opacity:1; transform:translateX(0); } .toast.success { background:#059669; } .toast.error { background:#dc2626; }
         .modal { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.5); z-index:999; justify-content:center; align-items:center; } .modal.active { display:flex; }
         .modal-content { background:#fff; border-radius:var(--radius); padding:24px; width:90%; max-width:550px; max-height:90vh; overflow-y:auto; }
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .sidebar { width: 0; min-width: 0; overflow: hidden; }
+            .sidebar.open { width: 200px; min-width: 200px; }
+            .main { margin-left: 0 !important; padding: 12px; }
+            .menu-toggle { display: block; position: fixed; top: 10px; left: 10px; z-index: 200; background: var(--primary); color: #fff; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; }
+            .card { padding: 12px; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .stat-card .num { font-size: 1.5rem; }
+            table { font-size: 12px; }
+            th, td { padding: 6px 8px; }
+        }
+        @media (min-width: 769px) {
+            .menu-toggle { display: none; }
+        }
     </style>
 </head>
 <body>
@@ -56,6 +75,7 @@
     <li><a data-page="system-upgrade">⬆️ 系统升级</a></li>
 </ul></aside>
 <div class="toast" id="toast"></div>
+<button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
 <div class="main" id="mainContent"></div>
 
 <script>
@@ -271,9 +291,17 @@ function getAgeFromIdcard(idcard) {
                 <table style="text-align:center;"><thead><tr><th>日期</th><th>班干</th><th>总评</th><th>课间</th><th>卫生</th><th>好事</th><th>关注</th><th>操作</th></tr></thead><tbody id="daily-log-tbody"></tbody></table>
             </div>
         </div>
-        <div class="page" id="page-alert-records">
-            <div class="card"><h2>⚠️ 预警通知</h2><button onclick="window.openAlertModal()">+ 新增</button><table><table style="text-align:center;"><thead><tr><th>日期</th><th>学生</th><th>分数</th><th>等级</th><th>编号</th><th>反馈</th><th>建议处置</th><th>操作</th></tr></thead><tbody id="alert-tbody"></tbody></table></div>
-            <div class="card"><h2>💬 谈话记录</h2><button onclick="window.openTalkModal()">+ 新增</button><table><thead><tr><th>日期</th><th>学生</th><th>类型</th><th>事由</th><th>要点</th><th>表态</th><th>后续</th><th>操作</th></tr></thead><tbody id="talk-tbody"></tbody></table></div>
+                                <div class="page" id="page-alert-records">
+            <div class="card"><h2>⚠️ 预警通知</h2><button onclick="window.openAlertModal()">+ 新增</button>
+                <div style="overflow-x:auto; max-width:100%;">
+                    <table style="text-align:center; min-width:600px;"><thead><tr><th>日期</th><th>学生</th><th>分数</th><th>等级</th><th>编号</th><th>反馈</th><th>建议处置</th><th>操作</th></tr></thead><tbody id="alert-tbody"></tbody></table>
+                </div>
+            </div>
+            <div class="card"><h2>💬 谈话记录</h2><button onclick="window.openTalkModal()">+ 新增</button>
+                <div style="overflow-x:auto; max-width:100%;">
+                    <table style="min-width:600px;"><thead><tr><th>日期</th><th>学生</th><th>类型</th><th>事由</th><th>要点</th><th>表态</th><th>后续</th><th>操作</th></tr></thead><tbody id="talk-tbody"></tbody></table>
+                </div>
+            </div>
         </div>
         <div class="page" id="page-ai-report">
             <div class="card"><h2>🤖 AI周报</h2><button id="btn-generate" onclick="window.generateAIReport()">✨ 生成</button><div class="ai-report-content" id="ai-report-text">点击生成</div></div>
@@ -877,7 +905,7 @@ window.loadSemesterConfig = async function() {
     }
 
     // AI 公共调用函数（自动清洗结果）
-   async function callAI(systemPrompt, userPrompt, maxTokens = 20) {
+   async function callAI(systemPrompt, userPrompt, maxTokens = 500) {
     try {
         const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
             method: 'POST',
@@ -1192,11 +1220,192 @@ window.loadSemesterConfig = async function() {
         : '<tr><td colspan="8">✅ 暂无预警学生</td></tr>';
 }
     // ==================== 谈话记录 ====================
-    function renderTalks() { document.getElementById('talk-tbody').innerHTML = talks.length ? talks.map(t => `<tr><td>${t.date}</td><td>${t.student}</td><td>${t.type}</td><td>${t.reason||'—'}</td><td>${t.points||'—'}</td><td>${t.response||'—'}</td><td>${t.followup||'—'}</td><td><button class="btn-danger btn-xs" onclick="window.deleteTalk(${t.id})">删</button></td></tr>`).join('') : '<tr><td colspan="8">暂无谈话记录</td></tr>'; }
+            function renderTalks() {
+    document.getElementById('talk-tbody').innerHTML = talks.length
+        ? talks.map(t => `<tr>
+            <td>${t.date}</td>
+            <td>${t.student}</td>
+            <td>${t.type}</td>
+            <td>${t.reason||'—'}</td>
+            <td class="talk-content">${t.points||'—'}</td>
+            <td class="talk-content">${t.response||'—'}</td>
+            <td class="talk-content">${t.followup||'—'}</td>
+            <td>
+                <button class="btn-sm" onclick="window.editTalk(${t.id})">✏️ 编辑</button>
+                <button class="btn-danger btn-xs" onclick="window.deleteTalk(${t.id})">删</button>
+            </td>
+        </tr>`).join('')
+        : '<tr><td colspan="8">暂无谈话记录</td></tr>';
+}
+window.editTalk = async function(id) {
+    const t = talks.find(t => t.id === id);
+    if (!t) { toast('记录未找到', 'error'); return; }
+    // 打开模态框（如果还没创建则创建）
+    if (!document.getElementById('modal-talk')) {
+        window.openTalkModal(); // 确保模态框存在
+    }
+    // 填充数据
+    document.getElementById('talk-student').value = t.student;
+    document.getElementById('talk-date').value = t.date;
+    document.getElementById('talk-type').value = t.type;
+    document.getElementById('talk-reason').innerHTML = `<option value="${t.reason}" selected>${t.reason}</option>`;
+    document.getElementById('talk-points').value = t.points || '';
+    document.getElementById('talk-response').value = t.response || '';
+    document.getElementById('talk-followup').value = t.followup || '';
+    // 设置隐藏字段标记编辑模式
+    document.getElementById('talk-edit-id').value = id;
+    document.querySelector('#modal-talk h3').textContent = '编辑谈话记录';
+    document.getElementById('talk-edit-id').value = '';
+    document.querySelector('#modal-talk h3').textContent = '新增谈话记录';
+    openModal('modal-talk');
+};
     window.deleteTalk = async id => { await sb.from('talks').delete().eq('id', id); await loadData(); renderTalks(); };
-    window.openTalkModal = function() { if(!document.getElementById('modal-talk')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-talk"><div class="modal-content"><h3>新增谈话记录</h3><div class="form-row"><select id="talk-student"></select><input type="date" id="talk-date"></div><div class="form-row"><select id="talk-type"><option>个别谈话</option><option>家长沟通</option></select></div><input id="talk-reason" placeholder="事由"><textarea id="talk-points" rows="2" placeholder="要点"></textarea><textarea id="talk-response" rows="2" placeholder="表态"></textarea><input id="talk-followup" placeholder="后续跟进"><div style="display:flex;gap:8px;margin-top:8px"><button class="btn-outline btn-sm" onclick="window.aiGenerateTalk()">🤖 AI生成建议</button></div><div style="text-align:right;margin-top:10px"><button class="btn-outline" onclick="window.closeModal('modal-talk')">取消</button><button class="btn-primary" onclick="window.saveTalk()">保存</button></div></div></div>`); document.getElementById('talk-date').value = fmt(new Date()); const sel = document.getElementById('talk-student'); sel.innerHTML=''; students.filter(s=>s.status==='在读').forEach(s=>sel.innerHTML+=`<option value="${s.name}">${s.name}</option>`); openModal('modal-talk'); };
-    window.saveTalk = async function() { const s = document.getElementById('talk-student').value; if(!s){ toast('请选择学生','error'); return; } const d = { date: document.getElementById('talk-date').value, student: s, type: document.getElementById('talk-type').value, reason: document.getElementById('talk-reason').value, points: document.getElementById('talk-points').value, response: document.getElementById('talk-response').value, followup: document.getElementById('talk-followup').value }; await sb.from('talks').insert(d); closeModal('modal-talk'); await loadData(); renderTalks(); toast('已保存'); };
-    window.aiGenerateTalk = async function() { const student = document.getElementById('talk-student').value; const reason = document.getElementById('talk-reason').value.trim(); if(!student||!reason){ toast('请先选择学生并填写事由','error'); return; } const btn = document.querySelector('#modal-talk .btn-outline'); btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span>'; const prompt = `你是班主任助手。学生${student}因"${reason}"需要谈话，请生成谈话要点、学生可能表态、后续跟进策略。用【要点】、【表态】、【跟进】作为开头分三行。`; try { const res = await fetch('https://api.deepseek.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+DEEPSEEK_KEY},body:JSON.stringify({model:'deepseek-chat',messages:[{role:'user',content:prompt}],temperature:0.8,max_tokens:500})}); const data = await res.json(); const txt = data.choices[0].message.content; document.getElementById('talk-points').value = (txt.match(/【要点】\s*(.*?)(?:\n|$)/)?.[1]||'').trim(); document.getElementById('talk-response').value = (txt.match(/【表态】\s*(.*?)(?:\n|$)/)?.[1]||'').trim(); document.getElementById('talk-followup').value = (txt.match(/【跟进】\s*(.*?)(?:\n|$)/)?.[1]||'').trim(); } catch(e) { toast('AI生成失败','error'); } btn.disabled = false; btn.innerHTML = '🤖 AI生成建议'; };
+    window.openTalkModal = function() {
+    if(!document.getElementById('modal-talk')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-talk"><div class="modal-content" style="max-width:650px;"><h3>新增谈话记录</h3>
+        <div class="form-row"><select id="talk-student"></select><input type="date" id="talk-date"></div>
+        <div class="form-row"><select id="talk-type"><option>个别谈话</option><option>家长沟通</option></select></div>
+        <div><label style="font-weight:500;">事由（可多选违纪记录）</label>
+            <select id="talk-reason" multiple size="4" style="width:100%;height:auto;" title="按住Ctrl多选"></select>
+        </div>
+        <textarea id="talk-points" rows="3" placeholder="要点"></textarea>
+        <textarea id="talk-response" rows="3" placeholder="表态"></textarea>
+        <input id="talk-followup" placeholder="后续跟进">
+       <input type="hidden" id="talk-edit-id" value="">
+        <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="btn-outline btn-sm" onclick="window.aiGenerateTalk()">👤 处置建议</button>
+        </div>
+        <div style="text-align:right;margin-top:10px">
+            <button class="btn-outline" onclick="window.closeModal('modal-talk')">取消</button>
+            <button class="btn-primary" onclick="window.saveTalk()">保存</button>
+        </div></div></div>`);
+    document.getElementById('talk-date').value = fmt(new Date());
+    const studentSel = document.getElementById('talk-student');
+    studentSel.innerHTML = ''; 
+    students.filter(s=>s.status==='在读').forEach(s=>studentSel.innerHTML+=`<option value="${s.name}">${s.name}</option>`);
+    // 监听学生变化，加载该生违纪记录
+    studentSel.onchange = function() {
+        window.loadReasonsForStudent(this.value, 'talk-reason');
+    };
+    openModal('modal-talk');
+};
+    window.saveTalk = async function() {
+    const student = document.getElementById('talk-student').value;
+    const date = document.getElementById('talk-date').value;
+    const type = document.getElementById('talk-type').value;
+    const points = document.getElementById('talk-points').value;
+    const response = document.getElementById('talk-response').value;
+    const followup = document.getElementById('talk-followup').value;
+    const editId = document.getElementById('talk-edit-id').value;
+
+    // 获取多选事由并合并
+    const reasonSel = document.getElementById('talk-reason');
+    let reason = '';
+    if (reasonSel && reasonSel.selectedOptions.length > 0) {
+        const texts = [];
+        for (const opt of reasonSel.selectedOptions) {
+            if (opt.value) texts.push(opt.getAttribute('data-reason') || opt.text);
+        }
+        reason = texts.join('；');
+    }
+
+    if (!student) { toast('请选择学生', 'error'); return; }
+    if (!reason) { toast('请填写事由', 'error'); return; }
+    if (!date) { toast('请选择日期', 'error'); return; }
+
+    const data = { student, date, type, reason, points, response, followup };
+    let error;
+    if (editId) {
+        // 更新现有记录
+        ({ error } = await sb.from('talks').update(data).eq('id', parseInt(editId)));
+    } else {
+        // 插入新记录
+        ({ error } = await sb.from('talks').insert(data));
+    }
+
+    if (error) {
+        toast('保存失败：' + error.message, 'error');
+    } else {
+        closeModal('modal-talk');
+        await loadData();
+        renderTalks();
+        toast(editId ? '已更新' : '已保存');
+    }
+};
+    window.aiGenerateTalk = async function() {
+    const student = document.getElementById('talk-student').value;
+    const reasonSel = document.getElementById('talk-reason');
+    let reason = '';
+    if (reasonSel && reasonSel.selectedOptions.length > 0) {
+        const texts = [];
+        for (const opt of reasonSel.selectedOptions) {
+            if (opt.value) texts.push(opt.getAttribute('data-reason') || opt.text);
+        }
+        reason = texts.join('；');
+    }
+    if (!student || !reason) { toast('请先选择学生并填写事由', 'error'); return; }
+    const btn = document.querySelector('#modal-talk .btn-outline');
+    btn.disabled = true; btn.innerHTML = '生成中...';
+
+    // 强化提示词，明确班主任身份，禁止任何 Markdown
+    const systemPrompt = '你是一名经验丰富的中职班主任。请以第一人称“我”的口吻，直接给出针对该生违纪行为的谈话方案。方案必须包含三部分，并用【谈话要点】、【学生可能表态】、【后续跟进】作为每部分的小标题。内容要具体、可操作，避免空泛。不要使用任何 Markdown 格式（如 ** 、## 、- 等），纯文本输出。';
+    const userPrompt = `学生：${student}，事由：${reason}。请生成谈话方案。`;
+
+    try {
+        const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + DEEPSEEK_KEY },
+            body: JSON.stringify({
+                model: 'deepseek-chat',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt }
+                ],
+                temperature: 0.7,
+                max_tokens: 600
+            })
+        });
+        const data = await res.json();
+        let txt = data.choices[0].message.content;
+
+        // 清洗 Markdown 符号
+        txt = txt
+            .replace(/#{1,6}\s*/g, '')          // 去除标题
+            .replace(/\*\*(.*?)\*\*/g, '$1')    // 去除加粗
+            .replace(/___(.*?)___/g, '$1')      // 去除其他加粗
+            .replace(/\*(.*?)\*/g, '$1')        // 去除斜体
+            .replace(/^\s*[-*+]\s/gm, '')       // 去除无序列表符号
+            .replace(/^\d+\.\s/gm, '')          // 去除有序列表数字
+            .replace(/`{1,3}[^`]*`{1,3}/g, '') // 去除代码块
+            .trim();
+
+        // 尝试匹配标题（兼容多种写法）
+        const pointsMatch = txt.match(/【(谈话)?要点】\s*([\s\S]*?)(?=【(学生可能)?表态】|【后续跟进】|$)/);
+        const responseMatch = txt.match(/【(学生可能)?表态】\s*([\s\S]*?)(?=【后续跟进】|$)/);
+        const followupMatch = txt.match(/【后续跟进】\s*([\s\S]*)/);
+
+        if (pointsMatch || responseMatch || followupMatch) {
+            document.getElementById('talk-points').value = pointsMatch ? pointsMatch[2].trim() : '';
+            document.getElementById('talk-response').value = responseMatch ? responseMatch[2].trim() : '';
+            document.getElementById('talk-followup').value = followupMatch ? followupMatch[1].trim() : '';
+        } else {
+            // 如果标题匹配失败，按双换行拆分成三部分
+            const parts = txt.split(/\n{2,}/);
+            if (parts.length >= 3) {
+                document.getElementById('talk-points').value = parts[0].trim();
+                document.getElementById('talk-response').value = parts[1].trim();
+                document.getElementById('talk-followup').value = parts.slice(2).join('\n\n').trim();
+            } else {
+                // 完全无法拆分，全部放入要点
+                document.getElementById('talk-points').value = txt;
+            }
+        }
+    } catch (e) {
+        console.error(e);
+        toast('AI生成失败', 'error');
+    }
+    btn.disabled = false;
+    btn.innerHTML = '👤 处置建议';
+};
 
     // ==================== 代码管理 ====================
     function renderCodeTable() { const dedCodes = getDeductCodes(), bonCodes = getBonusCodes(); document.getElementById('code-tbody').innerHTML = dedCodes.map(c => `<tr><td>${c.code}</td><td>${c.desc}</td><td style="color:#ef4444">${c.pt}</td><td><button class="btn-sm" onclick="window.openDeductCodeModal('${c.code}')">编辑</button> <button class="btn-sm btn-danger" onclick="window.deleteDeductCode('${c.code}')">删</button></td></tr>`).join(''); document.getElementById('bonus-code-tbody').innerHTML = bonCodes.map(c => `<tr><td>${c.code}</td><td>${c.desc}</td><td style="color:#10b981">+${c.pt}</td><td><button class="btn-sm" onclick="window.openBonusCodeModal('${c.code}')">编辑</button> <button class="btn-sm btn-danger" onclick="window.deleteBonusCode('${c.code}')">删</button></td></tr>`).join(''); }
@@ -2152,8 +2361,8 @@ window.batchDeleteLogs = async function() {
 // 预警通知单自动计算
 // 实时更新操行分和预警等级
 // 根据学生姓名加载其最近的违纪记录到违纪事项下拉（多选）
-window.loadReasonsForStudent = function(studentName) {
-    const reasonSel = document.getElementById('wn-reason');
+window.loadReasonsForStudent = function(studentName, targetId = 'wn-reason') {
+    const reasonSel = document.getElementById(targetId);
     if (!reasonSel) return;
     if (!studentName) {
         reasonSel.innerHTML = '<option value="">-- 请先选择学生 --</option>';
@@ -2169,12 +2378,14 @@ window.loadReasonsForStudent = function(studentName) {
     }
     let html = '<option value="">-- 按住Ctrl可多选 --</option>';
     studentDeducts.forEach(l => {
-        const label = `${l.date} ${l.code} ${l.reason || ''} (${l.value}分)`;
+        const d = new Date(l.date);
+        const weekDays = ['周日','周一','周二','周三','周四','周五','周六'];
+        const weekday = weekDays[d.getDay()];
+        const label = `${l.date} ${weekday} ${l.code} ${l.reason || ''} (${l.value}分)`;
         html += `<option value="${l.value}" data-reason="${label}">${label}</option>`;
     });
     reasonSel.innerHTML = html;
-};
-window.updateWarningNotice = function() {
+};window.updateWarningNotice = function() {
     const studentName = document.getElementById('wn-student').value;
     const deductInput = document.getElementById('wn-deduct');
     const reasonSel = document.getElementById('wn-reason');
@@ -2438,6 +2649,21 @@ window.printWarningNotice = function() {
         hr{margin:5mm 0;}
         @page{size:A4;margin:10mm;}
         @media print{body{-webkit-print-color-adjust:exact;}}
+        @media (max-width: 768px) {
+            .sidebar { width: 0; min-width: 0; overflow: hidden; }
+            .sidebar.open { width: 200px; min-width: 200px; }
+            .main { margin-left: 0 !important; padding: 10px; }
+            .menu-toggle { display: block; position: fixed; top: 10px; left: 10px; z-index: 200; background: var(--primary); color: #fff; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; }
+            .card { padding: 10px; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .stat-card .num { font-size: 1.3rem; }
+            table { font-size: 12px; }
+            th, td { padding: 6px 8px; white-space: nowrap; }
+        }
+        @media (min-width: 769px) {
+            .menu-toggle { display: none; }
+        }
+
         </style></head><body>
         <h2>学生操行分预警通知单</h2>
         <table><tr><td><b>学生：</b>${student}</td><td><b>班级：</b>25级化学工艺1班</td></tr>
@@ -2935,7 +3161,34 @@ window.savePhoneViolation = async function() {
     window.renderPhoneDiscipline();
     toast('手机违规已登记');
 };
-
+window.generateAIReport = async function() {
+    const container = document.getElementById('ai-report-text');
+    if (!container) return;
+    container.textContent = '正在生成周报，请稍候...';
+    
+    try {
+        const wk = getWeek();
+        const weekLogs = logs.filter(l => l.week === wk);
+        let totalDeduct = 0, totalBonus = 0;
+        const studentsSet = new Set();
+        weekLogs.forEach(l => {
+            const val = parseFloat(l.value) || 0;
+            if (val < 0) totalDeduct += val;
+            else totalBonus += val;
+            studentsSet.add(l.student);
+        });
+        
+        const systemPrompt = '你是一名中职班主任助手。请根据本周班级操行数据，用自然语气生成一份简洁的班级周报，概括整体纪律情况、突出问题、以及下周建议。直接给出内容，不要使用Markdown标记。';
+        const userPrompt = `本周第${wk}周，参与评分学生${studentsSet.size}人，扣分合计${totalDeduct}分，加分合计+${totalBonus}分。请生成周报。`;
+        
+        const raw = await callAI(systemPrompt, userPrompt, 800);
+        const cleaned = cleanMarkdown(raw).replace(/\n+/g, '\n\n').trim();
+        container.textContent = cleaned || '本周暂无足够数据生成报告。';
+    } catch (e) {
+        console.error('AI周报生成失败:', e);
+        container.textContent = 'AI周报生成失败，请稍后重试。';
+    }
+};
 window.onload = init;
 })();
 </script>
