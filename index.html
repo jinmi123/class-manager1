@@ -1599,12 +1599,53 @@ window.submitAbsence = async function() {
                     mergedEve += parsePeriod(oldReason, '晚自习');
                 }
 
+                               // 合并节次列表（保留具体节次编号）
+                const curAmPeriods = selected.filter(p => p >= 1 && p <= 4).sort((a,b)=>a-b);
+                const curPmPeriods = selected.filter(p => p >= 5 && p <= 6).sort((a,b)=>a-b);
+                const curEvePeriods = selected.filter(p => p >= 7 && p <= 8).sort((a,b)=>a-b);
+                
+                let mergedAmPeriods = [...curAmPeriods];
+                let mergedPmPeriods = [...curPmPeriods];
+                let mergedEvePeriods = [...curEvePeriods];
+                
+                if (existing) {
+                    // 合并旧记录的节次（如果旧记录中有具体节次信息）
+                    const oldReason = existing.reason || '';
+                    const parsePeriods = (text, keyword) => {
+                        const regex = new RegExp(`${keyword}(\\d+)节（第([\\d,]+)节）`);
+                        const match = text.match(regex);
+                        if (match) return match[2].split(',').map(Number);
+                        return [];
+                    };
+                    const oldAm = parsePeriods(oldReason, '上午');
+                    const oldPm = parsePeriods(oldReason, '下午');
+                    const oldEve = parsePeriods(oldReason, '晚自习');
+                    // 如果旧记录没有具体节次，则使用数量推算（保留当前合并逻辑的数量）
+                    if (oldAm.length === 0 && mergedAm > curAmPeriods.length) {
+                        // 无法获取旧节次，只能按数量保留
+                    } else {
+                        mergedAmPeriods = [...new Set([...oldAm, ...curAmPeriods])].sort((a,b)=>a-b);
+                    }
+                    if (oldPm.length === 0 && mergedPm > curPmPeriods.length) {
+                    } else {
+                        mergedPmPeriods = [...new Set([...oldPm, ...curPmPeriods])].sort((a,b)=>a-b);
+                    }
+                    if (oldEve.length === 0 && mergedEve > curEvePeriods.length) {
+                    } else {
+                        mergedEvePeriods = [...new Set([...oldEve, ...curEvePeriods])].sort((a,b)=>a-b);
+                    }
+                    // 重新计算合并后的节数
+                    mergedAm = mergedAmPeriods.length;
+                    mergedPm = mergedPmPeriods.length;
+                    mergedEve = mergedEvePeriods.length;
+                }
+
                 // 计算合并后的总天数
                 let totalDays = (mergedAm > 0 ? 0.5 : 0) + (mergedPm > 0 ? 0.5 : 0) + (mergedEve > 0 ? 0.5 : 0);
 
-                const amStr = mergedAm > 0 ? `上午${mergedAm}节` : '';
-                const pmStr = mergedPm > 0 ? `下午${mergedPm}节` : '';
-                const eveStr = mergedEve > 0 ? `晚自习${mergedEve}节` : '';
+                const amStr = mergedAm > 0 ? `上午${mergedAm}节（第${mergedAmPeriods.join(',')}节）` : '';
+                const pmStr = mergedPm > 0 ? `下午${mergedPm}节（第${mergedPmPeriods.join(',')}节）` : '';
+                const eveStr = mergedEve > 0 ? `晚自习${mergedEve}节（第${mergedEvePeriods.join(',')}节）` : '';
                 const desc = [amStr, pmStr, eveStr].filter(Boolean).join('，');
 
                 // 连续请假天数计算（扣除当天后查询历史，再累加）
