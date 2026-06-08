@@ -2200,7 +2200,6 @@ window.exportAttendanceHistory = function() {
 };
 // 自动识别周/月奖励（全勤按周，团结/进步按月，自动去重，严格时间）
 window.autoAddWeeklyBonus = async function() {
-    // 防连点锁
     if (window._addingBonusLock) { toast('正在处理中，请稍候...', 'warning'); return; }
     window._addingBonusLock = true;
 
@@ -2213,7 +2212,6 @@ window.autoAddWeeklyBonus = async function() {
         const cfg = JSON.parse(saved);
         const semesterStart = new Date(cfg.startDate);
         
-        // 本周起止（周一~周日 23:59:59）
         const weekStart = new Date(semesterStart);
         weekStart.setDate(weekStart.getDate() + (wk - 1) * 7);
         const weekEnd = new Date(weekStart);
@@ -2223,11 +2221,9 @@ window.autoAddWeeklyBonus = async function() {
         const now = new Date();
         const isWeekOver = now >= weekEnd;
 
-        // 月份信息
         const month = weekStart.getMonth() + 1;
         const year = weekStart.getFullYear();
         const monthStart = `${year}-${String(month).padStart(2,'0')}-01`;
-        // 本月最后一天 23:59:59
         const lastDayOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
         const monthEndStr = lastDayOfMonth.toISOString().split('T')[0];
         const isMonthOver = now >= lastDayOfMonth;
@@ -2245,14 +2241,13 @@ window.autoAddWeeklyBonus = async function() {
                 l.student === name && l.date >= monthStart && l.date <= monthEndStr
             );
 
-            // ========== 全勤奖：本周无扣分、无请假、有记录，且周已过 ==========
+            // ========== 全勤奖（无扣分、无请假、无Z3，无记录也全勤） ==========
             if (isWeekOver) {
                 const hasDeduction = myWeekLogs.some(l => l.value < 0);
                 const hasLeave = myWeekLogs.some(l => l.code === '请假');
-                const hasRecord = myWeekLogs.length > 0;
+                const hasSpecial = myWeekLogs.some(l => l.code === 'Z3');
                 
-                if (hasRecord && !hasDeduction && !hasLeave) {
-                    // 先删除该生本周所有 P1 自动加分记录，再插入一条（保证唯一）
+                if (!hasDeduction && !hasLeave && !hasSpecial) {
                     await sb.from('score_log').delete()
                         .eq('student', name)
                         .eq('week', wk)
@@ -2273,13 +2268,11 @@ window.autoAddWeeklyBonus = async function() {
                 }
             }
 
-            // ========== 团结奖：当月无冲突代码，且月已过 ==========
+            // ========== 团结奖 ==========
             if (isMonthOver) {
                 const conflictCodes = ['C9', 'C10', 'C12'];
                 const hasConflict = myMonthLogs.some(l => conflictCodes.includes(l.code));
-                
                 if (!hasConflict) {
-                    // 删除该生本月所有 U1 自动加分记录，再插入
                     await sb.from('score_log').delete()
                         .eq('student', name)
                         .gte('date', monthStart)
@@ -2301,13 +2294,11 @@ window.autoAddWeeklyBonus = async function() {
                 }
             }
 
-            // ========== 进步奖：当月有扣分且加分，月已过 ==========
+            // ========== 进步奖 ==========
             if (isMonthOver) {
                 const hasDeductionMonth = myMonthLogs.some(l => l.value < 0);
                 const hasBonusMonth = myMonthLogs.some(l => l.value > 0);
-                
                 if (hasDeductionMonth && hasBonusMonth) {
-                    // 删除该生本月所有 U2 自动加分记录，再插入
                     await sb.from('score_log').delete()
                         .eq('student', name)
                         .gte('date', monthStart)
@@ -2343,7 +2334,7 @@ window.autoAddWeeklyBonus = async function() {
     } finally {
         window._addingBonusLock = false;
     }
-};  
+};
 // 全选/取消全选
 window.toggleSelectAllLogs = function() {
     var checked = document.getElementById('select-all-logs').checked;
