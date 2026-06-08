@@ -638,19 +638,35 @@ function getAgeFromIdcard(idcard) {
 }
     }
 
-    async function loadData() {
-        const [a,b,c,d,e,f,g,h,i] = await Promise.all([
-            sb.from('students').select('*').order('id'), sb.from('score_log').select('*').order('id'),
-            sb.from('class_logs').select('*').order('date'), sb.from('daily_logs').select('*').order('date'),
-            sb.from('alerts').select('*').order('date'), sb.from('talks').select('*').order('date'),
-            sb.from('weekly_data').select('*'), sb.from('deduct_codes').select('*').order('code'),
-            sb.from('bonus_codes').select('*').order('code')
-        ]);
-        students = a.data; logs = b.data; classLogs = c.data; dailyLogs = d.data;      
-        alerts = e.data; talks = f.data; weeklyData = {};
-        g.data.forEach(w => { if (!weeklyData[w.week]) weeklyData[w.week] = {}; weeklyData[w.week][w.student] = w; });
-        deductCodes = h.data.length ? h.data : DEFAULT_DEDUCT;
-        bonusCodes = i.data.length ? i.data : DEFAULT_BONUS;
+        async function loadData() {
+        let retry = 0;
+        while (retry < 2) {
+            try {
+                const [a,b,c,d,e,f,g,h,i] = await Promise.all([
+                    sb.from('students').select('*').order('id'),
+                    sb.from('score_log').select('*').order('id'),
+                    sb.from('class_logs').select('*').order('date'),
+                    sb.from('daily_logs').select('*').order('date'),
+                    sb.from('alerts').select('*').order('date'),
+                    sb.from('talks').select('*').order('date'),
+                    sb.from('weekly_data').select('*'),
+                    sb.from('deduct_codes').select('*').order('code'),
+                    sb.from('bonus_codes').select('*').order('code')
+                ]);
+                students = a.data; logs = b.data; classLogs = c.data; dailyLogs = d.data;
+                alerts = e.data; talks = f.data; weeklyData = {};
+                g.data.forEach(w => { if (!weeklyData[w.week]) weeklyData[w.week] = {}; weeklyData[w.week][w.student] = w; });
+                deductCodes = h.data.length ? h.data : DEFAULT_DEDUCT;
+                bonusCodes = i.data.length ? i.data : DEFAULT_BONUS;
+                console.log('数据加载成功，logs条数：' + logs.length);
+                return; // 成功，退出
+            } catch (e) {
+                console.error('数据加载失败，重试...', e);
+                retry++;
+                if (retry < 2) await new Promise(r => setTimeout(r, 1000));
+            }
+        }
+        toast('数据加载失败，请检查网络或刷新重试', 'error');
     }
 async function refreshDashboard() {
     const today = fmt(new Date());
@@ -1837,6 +1853,8 @@ window.submitAbsence = async function() {
     };
 
     async function init() {
+    window.logs = () => logs;
+    window.students = () => students;        
         buildUI();
     window.loadSemesterConfig();
         await loadData();
