@@ -156,25 +156,42 @@ window.handleLogin = async function() {
     const phone = document.getElementById('login-phone').value.trim();
     const pwd = document.getElementById('login-password').value.trim();
     if (phone === '13038688446' && pwd === 'fqzx123456') {
+        // 超级管理员模拟
+        currentUser = { id: 'admin', email: 'admin@class.local' };
+        userProfile = { role: '班主任', phone: '13038688446' };
         document.getElementById('login-overlay').style.display = 'none';
         document.querySelector('.sidebar').style.display = '';
         document.getElementById('mainContent').style.display = '';
-        toast('登录成功', 'success');
+        toast('登录成功 (超级管理员)', 'success');
         await initApp();
         return;
     }
     const email = phone + '@class.local';
-    const { data, error } = await sb.auth.signInWithPassword({ email, pwd });
-    if (error) { toast('登录失败：' + error.message, 'error'); return; }
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pwd });
+    if (error) {
+        toast('登录失败：' + error.message, 'error');
+        return;
+    }
     await loadUserProfile(data.user);
     hideLogin();
-    location.reload();
-};async function loadUserProfile(user) {
+    await initApp();   // 使用 initApp 而不是 location.reload()
+};
+async function loadUserProfile(user) {
     currentUser = user;
-    const { data } = await sb.from('profiles').select('*').eq('user_id', user.id).single();
+    let { data, error } = await sb.from('profiles').select('*').eq('user_id', user.id).single();
+    if (error && error.code === 'PGRST116') {
+        // 没有找到 profile，自动创建默认的（角色为“班委”）
+        const phone = user.email.split('@')[0] || '未知';
+        const { data: newProfile, error: insertError } = await sb.from('profiles').insert({
+            user_id: user.id,
+            phone: phone,
+            role: '班委',
+            status: 'active'
+        }).select().single();
+        if (!insertError) data = newProfile;
+    }
     userProfile = data;
 }
-
 function hideLogin() {
     document.getElementById('login-overlay').style.display = 'none';
     document.querySelector('.sidebar').style.display = '';
@@ -1308,7 +1325,7 @@ window.loadSemesterConfig = async function() {
         document.getElementById('ms-value').value = '';
         document.getElementById('ms-code').value = '';
         const sSel = document.getElementById('ms-student'); sSel.innerHTML = '<option value="">-- 选择学生 --</option>'; students.filter(s => s.status === '在读').forEach(s => sSel.innerHTML += `<option value="${s.name}">${s.name}</option>`);
-        const codeSel = document.getElementById('ms-code'); codeSel.innerHTML = '<option value="">自定义</option><optgroup label="扣分">' + getDeductCodes().map(c => `<option value="${c.code}" data-pt="${c.pt}">${c.code} ${c.desc} (${c.pt})</option>`).join('') + '</optgroup><optgroup label="加分">' + getBonusCodes().map(c => `<option value="${c.code}" data-pt="${c.pt}">${c.code} ${c.desc} (+${c.pt})</option>`).join('') + '</optgroup>';
+        const codeSel = document.getElementById('ms-code'); codeSel.innerHTML = '<option value="">自定义</option><optgroup label="扣分">' + getDeductCodes().map(c => `<option value="${c.code}" data-pt="${c.pt}">${c.code} ${c.description} (${c.pt})</option>`).join('') + '</optgroup><optgroup label="加分">' + getBonusCodes().map(c => `<option value="${c.code}" data-pt="${c.pt}">${c.code} ${c.description} (+${c.pt})</option>`).join('') + '</optgroup>';
         openModal('modal-score');
     };
 
@@ -2905,38 +2922,86 @@ window.handleRegister = async function() {
         return;
     }
     if (data.user) {
-        // 插入 profiles 记录
         await sb.from('profiles').upsert({ user_id: data.user.id, phone, role, status: 'active' });
-        // 如果注册后未返回 session，则尝试自动登录
+        // 尝试自动登录
         if (!data.session) {
             const { error: loginErr } = await sb.auth.signInWithPassword({ email, password });
-            if (loginErr) { toast('注册成功，但自动登录失败，请手动登录', 'error'); return; }
+            if (loginErr) {
+                toast('注册成功，但自动登录失败，请手动登录', 'error');
+                return;
+            }
         }
-        // 加载用户信息并进入系统
         await loadUserProfile(data.user);
         hideLogin();
-        location.reload();
+        await initApp();   // 不要 location.reload()
     }
 };
 async function init() {
-        const { data: { session } } = await sb.auth.getSession();
+    try {
+        // 多次尝试获取会话（解决某些环境下的延迟问题）
+        let session = null;
+        for (let attempt = 0; attempt < 3; attempt++) {
+            const { data, error } = await sb.auth.getSession();
+            if (error) {
+                console.warn(`获取会话失败 (尝试 ${attempt+1}/3):`, error);
+                await new Promise(r => setTimeout(r, 200));
+                continue;
+            }
+            if (data.session) {
+                session = data.session;
+                break;
+            }
+            await new Promise(r => setTimeout(r, 100));
+        }
+        
         if (session) {
-            hideLogin();
-            buildUI(); window.loadSemesterConfig(); await loadData();
-            populateAllSelects(); refreshDashboard(); window.loadRecentAttendance();
-            renderRoster(); window.renderScoreLog(); renderWeeklyTable();
-            renderClassLogs(); renderDailyLogs(); renderAlerts(); renderTalks(); renderCodeTable();
+            console.log('检测到有效会话，用户:', session.user.email);
+            document.getElementById('login-overlay').style.display = 'none';
+            document.querySelector('.sidebar').style.display = '';
+            document.getElementById('mainContent').style.display = '';
+            
+            // 加载用户资料（即使失败也不影响主界面）
+            try {
+                await loadUserProfile(session.user);
+            } catch (e) {
+                console.error('加载用户资料失败', e);
+                userProfile = { role: '班委', phone: '未知' };
+            }
+            
+            // 初始化界面和数据
+            buildUI();
+            window.loadSemesterConfig();
+            await loadData();
+            populateAllSelects();
+            refreshDashboard();
+            window.loadRecentAttendance();
+            renderRoster();
+            window.renderScoreLog();
+            renderWeeklyTable();
+            renderClassLogs();
+            renderDailyLogs();
+            renderAlerts();
+            renderTalks();
+            renderCodeTable();
             document.getElementById('weekly-week-num').value = getWeek();
             document.getElementById('absence-date').value = fmt(new Date());
             document.getElementById('absence-week').value = getWeek();
             renderAbsenceTable();
         } else {
+            console.log('未检测到会话，显示登录界面');
             document.getElementById('login-overlay').style.display = 'flex';
             document.querySelector('.sidebar').style.display = 'none';
             document.getElementById('mainContent').style.display = 'none';
         }
+    } catch (err) {
+        console.error('初始化失败:', err);
+        // 出错时也显示登录界面，避免白屏
+        document.getElementById('login-overlay').style.display = 'flex';
+        document.querySelector('.sidebar').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'none';
+        toast('页面加载失败，请刷新重试', 'error');
     }
-    // ==================== 周违纪登记 ====================
+}    // ==================== 周违纪登记 ====================
     function renderWeeklyTable() {
         const wk = parseInt(document.getElementById('weekly-week-num').value) || getWeek();
         const active = students.filter(s => s.status === '在读');
@@ -2948,9 +3013,9 @@ async function init() {
             return `<tr><td>${s.name}</td><td>${ic('mon')}</td><td>${ic('tue')}</td><td>${ic('wed')}</td><td>${ic('thu')}</td><td>${ic('fri')}</td><td><input list="bonusList" value="${d.bonus_reason||''}" data-student="${s.name}" data-day="bonus_reason" style="width:90px;" placeholder="加分事由"></td><td><input type="number" value="${d.bonus_score||''}" data-student="${s.name}" data-day="bonus_score" style="width:60px;" placeholder="分值"></td><td style="font-weight:700;color:${net<0?'#ef4444':'#10b981'}">${net.toFixed(1)}</td></tr>`;
         }).join('');
         let dl = document.getElementById('codeList'); if (dl) dl.remove();
-        dl = document.createElement('datalist'); dl.id = 'codeList'; dedCodes.forEach(c => dl.innerHTML += `<option value="${c.code} ${c.pt}">${c.code} ${c.desc}</option>`); bonCodes.forEach(c => dl.innerHTML += `<option value="${c.code} +${c.pt}">${c.code} ${c.desc}</option>`); document.body.appendChild(dl);
+        dl = document.createElement('datalist'); dl.id = 'codeList'; dedCodes.forEach(c => dl.innerHTML += `<option value="${c.code} ${c.pt}">${c.code} ${c.description}</option>`); bonCodes.forEach(c => dl.innerHTML += `<option value="${c.code} +${c.pt}">${c.code} ${c.description}</option>`); document.body.appendChild(dl);
         let bl = document.getElementById('bonusList'); if (bl) bl.remove();
-        bl = document.createElement('datalist'); bl.id = 'bonusList'; bonCodes.forEach(c => bl.innerHTML += `<option value="${c.code}">${c.desc}</option>`); document.body.appendChild(bl);
+        bl = document.createElement('datalist'); bl.id = 'bonusList'; bonCodes.forEach(c => bl.innerHTML += `<option value="${c.code}">${c.description}</option>`); document.body.appendChild(bl);
     }
       window.saveWeeklyData = async function() {
     const wk = parseInt(document.getElementById('weekly-week-num').value) || getWeek();
@@ -3262,7 +3327,7 @@ window.editTalk = async function(id) {
 };
 
     // ==================== 代码管理 ====================
-    function renderCodeTable() { const dedCodes = getDeductCodes(), bonCodes = getBonusCodes(); document.getElementById('code-tbody').innerHTML = dedCodes.map(c => `<tr><td>${c.code}</td><td>${c.desc}</td><td style="color:#ef4444">${c.pt}</td><td><button class="btn-sm" onclick="window.openDeductCodeModal('${c.code}')">编辑</button> <button class="btn-sm btn-danger" onclick="window.deleteDeductCode('${c.code}')">删</button></td></tr>`).join(''); document.getElementById('bonus-code-tbody').innerHTML = bonCodes.map(c => `<tr><td>${c.code}</td><td>${c.desc}</td><td style="color:#10b981">+${c.pt}</td><td><button class="btn-sm" onclick="window.openBonusCodeModal('${c.code}')">编辑</button> <button class="btn-sm btn-danger" onclick="window.deleteBonusCode('${c.code}')">删</button></td></tr>`).join(''); }
+    function renderCodeTable() { const dedCodes = getDeductCodes(), bonCodes = getBonusCodes(); document.getElementById('code-tbody').innerHTML = dedCodes.map(c => `<tr><td>${c.code}</td> <td>${c.description}</td><td style="color:#ef4444">${c.pt}</td><td><button class="btn-sm" onclick="window.openDeductCodeModal('${c.code}')">编辑</button> <button class="btn-sm btn-danger" onclick="window.deleteDeductCode('${c.code}')">删</button></td></tr>`).join(''); document.getElementById('bonus-code-tbody').innerHTML = bonCodes.map(c => `<tr><td>${c.code}</td><td>${c.description}</td><td style="color:#10b981">+${c.pt}</td><td><button class="btn-sm" onclick="window.openBonusCodeModal('${c.code}')">编辑</button> <button class="btn-sm btn-danger" onclick="window.deleteBonusCode('${c.code}')">删</button></td></tr>`).join(''); }
     window.openDeductCodeModal = function(code=null) { if(!document.getElementById('modal-deduct-code')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-deduct-code"><div class="modal-content"><h3>编辑扣分代码</h3><input id="dc-code" placeholder="代码"><input id="dc-desc" placeholder="事项描述"><input type="number" id="dc-pt" placeholder="扣分（负数）" step="0.5"><div style="margin-top:10px"><button class="btn-primary" onclick="window.saveDeductCode()">保存</button><button class="btn-outline" onclick="window.closeModal('modal-deduct-code')">取消</button></div></div></div>`); if(code){ const c = getDeductCodes().find(c=>c.code===code); document.getElementById('dc-code').value=c.code; document.getElementById('dc-desc').value=c.desc; document.getElementById('dc-pt').value=c.pt; } else { document.getElementById('dc-code').value=''; document.getElementById('dc-desc').value=''; document.getElementById('dc-pt').value=''; } openModal('modal-deduct-code'); };
     window.saveDeductCode = async function() { const code = document.getElementById('dc-code').value.trim(), desc = document.getElementById('dc-desc').value.trim(), pt = parseFloat(document.getElementById('dc-pt').value); if(!code||!desc||isNaN(pt)){ toast('请完整填写','error'); return; } await sb.from('deduct_codes').upsert({code,desc,pt}); await loadData(); renderCodeTable(); closeModal('modal-deduct-code'); toast('代码已保存'); };
     window.deleteDeductCode = async function(code) { if(!confirm('删除？')) return; await sb.from('deduct_codes').delete().eq('code',code); await loadData(); renderCodeTable(); };
