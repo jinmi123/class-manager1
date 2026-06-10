@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>25级化学工艺1班 · 班级管理系统 v4.6.6</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
        <style>
         :root { --primary: #1a73e8; --primary-dark: #1557b0; --sidebar-bg: #1e293b; --sidebar-text: #cbd5e1; --bg: #f1f5f9; --card: #fff; --text: #1e293b; --text-secondary: #64748b; --border: #e2e8f0; --danger: #ef4444; --warning: #f59e0b; --success: #10b981; --radius: 10px; --radius-sm: 6px; }
         * { margin:0; padding:0; box-sizing:border-box; }
@@ -77,6 +78,7 @@
     <li><a data-page="absence-log">📋 缺旷登记</a></li>
     <li><a data-page="attendance-history">📊 出勤历史</a></li>
     <li><a data-page="warning-notice">📄 预警通知单</a></li>
+    <li><a data-page="grade-manager">📊 成绩管理</a></li>
     <li><a data-page="ai-advisor">🤖 <span>班级管理小助手</span></a></li>
     <li><a data-page="rules">📜 规章制度</a></li>
         <li><a data-page="settings">⚙️ 设置</a></li>
@@ -136,9 +138,7 @@ window.handleRegister = async function() {
         return;
     }
     if (data.user) {
-        // 插入 profiles 记录
         await sb.from('profiles').upsert({ user_id: data.user.id, phone, role, status: 'active' });
-        // 自动登录
         if (!data.session) {
             const { error: loginErr } = await sb.auth.signInWithPassword({ email, password });
             if (loginErr) { toast('自动登录失败，请手动登录', 'error'); return; }
@@ -147,26 +147,27 @@ window.handleRegister = async function() {
         hideLogin();
         location.reload();
     }
-};
-    // ========== 登录/注册/权限模块 ==========
+}  // ✅ 这里必须有这个闭合大括号
+  // ========== 登录/注册/权限模块 ==========
 let currentUser = null;
 let userProfile = null;
 
 window.handleLogin = async function() {
     const phone = document.getElementById('login-phone').value.trim();
     const pwd = document.getElementById('login-password').value.trim();
+    // 超级管理员账号 - 免登录直接进入
     if (phone === '13038688446' && pwd === 'fqzx123456') {
-        // 超级管理员模拟
         currentUser = { id: 'admin', email: 'admin@class.local' };
         userProfile = { role: '班主任', phone: '13038688446' };
         document.getElementById('login-overlay').style.display = 'none';
         document.querySelector('.sidebar').style.display = '';
         document.getElementById('mainContent').style.display = '';
         toast('登录成功 (超级管理员)', 'success');
-        await initApp();
+        await initAdminMode();   // 调用专用初始化函数
         return;
     }
-    const email = phone + '@class.local';
+    // 普通用户登录
+    const email = phone + '@example.com';
     const { data, error } = await sb.auth.signInWithPassword({ email, password: pwd });
     if (error) {
         toast('登录失败：' + error.message, 'error');
@@ -174,8 +175,8 @@ window.handleLogin = async function() {
     }
     await loadUserProfile(data.user);
     hideLogin();
-    await initApp();   // 使用 initApp 而不是 location.reload()
-};
+    await init();
+}   // 注意：这里只有一个 }，没有多余的分号
 async function loadUserProfile(user) {
     currentUser = user;
     let { data, error } = await sb.from('profiles').select('*').eq('user_id', user.id).single();
@@ -192,11 +193,13 @@ async function loadUserProfile(user) {
     }
     userProfile = data;
 }
+
 function hideLogin() {
     document.getElementById('login-overlay').style.display = 'none';
     document.querySelector('.sidebar').style.display = '';
     document.getElementById('mainContent').style.display = '';
 }
+
 window.logout = async function() {
     await sb.auth.signOut();
     currentUser = null;
@@ -222,7 +225,6 @@ async function requestModification(action, details) {
     }
 }
 
-// 修改密码
 window.changePassword = async function() {
     const newPass = document.getElementById('new-password').value.trim();
     if (!newPass || newPass.length < 6) { toast('新密码至少6位', 'error'); return; }
@@ -232,7 +234,6 @@ window.changePassword = async function() {
     document.getElementById('new-password').value = '';
 };
 
-// WebAuthn 占位
 window.handleWebAuthnLogin = async function() { toast('生物识别登录暂未开放，请使用密码登录', 'error'); };
 window.registerWebAuthn = async function() { toast('请在浏览器支持的环境下使用', 'error'); };
 // ========== 登录模块结束 ==========
@@ -511,7 +512,76 @@ function getAgeFromIdcard(idcard) {
             </table>
         </div>
     </div>
+<div class="page" id="page-grade-manager">
+    <div class="card">
+        <h2>📊 学生成绩管理</h2>
+        <div style="margin-bottom: 12px;">
+            <label>学期：</label>
+            <select id="grade-semester">
+                <option value="2025-2026学年第一学期">2025-2026学年第一学期</option>
+                <option value="2025-2026学年第二学期">2025-2026学年第二学期</option>
+            </select>
+            <label>科目：</label>
+            <input type="text" id="grade-subject" placeholder="例如：语文" list="subjectList">
+            <datalist id="subjectList">
+                <option>语文</option><option>数学</option><option>英语</option><option>专业课</option>
+            </datalist>
+            <button class="btn-sm" onclick="window.loadGradeTable()">🔍 加载成绩</button>
+<button class="btn-sm btn-outline" onclick="window.importGradeExcel()">📤 导入Excel</button>
+            <button class="btn-sm btn-outline" onclick="window.showAddGradeModal()">+ 录入成绩</button>
+        </div>
+        <div style="overflow-x: auto;">
+            <table id="grade-table">
+                <thead><tr><th>学生姓名</th><th>成绩</th><th>操作</th></tr></thead>
+                <tbody id="grade-tbody"><tr><td colspan="3">请先选择学期和科目，点击“加载成绩”</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card">
+        <h2>📈 期末综合分（操行分60% + 平均成绩40%）</h2>
+        <table id="comprehensive-table">
+            <thead><tr><th>学生姓名</th><th>操行分</th><th>平均成绩</th><th>综合分</th></tr></thead>
+            <tbody id="comprehensive-tbody"></tbody>
+        </table>
+        <button class="btn-sm" onclick="window.refreshComprehensiveScores()">🔄 重新计算所有学生综合分</button>
+    </div>
+</div>
        <div class="page" id="page-warning-notice">
+<div class="page" id="page-grade-manager">
+    <div class="card">
+        <h2>📊 学生成绩管理</h2>
+        <div style="margin-bottom: 12px;">
+            <label>学期：</label>
+            <select id="grade-semester">
+                <option value="2025-2026学年第一学期">2025-2026学年第一学期</option>
+                <option value="2025-2026学年第二学期">2025-2026学年第二学期</option>
+            </select>
+            <label>科目：</label>
+            <input type="text" id="grade-subject" placeholder="例如：语文" list="subjectList">
+            <datalist id="subjectList">
+                <option>语文</option><option>数学</option><option>英语</option><option>专业课</option>
+            </datalist>
+            <button class="btn-sm" onclick="window.loadGradeTable()">🔍 加载成绩</button>
+            <button class="btn-sm btn-outline" onclick="window.showAddGradeModal()">+ 录入成绩</button>
+            <!-- 这里是导入按钮 -->
+            <button class="btn-sm btn-outline" onclick="window.importGradeExcel()">📤 导入Excel</button>
+        </div>
+        <div style="overflow-x: auto;">
+            <table id="grade-table">
+                <thead><tr><th>学生姓名</th><th>成绩</th><th>操作</th></tr></thead>
+                <tbody id="grade-tbody"><tr><td colspan="3">请先选择学期和科目，点击“加载成绩”</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card">
+        <h2>📈 期末综合分（操行分60% + 平均成绩40%）</h2>
+        <table id="comprehensive-table">
+            <thead><tr><th>学生姓名</th><th>操行分</th><th>平均成绩</th><th>综合分</th></tr></thead>
+            <tbody id="comprehensive-tbody"></tbody>
+        </table>
+        <button class="btn-sm" onclick="window.refreshComprehensiveScores()">🔄 重新计算所有学生综合分</button>
+    </div>
+</div>
             <div class="card">
                 <h2>📄 学生操行分预警通知单</h2>
                 <p style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">选择学生和违纪事项后，等级自动生成；处置建议可 AI 辅助。</p>
@@ -791,6 +861,10 @@ function getAgeFromIdcard(idcard) {
         if (p === 'score-log') window.renderScoreLog();
         if (p === 'weekly-table') { document.getElementById('weekly-week-num').value = getWeek(); renderWeeklyTable(); }
         if (p === 'class-log') { renderClassLogs(); renderDailyLogs(); }
+        if (p === 'grade-manager') {
+    window.loadGradeTable();
+    window.refreshComprehensiveScores();
+}
         if (p === 'alert-records') { renderAlerts(); renderTalks(); }
         if (p === 'code-table') renderCodeTable();
                 if (p === 'settings') {
@@ -1094,10 +1168,13 @@ async function refreshDashboard() {
         }
     };
 window.deleteStudent = async function(idcard) {
-    if (!canModify()) { toast('只有班主任才能删除学生', 'error'); return; }
+    if (!canModify()) {
+        if (confirm('您是班委，无权直接删除学生。是否提交申请给班主任？')) {
+            await requestModification('删除学生', `身份证：${idcard}`);
+        }
+        return;
+    }
     if (!confirm(`确定要永久删除该学生及其所有记录吗？\n身份证：${idcard}\n此操作不可恢复！`)) return;
-    // 可选：先删除该生的所有操行分记录
-    // await sb.from('score_log').delete().eq('student', studentName); // 需要先通过idcard获取姓名
     const { error } = await sb.from('students').delete().eq('idcard', idcard);
     if (error) { toast('删除失败：' + error.message, 'error'); return; }
     toast('学生已删除');
@@ -1122,8 +1199,10 @@ window.saveSemesterConfig = async function() {
     }
     // 同时缓存到本地（方便离线或快速读取）
     localStorage.setItem('semester_config', JSON.stringify({ startDate, totalWeeks }));
-    document.getElementById('current-week-display').textContent = getWeek();
-    toast('学期配置已保存（云端同步）');
+    const week = getWeek();
+document.getElementById('current-week-display').textContent = week;
+toast('学期配置已保存（云端同步）');
+refreshDashboard();
 };
     // 加载学期配置（修复空白页）
 window.loadSemesterConfig = async function() {
@@ -1312,12 +1391,18 @@ window.loadSemesterConfig = async function() {
 };
 
     window.deleteLog = async function(id) {
-        if(!confirm('删除？')) return;
-        await sb.from('score_log').delete().eq('id', id);
-        await loadData();
-        window.renderScoreLog();
-        refreshDashboard();
-    };
+    if (!canModify()) {
+        if (confirm('您是班委，无权直接删除操行分记录。是否提交申请给班主任？')) {
+            await requestModification('删除操行分记录', `记录ID：${id}`);
+        }
+        return;
+    }
+    if(!confirm('删除？')) return;
+    await sb.from('score_log').delete().eq('id', id);
+    await loadData();
+    window.renderScoreLog();
+    refreshDashboard();
+};
 
     window.openAddScoreModal = function() {
         if (!document.getElementById('modal-score')) document.body.insertAdjacentHTML('beforeend', `<div class="modal" id="modal-score"><div class="modal-content"><h3>新增操行分</h3><div class="form-row"><select id="ms-student"></select><input type="date" id="ms-date"></div><div class="form-row"><input type="number" id="ms-week" value="1" style="width:70px"><select id="ms-code" onchange="window.onCodeChange()"></select><input type="number" id="ms-value" placeholder="分值" style="width:80px"></div><input id="ms-reason" placeholder="事由"><div class="form-row"><input id="ms-operator" value="班主任"><select id="ms-basis"><option>直接记录</option><option>课堂日志</option><option>班级日志</option></select></div><div style="text-align:right;margin-top:10px"><button class="btn-outline" onclick="window.closeModal('modal-score')">取消</button><button class="btn-primary" onclick="window.saveScoreRecord()">保存</button></div></div></div>`);
@@ -1833,11 +1918,16 @@ window.updateSelectAllState = function() {
 };
 // 批量删除
 window.batchDeleteLogs = async function() {
+    if (!canModify()) {
+        if (confirm('您是班委，无权批量删除。是否提交申请给班主任？')) {
+            await requestModification('批量删除操行分记录', '多条记录');
+        }
+        return;
+    }
     var checked = document.querySelectorAll('.log-checkbox:checked');
     if (checked.length === 0) { toast('请至少选择一条记录', 'error'); return; }
     if (!confirm(`确定删除选中的 ${checked.length} 条记录吗？此操作不可恢复。`)) return;
     var ids = Array.from(checked).map(cb => parseInt(cb.value));
-    // 分批删除，避免URL过长
     for (let i = 0; i < ids.length; i += 50) {
         const batch = ids.slice(i, i + 50);
         const { error } = await sb.from('score_log').delete().in('id', batch);
@@ -2831,9 +2921,9 @@ window.savePhoneViolation = async function() {
     const reason = document.getElementById('pv-reason').value.trim();
     if (!student) { toast('请选择学生', 'error'); return; }
 
-    const code = times === '1' ? 'M1' : 'M2';
-    const desc = times === '1' ? '手机违规第1次（代管一周）' : `手机违规第${times}次`;
-    const pt = times === '1' ? 0 : -10;
+    const code = times === '1' ? 'M1-1' : (times === '2' ? 'M1-2' : (times === '3' ? 'M1-3' : 'M1-4'));
+    const pt = times === '1' ? -5 : (times === '2' ? -10 : (times === '3' ? -15 : -20));
+    const desc = times === '1' ? '手机违规第1次（代管一周）' : `手机违规第${times}次`;  // ✅ 添加这行
 
     const { error } = await sb.from('score_log').insert({
         student, date: fmt(new Date()), week: getWeek(), code,
@@ -2841,7 +2931,6 @@ window.savePhoneViolation = async function() {
         value: pt, operator: '班主任', basis: '直接记录'
     });
     if (error) { toast('保存失败：' + error.message, 'error'); return; }
-
     closeModal('modal-phone-violation');
     await loadData();
     window.renderPhoneDiscipline();
@@ -2911,7 +3000,7 @@ window.handleRegister = async function() {
     const role = document.getElementById('login-role').value;
     if (!phone || !password) { toast('请输入手机号和密码', 'error'); return; }
     if (password.length < 6) { toast('密码至少6位', 'error'); return; }
-    const email = phone + '@class.local';
+    const email = phone + '@example.com';  // 注意：这里已经改为 @example.com
     const { data, error } = await sb.auth.signUp({ email, password });
     if (error) {
         if (error.message.includes('already registered')) {
@@ -2923,7 +3012,6 @@ window.handleRegister = async function() {
     }
     if (data.user) {
         await sb.from('profiles').upsert({ user_id: data.user.id, phone, role, status: 'active' });
-        // 尝试自动登录
         if (!data.session) {
             const { error: loginErr } = await sb.auth.signInWithPassword({ email, password });
             if (loginErr) {
@@ -2933,43 +3021,17 @@ window.handleRegister = async function() {
         }
         await loadUserProfile(data.user);
         hideLogin();
-        await initApp();   // 不要 location.reload()
+        await init();   // 替换原来的 location.reload() 和 initApp()
     }
 };
-async function init() {
+let initLock = false; // 防止并发初始化
+async function initAdminMode() {
+    if (initLock) return;
+    initLock = true;
     try {
-        // 多次尝试获取会话（解决某些环境下的延迟问题）
-        let session = null;
-        for (let attempt = 0; attempt < 3; attempt++) {
-            const { data, error } = await sb.auth.getSession();
-            if (error) {
-                console.warn(`获取会话失败 (尝试 ${attempt+1}/3):`, error);
-                await new Promise(r => setTimeout(r, 200));
-                continue;
-            }
-            if (data.session) {
-                session = data.session;
-                break;
-            }
-            await new Promise(r => setTimeout(r, 100));
-        }
-        
-        if (session) {
-            console.log('检测到有效会话，用户:', session.user.email);
-            document.getElementById('login-overlay').style.display = 'none';
-            document.querySelector('.sidebar').style.display = '';
-            document.getElementById('mainContent').style.display = '';
-            
-            // 加载用户资料（即使失败也不影响主界面）
-            try {
-                await loadUserProfile(session.user);
-            } catch (e) {
-                console.error('加载用户资料失败', e);
-                userProfile = { role: '班委', phone: '未知' };
-            }
-            
-            // 初始化界面和数据
+        if (!window._uiBuilt) {
             buildUI();
+            window._uiBuilt = true;
             window.loadSemesterConfig();
             await loadData();
             populateAllSelects();
@@ -2988,20 +3050,119 @@ async function init() {
             document.getElementById('absence-week').value = getWeek();
             renderAbsenceTable();
         } else {
-            console.log('未检测到会话，显示登录界面');
+            await loadData();
+            refreshDashboard();
+            const activePage = document.querySelector('.page.active');
+            if (activePage) {
+                const pageId = activePage.id.replace('page-', '');
+                if (pageId === 'dashboard') refreshDashboard();
+                else if (pageId === 'roster') renderRoster();
+                else if (pageId === 'score-log') window.renderScoreLog();
+                else if (pageId === 'weekly-table') renderWeeklyTable();
+                else if (pageId === 'class-log') { renderClassLogs(); renderDailyLogs(); }
+                else if (pageId === 'alert-records') { renderAlerts(); renderTalks(); }
+                else if (pageId === 'code-table') renderCodeTable();
+                else if (pageId === 'student-profile') window.renderStudentProfile();
+                else if (pageId === 'absence-log') renderAbsenceTable();
+            }
+        }
+        document.getElementById('current-week-display').textContent = getWeek();
+    } catch (err) {
+        console.error('管理员模式初始化失败', err);
+        toast('初始化失败，请刷新页面', 'error');
+    } finally {
+        initLock = false;
+    }
+}
+
+async function init() {
+    if (initLock) return;
+    initLock = true;
+    try {
+        let session = null;
+        for (let i = 0; i < 5; i++) {
+            const { data, error } = await sb.auth.getSession();
+            if (error) {
+                console.warn(`获取会话失败 (${i+1}/5):`, error);
+                await new Promise(r => setTimeout(r, 200));
+                continue;
+            }
+            if (data.session) {
+                session = data.session;
+                break;
+            }
+            await new Promise(r => setTimeout(r, 100));
+        }
+        if (!session) {
+            // 没有会话，返回登录界面
             document.getElementById('login-overlay').style.display = 'flex';
             document.querySelector('.sidebar').style.display = 'none';
             document.getElementById('mainContent').style.display = 'none';
+            window._uiBuilt = false;
+            toast('请先登录', 'error');
+            return;
         }
+        // 有会话，正常加载
+        document.getElementById('login-overlay').style.display = 'none';
+        document.querySelector('.sidebar').style.display = '';
+        document.getElementById('mainContent').style.display = '';
+        if (!userProfile) {
+            try {
+                await loadUserProfile(session.user);
+            } catch (e) {
+                console.error('加载用户资料失败', e);
+                userProfile = { role: '班委', phone: '未知' };
+            }
+        }
+        if (!window._uiBuilt) {
+            buildUI();
+            window._uiBuilt = true;
+            window.loadSemesterConfig();
+            await loadData();
+            populateAllSelects();
+            refreshDashboard();
+            window.loadRecentAttendance();
+            renderRoster();
+            window.renderScoreLog();
+            renderWeeklyTable();
+            renderClassLogs();
+            renderDailyLogs();
+            renderAlerts();
+            renderTalks();
+            renderCodeTable();
+            document.getElementById('weekly-week-num').value = getWeek();
+            document.getElementById('absence-date').value = fmt(new Date());
+            document.getElementById('absence-week').value = getWeek();
+            renderAbsenceTable();
+        } else {
+            await loadData();
+            refreshDashboard();
+            const activePage = document.querySelector('.page.active');
+            if (activePage) {
+                const pageId = activePage.id.replace('page-', '');
+                if (pageId === 'dashboard') refreshDashboard();
+                else if (pageId === 'roster') renderRoster();
+                else if (pageId === 'score-log') window.renderScoreLog();
+                else if (pageId === 'weekly-table') renderWeeklyTable();
+                else if (pageId === 'class-log') { renderClassLogs(); renderDailyLogs(); }
+                else if (pageId === 'alert-records') { renderAlerts(); renderTalks(); }
+                else if (pageId === 'code-table') renderCodeTable();
+                else if (pageId === 'student-profile') window.renderStudentProfile();
+                else if (pageId === 'absence-log') renderAbsenceTable();
+            }
+        }
+        document.getElementById('current-week-display').textContent = getWeek();
     } catch (err) {
-        console.error('初始化失败:', err);
-        // 出错时也显示登录界面，避免白屏
+        console.error('init错误', err);
         document.getElementById('login-overlay').style.display = 'flex';
         document.querySelector('.sidebar').style.display = 'none';
         document.getElementById('mainContent').style.display = 'none';
-        toast('页面加载失败，请刷新重试', 'error');
+        toast('初始化失败：' + err.message, 'error');
+    } finally {
+        initLock = false;
     }
-}    // ==================== 周违纪登记 ====================
+}
+  // ==================== 周违纪登记 ====================
     function renderWeeklyTable() {
         const wk = parseInt(document.getElementById('weekly-week-num').value) || getWeek();
         const active = students.filter(s => s.status === '在读');
@@ -3083,13 +3244,33 @@ async function init() {
 
     // ==================== 课堂日志 ====================
     function renderClassLogs() { document.getElementById('class-log-tbody').innerHTML = classLogs.length ? classLogs.map(l => `<tr><td>${l.date}</td><td>${l.period}</td><td>${l.subject||''}</td><td>${l.teacher||''}</td><td>${l.rating}</td><td>${l.violation||'—'}</td><td>${l.measure||'—'}</td><td><button class="btn-danger btn-xs" onclick="window.deleteClassLog(${l.id})">删</button></td></tr>`).join('') : '<tr><td colspan="8">暂无课堂日志</td></tr>'; }
-    window.deleteClassLog = async id => { await sb.from('class_logs').delete().eq('id', id); await loadData(); renderClassLogs(); };
+    window.deleteClassLog = async id => {
+    if (!canModify()) {
+        if (confirm('您是班委，无权删除课堂日志。是否提交申请给班主任？')) {
+            await requestModification('删除课堂日志', `记录ID：${id}`);
+        }
+        return;
+    }
+    await sb.from('class_logs').delete().eq('id', id);
+    await loadData();
+    renderClassLogs();
+};;
     window.openClassLogModal = function() { if(!document.getElementById('modal-class-log')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-class-log"><div class="modal-content"><h3>课堂日志</h3><div class="form-row"><input type="date" id="cl-date"><input type="number" id="cl-period" value="1" style="width:70px"></div><div class="form-row"><input id="cl-subject" placeholder="科目"><input id="cl-teacher" placeholder="教师"></div><div class="form-row"><select id="cl-rating"><option>A</option><option>B</option><option>C</option></select><input id="cl-monitor" value="唐雨馨"></div><textarea id="cl-violation" rows="2" placeholder="违纪记录"></textarea><textarea id="cl-measure" rows="2" placeholder="教师措施"></textarea><div style="text-align:right;margin-top:10px"><button class="btn-outline" onclick="window.closeModal('modal-class-log')">取消</button><button class="btn-primary" onclick="window.saveClassLog()">保存</button></div></div></div>`); document.getElementById('cl-date').value = fmt(new Date()); openModal('modal-class-log'); };
     window.saveClassLog = async function() { const d = { date: document.getElementById('cl-date').value, period: parseInt(document.getElementById('cl-period').value)||1, subject: document.getElementById('cl-subject').value, teacher: document.getElementById('cl-teacher').value, rating: document.getElementById('cl-rating').value, monitor: document.getElementById('cl-monitor').value, violation: document.getElementById('cl-violation').value, measure: document.getElementById('cl-measure').value }; if(!d.date){ toast('请填写日期','error'); return; } await sb.from('class_logs').insert(d); closeModal('modal-class-log'); await loadData(); renderClassLogs(); toast('已保存'); };
 
     // ==================== 班级日志 ====================
     function renderDailyLogs() { document.getElementById('daily-log-tbody').innerHTML = dailyLogs.length ? dailyLogs.map(l => `<tr><td>${l.date}</td><td>${l.monitor||''}</td><td>${l.overall}</td><td>${l.recess||'—'}</td><td>${l.hygiene||'—'}</td><td>${l.good||'—'}</td><td>${l.concern||'—'}</td><td><button class="btn-danger btn-xs" onclick="window.deleteDailyLog(${l.id})">删</button></td></tr>`).join('') : '<tr><td colspan="8">暂无班级日志</td></tr>'; }
-    window.deleteDailyLog = async id => { await sb.from('daily_logs').delete().eq('id', id); await loadData(); renderDailyLogs(); };
+    window.deleteDailyLog = async id => {
+    if (!canModify()) {
+        if (confirm('您是班委，无权删除班级日志。是否提交申请给班主任？')) {
+            await requestModification('删除班级日志', `记录ID：${id}`);
+        }
+        return;
+    }
+    await sb.from('daily_logs').delete().eq('id', id);
+    await loadData();
+    renderDailyLogs();
+};
     window.openDailyLogModal = function() { if(!document.getElementById('modal-daily-log')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-daily-log"><div class="modal-content"><h3>班级日志</h3><div class="form-row"><input type="date" id="dl-date"><input id="dl-monitor" value="杨桂琼"></div><div class="form-row"><select id="dl-overall"><option>优</option><option>良</option><option>一般</option><option>需关注</option></select></div><textarea id="dl-recess" rows="1" placeholder="课间"></textarea><textarea id="dl-hygiene" rows="1" placeholder="卫生"></textarea><textarea id="dl-good" rows="2" placeholder="好事"></textarea><textarea id="dl-concern" rows="2" placeholder="关注"></textarea><div style="text-align:right;margin-top:10px"><button class="btn-outline" onclick="window.closeModal('modal-daily-log')">取消</button><button class="btn-primary" onclick="window.saveDailyLog()">保存</button></div></div></div>`); document.getElementById('dl-date').value = fmt(new Date()); openModal('modal-daily-log'); };
     window.saveDailyLog = async function() { const d = { date: document.getElementById('dl-date').value, monitor: document.getElementById('dl-monitor').value, overall: document.getElementById('dl-overall').value, recess: document.getElementById('dl-recess').value, hygiene: document.getElementById('dl-hygiene').value, good: document.getElementById('dl-good').value, concern: document.getElementById('dl-concern').value }; if(!d.date){ toast('请填写日期','error'); return; } await sb.from('daily_logs').insert(d); closeModal('modal-daily-log'); await loadData(); renderDailyLogs(); toast('已保存'); };
 
@@ -3178,8 +3359,20 @@ window.editTalk = async function(id) {
     document.querySelector('#modal-talk h3').textContent = '新增谈话记录';
     openModal('modal-talk');
 };
-    window.deleteTalk = async id => { await sb.from('talks').delete().eq('id', id); await loadData(); renderTalks(); };
+    window.deleteTalk = async id => {
+    if (!canModify()) {
+        if (confirm('您是班委，无权删除谈话记录。是否提交申请给班主任？')) {
+            await requestModification('删除谈话记录', `记录ID：${id}`);
+        }
+        return;
+    }
+    await sb.from('talks').delete().eq('id', id);
+    await loadData();
+    renderTalks();
+};
     window.openTalkModal = function() {
+    document.getElementById('talk-edit-id').value = '';
+    document.querySelector('#modal-talk h3').textContent = '新增谈话记录';
     if(!document.getElementById('modal-talk')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-talk"><div class="modal-content" style="max-width:650px;"><h3>新增谈话记录</h3>
         <div class="form-row"><select id="talk-student"></select><input type="date" id="talk-date"></div>
         <div class="form-row"><select id="talk-type"><option>个别谈话</option><option>家长沟通</option></select></div>
@@ -3328,12 +3521,34 @@ window.editTalk = async function(id) {
 
     // ==================== 代码管理 ====================
     function renderCodeTable() { const dedCodes = getDeductCodes(), bonCodes = getBonusCodes(); document.getElementById('code-tbody').innerHTML = dedCodes.map(c => `<tr><td>${c.code}</td> <td>${c.description}</td><td style="color:#ef4444">${c.pt}</td><td><button class="btn-sm" onclick="window.openDeductCodeModal('${c.code}')">编辑</button> <button class="btn-sm btn-danger" onclick="window.deleteDeductCode('${c.code}')">删</button></td></tr>`).join(''); document.getElementById('bonus-code-tbody').innerHTML = bonCodes.map(c => `<tr><td>${c.code}</td><td>${c.description}</td><td style="color:#10b981">+${c.pt}</td><td><button class="btn-sm" onclick="window.openBonusCodeModal('${c.code}')">编辑</button> <button class="btn-sm btn-danger" onclick="window.deleteBonusCode('${c.code}')">删</button></td></tr>`).join(''); }
-    window.openDeductCodeModal = function(code=null) { if(!document.getElementById('modal-deduct-code')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-deduct-code"><div class="modal-content"><h3>编辑扣分代码</h3><input id="dc-code" placeholder="代码"><input id="dc-desc" placeholder="事项描述"><input type="number" id="dc-pt" placeholder="扣分（负数）" step="0.5"><div style="margin-top:10px"><button class="btn-primary" onclick="window.saveDeductCode()">保存</button><button class="btn-outline" onclick="window.closeModal('modal-deduct-code')">取消</button></div></div></div>`); if(code){ const c = getDeductCodes().find(c=>c.code===code); document.getElementById('dc-code').value=c.code; document.getElementById('dc-desc').value=c.desc; document.getElementById('dc-pt').value=c.pt; } else { document.getElementById('dc-code').value=''; document.getElementById('dc-desc').value=''; document.getElementById('dc-pt').value=''; } openModal('modal-deduct-code'); };
+    window.openDeductCodeModal = function(code=null) { if(!document.getElementById('modal-deduct-code')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-deduct-code"><div class="modal-content"><h3>编辑扣分代码</h3><input id="dc-code" placeholder="代码"><input id="dc-desc" placeholder="事项描述"><input type="number" id="dc-pt" placeholder="扣分（负数）" step="0.5"><div style="margin-top:10px"><button class="btn-primary" onclick="window.saveDeductCode()">保存</button><button class="btn-outline" onclick="window.closeModal('modal-deduct-code')">取消</button></div></div></div>`); if(code){ const c = getDeductCodes().find(c=>c.code===code); document.getElementById('dc-code').value=c.code; document.getElementById('dc-desc').value = c.description;; document.getElementById('dc-pt').value=c.pt; } else { document.getElementById('dc-code').value=''; document.getElementById('dc-desc').value=''; document.getElementById('dc-pt').value=''; } openModal('modal-deduct-code'); };
     window.saveDeductCode = async function() { const code = document.getElementById('dc-code').value.trim(), desc = document.getElementById('dc-desc').value.trim(), pt = parseFloat(document.getElementById('dc-pt').value); if(!code||!desc||isNaN(pt)){ toast('请完整填写','error'); return; } await sb.from('deduct_codes').upsert({code,desc,pt}); await loadData(); renderCodeTable(); closeModal('modal-deduct-code'); toast('代码已保存'); };
-    window.deleteDeductCode = async function(code) { if(!confirm('删除？')) return; await sb.from('deduct_codes').delete().eq('code',code); await loadData(); renderCodeTable(); };
-    window.openBonusCodeModal = function(code=null) { if(!document.getElementById('modal-bonus-code')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-bonus-code"><div class="modal-content"><h3>编辑加分代码</h3><input id="bc-code" placeholder="代码"><input id="bc-desc" placeholder="事项描述"><input type="number" id="bc-pt" placeholder="加分（正数）" step="0.5"><div style="margin-top:10px"><button class="btn-primary" onclick="window.saveBonusCode()">保存</button><button class="btn-outline" onclick="window.closeModal('modal-bonus-code')">取消</button></div></div></div>`); if(code){ const c = getBonusCodes().find(c=>c.code===code); document.getElementById('bc-code').value=c.code; document.getElementById('bc-desc').value=c.desc; document.getElementById('bc-pt').value=c.pt; } else { document.getElementById('bc-code').value=''; document.getElementById('bc-desc').value=''; document.getElementById('bc-pt').value=''; } openModal('modal-bonus-code'); };
+    window.deleteDeductCode = async function(code) {
+    if (!canModify()) {
+        if (confirm('您是班委，无权删除扣分代码。是否提交申请给班主任？')) {
+            await requestModification('删除扣分代码', `代码：${code}`);
+        }
+        return;
+    }
+    if(!confirm('删除？')) return;
+    await sb.from('deduct_codes').delete().eq('code',code);
+    await loadData();
+    renderCodeTable();
+};
+    window.openBonusCodeModal = function(code=null) { if(!document.getElementById('modal-bonus-code')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-bonus-code"><div class="modal-content"><h3>编辑加分代码</h3><input id="bc-code" placeholder="代码"><input id="bc-desc" placeholder="事项描述"><input type="number" id="bc-pt" placeholder="加分（正数）" step="0.5"><div style="margin-top:10px"><button class="btn-primary" onclick="window.saveBonusCode()">保存</button><button class="btn-outline" onclick="window.closeModal('modal-bonus-code')">取消</button></div></div></div>`); if(code){ const c = getBonusCodes().find(c=>c.code===code); document.getElementById('bc-code').value=c.code;document.getElementById('bc-desc').value = c.description;document.getElementById('bc-pt').value=c.pt; } else { document.getElementById('bc-code').value=''; document.getElementById('bc-desc').value=''; document.getElementById('bc-pt').value=''; } openModal('modal-bonus-code'); };
     window.saveBonusCode = async function() { const code = document.getElementById('bc-code').value.trim(), desc = document.getElementById('bc-desc').value.trim(), pt = parseFloat(document.getElementById('bc-pt').value); if(!code||!desc||isNaN(pt)){ toast('请完整填写','error'); return; } await sb.from('bonus_codes').upsert({code,desc,pt}); await loadData(); renderCodeTable(); closeModal('modal-bonus-code'); toast('代码已保存'); };
-    window.deleteBonusCode = async function(code) { if(!confirm('删除？')) return; await sb.from('bonus_codes').delete().eq('code',code); await loadData(); renderCodeTable(); };
+    window.deleteBonusCode = async function(code) {
+    if (!canModify()) {
+        if (confirm('您是班委，无权删除加分代码。是否提交申请给班主任？')) {
+            await requestModification('删除加分代码', `代码：${code}`);
+        }
+        return;
+    }
+    if(!confirm('删除？')) return;
+    await sb.from('bonus_codes').delete().eq('code',code);
+    await loadData();
+    renderCodeTable();
+};
 
     // ==================== 缺旷登记 ====================
 window.renderAbsenceTable = function() {
@@ -3661,6 +3876,402 @@ async function initApp() {
         document.getElementById('absence-week').value = getWeek();
         renderAbsenceTable();
     }
+window.changeTheme = function() {
+    const select = document.getElementById('theme-select');
+    if (!select) return;
+    const theme = select.value;
+    localStorage.setItem('theme', theme);
+    if (theme === 'green') {
+        document.documentElement.style.setProperty('--primary', '#10b981');
+        document.documentElement.style.setProperty('--primary-dark', '#059669');
+    } else if (theme === 'dark') {
+        document.documentElement.style.setProperty('--bg', '#0f172a');
+        document.documentElement.style.setProperty('--card', '#1e293b');
+        document.documentElement.style.setProperty('--text', '#f1f5f9');
+        document.documentElement.style.setProperty('--border', '#334155');
+    } else {
+        document.documentElement.style.setProperty('--primary', '#1a73e8');
+        document.documentElement.style.setProperty('--primary-dark', '#1557b0');
+        document.documentElement.style.setProperty('--bg', '#f1f5f9');
+        document.documentElement.style.setProperty('--card', '#fff');
+        document.documentElement.style.setProperty('--text', '#1e293b');
+        document.documentElement.style.setProperty('--border', '#e2e8f0');
+    }
+};
+window.changeBrightness = function(val) {
+    document.body.style.filter = `brightness(${val/100})`;
+    localStorage.setItem('brightness', val);
+};
+window.autoUpgrade = function() { toast('升级功能开发中', 'info'); };
+window.openAlertModal = function() { toast('手动添加预警功能开发中', 'info'); };
+window.deleteAlert = async function(id) {
+    if (String(id).startsWith('auto_')) {
+        toast('自动生成的预警不可删除', 'error');
+        return;
+    }
+    if (!canModify()) {
+        if (confirm('您是班委，无权删除预警记录。是否提交申请给班主任？')) {
+            await requestModification('删除预警记录', `记录ID：${id}`);
+        }
+        return;
+    }
+    if (confirm('确定删除此预警记录吗？')) {
+        const { error } = await sb.from('alerts').delete().eq('id', id);
+        if (error) toast('删除失败', 'error');
+        else { await loadData(); renderAlerts(); toast('已删除'); }
+    }
+};
+// ==================== 成绩管理 ====================
+window.loadGradeTable = async function() {
+    const semester = document.getElementById('grade-semester').value;
+    const subject = document.getElementById('grade-subject').value.trim();
+    if (!subject) { toast('请填写科目', 'error'); return; }
+    const { data, error } = await sb.from('student_semester_scores')
+        .select('*, students!inner(name)')
+        .eq('semester', semester)
+        .eq('subject', subject);
+    if (error) { toast('加载失败', 'error'); return; }
+    const tbody = document.getElementById('grade-tbody');
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3">暂无成绩记录</td></tr>';
+        return;
+    }
+    tbody.innerHTML = data.map(score => `
+        <tr>
+            <td>${score.students.name}</td>
+            <td><input type="number" step="0.5" class="grade-input" data-id="${score.id}" value="${score.score}"></td>
+            <td><button class="btn-sm" onclick="window.updateGrade(${score.id}, this)">保存</button></td>
+        </tr>
+    `).join('');
+};
+
+window.updateGrade = async function(id, btn) {
+    const input = btn.parentElement.previousElementSibling.querySelector('.grade-input');
+    const newScore = parseFloat(input.value);
+    if (isNaN(newScore)) { toast('请输入有效数字', 'error'); return; }
+    const { error } = await sb.from('student_semester_scores').update({ score: newScore }).eq('id', id);
+    if (error) { toast('更新失败', 'error'); return; }
+    toast('成绩已更新');
+    window.refreshComprehensiveScores(); // 更新综合分
+};
+
+window.showAddGradeModal = function() {
+    const semester = document.getElementById('grade-semester').value;
+    const subject = document.getElementById('grade-subject').value.trim();
+    if (!subject) { toast('请先填写科目', 'error'); return; }
+    // 获取所有在读学生
+    const activeStudents = students.filter(s => s.status === '在读');
+    if (activeStudents.length === 0) { toast('没有在读学生', 'error'); return; }
+    let modal = document.getElementById('modal-add-grade');
+    if (!modal) {
+        document.body.insertAdjacentHTML('beforeend', `
+            <div class="modal" id="modal-add-grade">
+                <div class="modal-content" style="max-width: 500px;">
+                    <h3>录入成绩</h3>
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        <table style="width:100%;">
+                            <thead><tr><th>学生</th><th>成绩</th></tr></thead>
+                            <tbody id="add-grade-tbody"></tbody>
+                        </table>
+                    </div>
+                    <div style="text-align:right; margin-top: 12px;">
+                        <button class="btn-outline" onclick="window.closeModal('modal-add-grade')">取消</button>
+                        <button class="btn-primary" onclick="window.saveBatchGrades()">保存全部</button>
+                    </div>
+                </div>
+            </div>
+        `);
+    }
+    const tbody = document.getElementById('add-grade-tbody');
+    tbody.innerHTML = activeStudents.map(s => `
+        <tr>
+            <td>${s.name}</td>
+            <td><input type="number" step="0.5" data-student-id="${s.id}" placeholder="分数" style="width:80px;"></td>
+        </tr>
+    `).join('');
+    openModal('modal-add-grade');
+};
+
+window.saveBatchGrades = async function() {
+    const semester = document.getElementById('grade-semester').value;
+    const subject = document.getElementById('grade-subject').value.trim();
+    const rows = document.querySelectorAll('#add-grade-tbody tr');
+    const promises = [];
+    for (const row of rows) {
+        const studentId = row.querySelector('input').dataset.studentId;
+        const score = parseFloat(row.querySelector('input').value);
+        if (isNaN(score)) continue;
+        promises.push(sb.from('student_semester_scores').upsert({
+            student_id: studentId,
+            semester: semester,
+            subject: subject,
+            exam_type: '期末考试',
+            score: score
+        }, { onConflict: 'student_id, semester, subject, exam_type' }));
+    }
+    await Promise.all(promises);
+    closeModal('modal-add-grade');
+    toast('成绩已保存');
+    await window.loadGradeTable();
+    window.refreshComprehensiveScores();
+};
+
+window.refreshComprehensiveScores = async function() {
+    // 1. 从数据库获取所有在读学生及其操行分（通过 score_log 实时计算）和综合分
+    const active = students.filter(s => s.status === '在读');
+    const tbody = document.getElementById('comprehensive-tbody');
+    if (active.length === 0) { tbody.innerHTML = '<tr><td colspan="4">暂无学生</td></tr>'; return; }
+    
+    // 计算每个学生的操行分
+    const conductScores = {};
+    for (const s of active) {
+        conductScores[s.name] = calcScore(s.name);
+    }
+    // 获取每个学生的平均成绩（所有科目）
+    const avgScores = {};
+    for (const s of active) {
+        const { data, error } = await sb.from('student_semester_scores')
+            .select('score')
+            .eq('student_id', s.id)
+            .eq('exam_type', '期末考试');
+        if (error) continue;
+        if (data && data.length > 0) {
+            const avg = data.reduce((sum, r) => sum + r.score, 0) / data.length;
+            avgScores[s.name] = avg;
+        } else {
+            avgScores[s.name] = 0;
+        }
+    }
+    // 构建表格并计算综合分（操行分*0.6 + 平均成绩*0.4）
+    let html = '';
+    for (const s of active) {
+        const conduct = conductScores[s.name] || 100;
+        const avg = avgScores[s.name] || 0;
+        const comprehensive = conduct * 0.6 + avg * 0.4;
+        // 更新数据库中的 comprehensive_score 字段
+        await sb.from('students').update({ comprehensive_score: comprehensive }).eq('id', s.id);
+        html += `<tr>
+            <td>${s.name}</td>
+            <td>${conduct}</td>
+            <td>${avg.toFixed(1)}</td>
+            <td style="font-weight:bold;">${comprehensive.toFixed(1)}</td>
+        </tr>`;
+    }
+    tbody.innerHTML = html;
+    toast('综合分已同步更新到数据库');
+};
+// ==================== 成绩管理函数 ====================
+window.loadGradeTable = async function() {
+    const semester = document.getElementById('grade-semester').value;
+    const subject = document.getElementById('grade-subject').value.trim();
+    if (!subject) { toast('请填写科目', 'error'); return; }
+    const { data, error } = await sb.from('student_semester_scores')
+        .select('*, students!inner(name)')
+        .eq('semester', semester)
+        .eq('subject', subject);
+    if (error) { toast('加载失败', 'error'); return; }
+    const tbody = document.getElementById('grade-tbody');
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3">暂无成绩记录</td></tr>';
+        return;
+    }
+    tbody.innerHTML = data.map(score => `
+        <tr>
+            <td>${score.students.name}</td>
+            <td><input type="number" step="0.5" class="grade-input" data-id="${score.id}" value="${score.score}"></td>
+            <td><button class="btn-sm" onclick="window.updateGrade(${score.id}, this)">保存</button></td>
+        </tr>
+    `).join('');
+};
+
+window.updateGrade = async function(id, btn) {
+    const input = btn.parentElement.previousElementSibling.querySelector('.grade-input');
+    const newScore = parseFloat(input.value);
+    if (isNaN(newScore)) { toast('请输入有效数字', 'error'); return; }
+    const { error } = await sb.from('student_semester_scores').update({ score: newScore }).eq('id', id);
+    if (error) { toast('更新失败', 'error'); return; }
+    toast('成绩已更新');
+    window.refreshComprehensiveScores();
+};
+
+window.showAddGradeModal = function() {
+    const semester = document.getElementById('grade-semester').value;
+    const subject = document.getElementById('grade-subject').value.trim();
+    if (!subject) { toast('请先填写科目', 'error'); return; }
+    const activeStudents = students.filter(s => s.status === '在读');
+    if (activeStudents.length === 0) { toast('没有在读学生', 'error'); return; }
+    let modal = document.getElementById('modal-add-grade');
+    if (!modal) {
+        document.body.insertAdjacentHTML('beforeend', `
+            <div class="modal" id="modal-add-grade">
+                <div class="modal-content" style="max-width: 500px;">
+                    <h3>录入成绩</h3>
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        <table style="width:100%;">
+                            <thead><tr><th>学生</th><th>成绩</th></tr></thead>
+                            <tbody id="add-grade-tbody"></tbody>
+                        </table>
+                    </div>
+                    <div style="text-align:right; margin-top: 12px;">
+                        <button class="btn-outline" onclick="window.closeModal('modal-add-grade')">取消</button>
+                        <button class="btn-primary" onclick="window.saveBatchGrades()">保存全部</button>
+                    </div>
+                </div>
+            </div>
+        `);
+    }
+    const tbody = document.getElementById('add-grade-tbody');
+    tbody.innerHTML = activeStudents.map(s => `
+        <tr>
+            <td>${s.name}</td>
+            <td><input type="number" step="0.5" data-student-id="${s.id}" placeholder="分数" style="width:80px;"></td>
+        </tr>
+    `).join('');
+    openModal('modal-add-grade');
+};
+
+window.saveBatchGrades = async function() {
+    const semester = document.getElementById('grade-semester').value;
+    const subject = document.getElementById('grade-subject').value.trim();
+    const rows = document.querySelectorAll('#add-grade-tbody tr');
+    const promises = [];
+    for (const row of rows) {
+        const studentId = row.querySelector('input').dataset.studentId;
+        const score = parseFloat(row.querySelector('input').value);
+        if (isNaN(score)) continue;
+        promises.push(sb.from('student_semester_scores').upsert({
+            student_id: studentId,
+            semester: semester,
+            subject: subject,
+            exam_type: '期末考试',
+            score: score
+        }, { onConflict: 'student_id, semester, subject, exam_type' }));
+    }
+    await Promise.all(promises);
+    closeModal('modal-add-grade');
+    toast('成绩已保存');
+    await window.loadGradeTable();
+    window.refreshComprehensiveScores();
+};
+
+window.refreshComprehensiveScores = async function() {
+    const active = students.filter(s => s.status === '在读');
+    const tbody = document.getElementById('comprehensive-tbody');
+    if (active.length === 0) { tbody.innerHTML = '<tr><td colspan="4">暂无学生</td></tr>'; return; }
+    for (const s of active) {
+        // 计算操行分
+        const conduct = calcScore(s.name);
+        // 获取平均成绩
+        const { data, error } = await sb.from('student_semester_scores')
+            .select('score')
+            .eq('student_id', s.id)
+            .eq('exam_type', '期末考试');
+        let avg = 0;
+        if (data && data.length) {
+            avg = data.reduce((sum, r) => sum + r.score, 0) / data.length;
+        }
+        const comprehensive = conduct * 0.6 + avg * 0.4;
+        await sb.from('students').update({ comprehensive_score: comprehensive }).eq('id', s.id);
+    }
+    // 重新显示表格
+    const updatedActive = students.filter(s => s.status === '在读');
+    let html = '';
+    for (const s of updatedActive) {
+        const conduct = calcScore(s.name);
+        const { data } = await sb.from('student_semester_scores')
+            .select('score')
+            .eq('student_id', s.id)
+            .eq('exam_type', '期末考试');
+        let avg = 0;
+        if (data && data.length) avg = data.reduce((s, r) => s + r.score, 0) / data.length;
+        const comp = conduct * 0.6 + avg * 0.4;
+        html += `<tr><td>${s.name}</td><td>${conduct}</td><td>${avg.toFixed(1)}</td><td style="font-weight:bold;">${comp.toFixed(1)}</td></tr>`;
+    }
+    tbody.innerHTML = html;
+    toast('综合分已更新');
+};
+
+// ==================== Excel 导入函数 ====================
+window.importGradeExcel = function() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.xlsx, .xls, .csv';
+    input.onchange = async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data);
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+        if (!rows || rows.length < 2) {
+            toast('Excel 至少需要两行（表头+数据）', 'error');
+            return;
+        }
+        const headers = rows[0].map(cell => String(cell).trim());
+        let nameIdx = -1, subjectIdx = -1, scoreIdx = -1, semesterIdx = -1;
+        for (let i = 0; i < headers.length; i++) {
+            const h = headers[i].toLowerCase();
+            if (h.includes('姓名') || h === 'name') nameIdx = i;
+            if (h.includes('科目') || h === 'subject') subjectIdx = i;
+            if (h.includes('成绩') || h === 'score' || h === '分数') scoreIdx = i;
+            if (h.includes('学期') || h === 'semester') semesterIdx = i;
+        }
+        if (nameIdx === -1 || subjectIdx === -1 || scoreIdx === -1) {
+            toast('Excel 必须包含“学生姓名”、“科目”、“成绩”三列', 'error');
+            return;
+        }
+        const defaultSemester = document.getElementById('grade-semester')?.value || '2025-2026学年第一学期';
+        const activeStudents = students.filter(s => s.status === '在读');
+        const studentMap = new Map();
+        activeStudents.forEach(s => studentMap.set(s.name, s.id));
+        
+        const insertData = [];
+        const missingStudents = new Set();
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || row.length === 0) continue;
+            const name = String(row[nameIdx] || '').trim();
+            if (!name) continue;
+            const subject = String(row[subjectIdx] || '').trim();
+            if (!subject) continue;
+            const score = parseFloat(row[scoreIdx]);
+            if (isNaN(score)) continue;
+            const semester = semesterIdx !== -1 ? String(row[semesterIdx] || '').trim() : defaultSemester;
+            if (!semester) continue;
+            const studentId = studentMap.get(name);
+            if (!studentId) {
+                missingStudents.add(name);
+                continue;
+            }
+            insertData.push({
+                student_id: studentId,
+                semester: semester,
+                subject: subject,
+                exam_type: '期末考试',
+                score: score
+            });
+        }
+        if (insertData.length === 0) {
+            toast('没有有效的成绩数据可导入', 'error');
+            if (missingStudents.size > 0) {
+                console.warn('未匹配的学生:', Array.from(missingStudents));
+                toast(`未找到学生: ${Array.from(missingStudents).join(', ')}`, 'error');
+            }
+            return;
+        }
+        let successCount = 0;
+        for (const item of insertData) {
+            const { error } = await sb.from('student_semester_scores').upsert(item, {
+                onConflict: 'student_id, semester, subject, exam_type'
+            });
+            if (!error) successCount++;
+        }
+        toast(`成功导入 ${successCount} 条成绩记录`, 'success');
+        await window.loadGradeTable();
+        await window.refreshComprehensiveScores();
+    };
+    input.click();
+};
 
 window.onload = init;
 })();
