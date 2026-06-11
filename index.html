@@ -1059,14 +1059,16 @@ async function refreshDashboard() {
     // 重点关注
     const alertList = allActive.filter(s => calcScore(s.name) < 70);
     document.getElementById('dashboard-alert-tbody').innerHTML = alertList.length
-        ? alertList.sort((a, b) => calcScore(a.name) - calcScore(b.name)).map(a => {
-            const sc = calcScore(a.name);
-            return `<tr><td>${a.name}</td><td>
-    <td>
-    <td><span class="badge ${badgeClass(level(sc))}">${sc}</span></td>
-<td>${level(sc)}</td><td>${logs.filter(l => l.student === a.name && l.value < 0).pop()?.reason || '—'}</td></tr>`;
-        }).join('')
-        : '<tr><td colspan="4">✅ 暂无预警</td></tr>';
+    ? alertList.sort((a, b) => calcScore(a.name) - calcScore(b.name)).map(a => {
+        const sc = calcScore(a.name);
+        return `<tr>
+            <td>${a.name}</td>
+            <td><span class="badge ${badgeClass(level(sc))}">${sc}</span></td>
+            <td>${level(sc)}</td>
+            <td>${logs.filter(l => l.student === a.name && l.value < 0).pop()?.reason || '—'}</td>
+        </tr>`;
+    }).join('')
+    : '<tr><td colspan="4">✅ 暂无预警</td></tr>';
 
     // 最近变动
     const recent = [...logs].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
