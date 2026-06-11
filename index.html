@@ -67,9 +67,7 @@
 <ul class="sidebar-nav">
     <li><a data-page="dashboard" class="active">📊 仪表盘</a></li>
     <li><a data-page="roster">👥 学生名册</a></li>
-    <li><a data-page="score-log">📝 操行分明细</a></li>
-    <li><a data-page="weekly-table">📅 周违纪登记</a></li>
-    <li><a data-page="weekly-summary">📋 周操行汇总</a></li>
+    <li><a data-page="discipline">📋 操行管理</a></li>
     <li><a data-page="class-log">📖 课堂/班级日志</a></li>
     <li><a data-page="alert-records">⚠️ 预警与谈话</a></li>
     <li><a data-page="ai-report">🤖 AI周报</a></li>
@@ -354,73 +352,91 @@ function getAgeFromIdcard(idcard) {
 <button onclick="window.openStudentModal()">+ 新增</button></div>
             <table><thead><tr><th>姓名</th><th>性别</th><th>年龄</th><th>走读/住校</th><th>身份证</th><th>家长</th><th>电话</th><th>状态</th><th>操行分</th><th>操作</th></tr></thead><tbody id="roster-tbody"></tbody></table></div>
         </div>
-      <div class="page" id="page-score-log">
-    <div class="card">
-        <h2>📝 操行分流水</h2>
-        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
-            <button onclick="window.openAddScoreModal()">+ 新增</button>
-            <span style="flex:1;"></span>
-            <label><input type="checkbox" id="select-all-logs" onchange="window.toggleSelectAllLogs()"> 全选</label>
-            <button class="btn-danger btn-sm" onclick="window.batchDeleteLogs()">🗑 批量删除</button>
-        </div>
-        <div class="form-row">
-            <div><label>学生</label><select id="filter-student" onchange="window.renderScoreLog()"><option value="">全部</option></select></div>
-            <div><label>周次</label><input type="number" id="filter-week" style="width:80px"></div>
-            <div><label>类型</label><select id="filter-type"><option value="">全部</option><option value="deduct">扣分</option><option value="add">加分</option></select></div>
-            <div><button class="btn-sm btn-outline" onclick="window.renderScoreLog()">🔍 筛选</button></div>
-        </div>
-        <table>
-            <thead><tr>
-                <th style="width:30px;">选</th>
-                <th>日期</th><th>周</th><th>学生</th><th>代码</th><th>事由</th><th>分值</th><th>操作人</th><th>操作</th>
-            </tr></thead>
-            <tbody id="score-log-tbody"></tbody>
-        </table>
-    </div>
-</div>
-                <div class="page" id="page-weekly-table">
-            <div class="card">
-                <h2>📅 周违纪登记</h2>
-                <div>第 <input type="number" id="weekly-week-num" value="1" style="width:60px"> 周 
-                    <button onclick="window.renderWeeklyTable()">刷新</button> 
-                    <button class="btn-outline" onclick="window.saveWeeklyData()">💾 保存</button>
+                       <div class="page" id="page-discipline">
+            <!-- 顶部选项卡 -->
+            <div style="display:flex; gap:0; margin-bottom:16px; border-bottom:2px solid var(--border);">
+               <button class="tab-btn active" data-tab="tab-summary" style="border-radius:8px 8px 0 0; border:none; padding:10px 20px; background:#fff; font-weight:600; cursor:pointer; color:var(--text);">📋 周操行汇总</button>
+               <button class="tab-btn" data-tab="tab-weekly" style="border-radius:8px 8px 0 0; border:none; padding:10px 20px; background:transparent; font-weight:500; cursor:pointer; color:var(--text-secondary);">📅 周违纪登记</button>
+              <button class="tab-btn" data-tab="tab-logs" style="border-radius:8px 8px 0 0; border:none; padding:10px 20px; background:transparent; font-weight:500; cursor:pointer; color:var(--text-secondary);">📝 操行分明细</button>
+            </div>
+
+            <!-- 周操行汇总面板 -->
+            <div class="tab-panel active" id="tab-summary">
+                <div class="card">
+                    <h2>📋 周操行汇总</h2>
+                    <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
+                        <label>第</label>
+                        <input type="number" id="summary-week-num" value="1" style="width:70px" min="1">
+                        <label>周</label>
+                        <button onclick="window.renderWeeklySummary()">🔍 查询</button>
+                        <button class="btn-outline" onclick="window.exportWeeklySummary()">📥 导出Excel</button>
+                        <button class="btn-outline" onclick="window.autoAddWeeklyBonus()">🤖 自动识别加分</button>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table id="weekly-summary-table">
+                            <thead><tr><th>学生</th><th>本周操行记录（代码：事由，分值）</th><th>本周合计</th><th>当前操行分</th></tr></thead>
+                            <tbody id="weekly-summary-tbody">
+                                <tr><td colspan="2">请选择周次后查询</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <div style="max-height:65vh; overflow-y:auto; border:1px solid var(--border); border-radius:var(--radius-sm);">
-                    <table style="border-collapse:separate; border-spacing:0;">
-                        <thead style="position:sticky; top:0; z-index:2; background:#f8fafc;">
-                            <tr>
-                                <th>姓名</th>
-                                <th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th>
-                                <th>加分事由</th><th>加分</th><th>净得分</th>
-                            </tr>
-                        </thead>
-                        <tbody id="weekly-tbody"></tbody>
+            </div>
+
+            <!-- 周违纪登记面板 -->
+            <div class="tab-panel" id="tab-weekly" style="display:none;">
+                <div class="card">
+                    <h2>📅 周违纪登记</h2>
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                        <label>日期</label><input type="date" id="weekly-date" onchange="window.onWeeklyDateChange()" style="width:140px">
+                        <label>周次</label><input type="number" id="weekly-week-num" value="1" style="width:70px">
+                        <button onclick="window.renderWeeklyTable()">刷新</button>
+                        <button class="btn-outline" onclick="window.saveWeeklyData()">💾 保存</button>                    
+               <button class="btn-sm btn-outline"onclick="window.showCodeLookup()" 
+style="margin-left:auto;">🔍 代码速查</button>
+                    </div>
+                    <div style="max-height:65vh; overflow-y:auto; border:1px solid var(--border); border-radius:var(--radius-sm);">
+                        <table style="border-collapse:separate; border-spacing:0;">
+                            <thead style="position:sticky; top:0; z-index:2; background:#f8fafc;">
+                                <tr>
+                                    <th>姓名</th>
+                                    <th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th>
+                                    <th>加分事由</th><th>加分</th><th>净得分</th>
+                                </tr>
+                            </thead>
+                            <tbody id="weekly-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操行分明细面板 -->
+            <div class="tab-panel" id="tab-logs" style="display:none;">
+                <div class="card">
+                    <h2>📝 操行分明细</h2>
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+                        <button onclick="window.openAddScoreModal()">+ 新增</button>
+                        <span style="flex:1;"></span>
+                        <label><input type="checkbox" id="select-all-logs" onchange="window.toggleSelectAllLogs()"> 全选</label>
+                        <button class="btn-danger btn-sm" onclick="window.batchDeleteLogs()">🗑 批量删除</button>
+                    </div>
+                    <div class="form-row">
+                        <div><label>学生</label><select id="filter-student" onchange="window.renderScoreLog()"><option value="">全部</option></select></div>
+                        <div><label>周次</label><input type="number" id="filter-week" style="width:80px"></div>
+                        <div><label>类型</label><select id="filter-type"><option value="">全部</option><option value="deduct">扣分</option><option value="add">加分</option></select></div>
+                        <div><button class="btn-sm btn-outline" onclick="window.renderScoreLog()">🔍 筛选</button></div>
+                    </div>
+                    <table>
+                        <thead><tr>
+                            <th style="width:30px;">选</th>
+                            <th>日期</th><th>周</th><th>学生</th><th>代码</th><th>事由</th><th>分值</th><th>操作人</th><th>操作</th>
+                        </tr></thead>
+                        <tbody id="score-log-tbody"></tbody>
                     </table>
                 </div>
             </div>
         </div>
-                <div class="page" id="page-weekly-summary">
-            <div class="card">
-                <h2>📋 周操行汇总</h2>
-                <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
-                    <label>第</label>
-                    <input type="number" id="summary-week-num" value="1" style="width:70px" min="1">
-                    <label>周</label>
-                   <button onclick="window.renderWeeklySummary()">🔍 查询</button>
-<button class="btn-outline" onclick="window.exportWeeklySummary()">📥 导出Excel</button>
-<button class="btn-outline" onclick="window.autoAddWeeklyBonus()">🤖 自动识别加分</button>
-                </div>
-                <div style="overflow-x: auto;">
-                    <table id="weekly-summary-table">
-                        <thead><tr><th>学生</th><th>本周操行记录（代码：事由，分值）</th><th>本周合计</th><th>当前操行分</th></tr></thead>
-                        <tbody id="weekly-summary-tbody">
-                            <tr><td colspan="2">请选择周次后查询</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-                <div class="page" id="page-class-log">
+            <div class="page" id="page-class-log">
             <div class="card">
                 <h2>📖 课堂日志</h2>
                 <div style="background:#f0f7ff; padding:10px; border-radius:6px; margin-bottom:10px; font-size:12px; color:#1e40af;">
@@ -856,107 +872,77 @@ function getAgeFromIdcard(idcard) {
         if (e.target.classList.contains('modal')) e.target.classList.remove('active');
     });
     function refreshPage(p) {
-        if (p === 'dashboard') refreshDashboard();
-        if (p === 'roster') renderRoster();
-        if (p === 'score-log') window.renderScoreLog();
-        if (p === 'weekly-table') { document.getElementById('weekly-week-num').value = getWeek(); renderWeeklyTable(); }
-        if (p === 'class-log') { renderClassLogs(); renderDailyLogs(); }
-        if (p === 'grade-manager') {
-    window.loadGradeTable();
-    window.refreshComprehensiveScores();
-}
-        if (p === 'alert-records') { renderAlerts(); renderTalks(); }
-        if (p === 'code-table') renderCodeTable();
-                if (p === 'settings') {
-            // 恢复主题和亮度
-            const savedTheme = localStorage.getItem('theme') || 'default';
-            const themeSelect = document.getElementById('theme-select');
-            if (themeSelect) { themeSelect.value = savedTheme; window.changeTheme(); }
-            const savedBrightness = localStorage.getItem('brightness') || '100';
-            const brightnessRange = document.getElementById('brightness-range');
-            if (brightnessRange) { brightnessRange.value = savedBrightness; window.changeBrightness(savedBrightness); }
-            // 班主任才显示账号管理卡片
-            if (typeof canModify === 'function' && canModify()) {
-                document.getElementById('card-account-admin').style.display = '';
-                if (typeof window.loadAccounts === 'function') window.loadAccounts();
-            } else {
-                const card = document.getElementById('card-account-admin');
-                if (card) card.style.display = 'none';
-            }
-        }
-        if (p === 'system-upgrade') {
-            // 如果用户点击了旧的系统升级菜单，自动跳转到设置页
-            document.querySelector('.sidebar-nav a[data-page="settings"]').click();
-        }
-        if (p === 'student-profile') populateProfileSelect();
-        if (p === 'ai-advisor') populateAIWarningStudents();
-        if (p === 'absence-log') { document.getElementById('absence-week').value = getWeek(); renderAbsenceTable(); }
-        if (p === 'attendance-history') {
-    document.getElementById('att-history-start').value = '';
-    document.getElementById('att-history-end').value = '';
-}
-       if (p === 'warning-notice') {
-    // 填充学生下拉
-    const studentSel = document.getElementById('wn-student');window.renderDisciplineWarning();
-    if (studentSel) {
-        studentSel.innerHTML = '<option value="">-- 请选择学生 --</option>';
-        students.filter(s => s.status === '在读').forEach(s => {
-            studentSel.innerHTML += `<option value="${s.name}">${s.name}</option>`;
-        });
-        studentSel.dataset.lastStudent = '';
+    if (p === 'dashboard') refreshDashboard();
+    if (p === 'roster') renderRoster();
+    if (p === 'discipline') {
+        document.getElementById('weekly-date').value = fmt(new Date());
+        document.getElementById('weekly-week-num').value = getWeek();
+        document.getElementById('summary-week-num').value = getWeek();
+        window.renderScoreLog();
+        renderWeeklyTable();
+        window.renderWeeklySummary();
+    } 
+    if (p === 'class-log') { renderClassLogs(); renderDailyLogs(); }
+    if (p === 'grade-manager') {
+        window.loadGradeTable();
+        window.refreshComprehensiveScores();
     }
-    window.loadWarningNoticesArchive();
-    // 违纪事项下拉初始置空（多选）
-    const reasonSel = document.getElementById('wn-reason');
-    if (reasonSel) {
-        reasonSel.innerHTML = '<option value="">-- 请先选择学生 --</option>';
+    if (p === 'alert-records') { renderAlerts(); renderTalks(); }
+    if (p === 'code-table') renderCodeTable();
+    if (p === 'student-profile') populateProfileSelect();
+    if (p === 'ai-advisor') populateAIWarningStudents();
+    if (p === 'absence-log') { 
+        document.getElementById('absence-week').value = getWeek(); 
+        renderAbsenceTable(); 
     }
-    document.getElementById('wn-deduct').value = '-5';
-    document.getElementById('wn-current').value = '';
-    document.getElementById('wn-level').value = '';
-    document.getElementById('wn-measure').value = '';
-    window.renderDisciplineWarning();
-    window.renderPhoneDiscipline();
-}
-                if (p === 'settings') {
-            const savedTheme = localStorage.getItem('theme') || 'default';
-            const themeSelect = document.getElementById('theme-select');
-            if (themeSelect) { themeSelect.value = savedTheme; window.changeTheme(); }
-            const savedBrightness = localStorage.getItem('brightness') || '100';
-            const brightnessRange = document.getElementById('brightness-range');
-            if (brightnessRange) { brightnessRange.value = savedBrightness; window.changeBrightness(savedBrightness); }
-            // 班主任才显示账号管理卡片
-            if (canModify()) {
-                document.getElementById('card-account-admin').style.display = '';
-                window.loadAccounts();
-            } else {
-                document.getElementById('card-account-admin').style.display = 'none';
-            }
-        }
-        if (p === 'system-upgrade') {
-            // 原有系统升级页面已经被整合到设置中，这里可以留空或重定向
-            toast('系统升级已移至设置页面');
-            document.querySelector('.sidebar-nav a[data-page="settings"]').click();
-        }
-        if (p === 'settings') {
-            const savedTheme = localStorage.getItem('theme') || 'default';
-            document.getElementById('theme-select').value = savedTheme;
-            window.changeTheme();
-            const savedBrightness = localStorage.getItem('brightness') || '100';
-            document.getElementById('brightness-range').value = savedBrightness;
-            window.changeBrightness(savedBrightness);
-            if (canModify()) {
-                document.getElementById('card-account-admin').style.display = '';
-                window.loadAccounts();
-            } else {
-                document.getElementById('card-account-admin').style.display = 'none';
-            }
-        }
-        if (p === 'weekly-summary') {
-    document.getElementById('summary-week-num').value = getWeek();
-    window.renderWeeklySummary();
-}
+    if (p === 'attendance-history') {
+        document.getElementById('att-history-start').value = '';
+        document.getElementById('att-history-end').value = '';
     }
+    if (p === 'warning-notice') {
+        const studentSel = document.getElementById('wn-student');
+        if (studentSel) {
+            studentSel.innerHTML = '<option value="">-- 请选择学生 --</option>';
+            students.filter(s => s.status === '在读').forEach(s => {
+                studentSel.innerHTML += `<option value="${s.name}">${s.name}</option>`;
+            });
+            studentSel.dataset.lastStudent = '';
+        }
+        window.loadWarningNoticesArchive();
+        const reasonSel = document.getElementById('wn-reason');
+        if (reasonSel) {
+            reasonSel.innerHTML = '<option value="">-- 请先选择学生 --</option>';
+        }
+        document.getElementById('wn-deduct').value = '-5';
+        document.getElementById('wn-current').value = '';
+        document.getElementById('wn-level').value = '';
+        document.getElementById('wn-measure').value = '';
+        window.renderDisciplineWarning();
+        window.renderPhoneDiscipline();
+    }
+    if (p === 'settings') {
+        const savedTheme = localStorage.getItem('theme') || 'default';
+        const themeSelect = document.getElementById('theme-select');
+        if (themeSelect) { themeSelect.value = savedTheme; window.changeTheme(); }
+        const savedBrightness = localStorage.getItem('brightness') || '100';
+        const brightnessRange = document.getElementById('brightness-range');
+        if (brightnessRange) { brightnessRange.value = savedBrightness; window.changeBrightness(savedBrightness); }
+        if (canModify()) {
+            document.getElementById('card-account-admin').style.display = '';
+            window.loadAccounts();
+        } else {
+            const card = document.getElementById('card-account-admin');
+            if (card) card.style.display = 'none';
+        }
+    }
+    if (p === 'ai-report') {
+        // AI周报页面无需额外初始化
+    }
+    if (p === 'rules') {
+        // 规章制度页面无需额外初始化
+    }
+}
+      
 
         async function loadData() {
         let retry = 0;
@@ -1075,7 +1061,10 @@ async function refreshDashboard() {
     document.getElementById('dashboard-alert-tbody').innerHTML = alertList.length
         ? alertList.sort((a, b) => calcScore(a.name) - calcScore(b.name)).map(a => {
             const sc = calcScore(a.name);
-            return `<tr><td>${a.name}</td><td><span class="badge ${badgeClass(level(sc))}">${sc}</span></td><td>${level(sc)}</td><td>${logs.filter(l => l.student === a.name && l.value < 0).pop()?.reason || '—'}</td></tr>`;
+            return `<tr><td>${a.name}</td><td>
+    <td>
+    <td><span class="badge ${badgeClass(level(sc))}">${sc}</span></td>
+<td>${level(sc)}</td><td>${logs.filter(l => l.student === a.name && l.value < 0).pop()?.reason || '—'}</td></tr>`;
         }).join('')
         : '<tr><td colspan="4">✅ 暂无预警</td></tr>';
 
@@ -1110,7 +1099,7 @@ async function refreshDashboard() {
             <td>${s.parent || '—'}</td>
             <td>${s.phone || '—'}</td>
             <td>${s.status === '在读' ? '✅在读' : s.status}</td>
-            <td><span class="badge ${badgeClass(level(sc))}">${sc}</span></td>
+          <td><span class="badge ${badgeClass(level(sc))}">${sc}</span></td>
             <td>
                 <button class="btn-sm" onclick="window.editStudent('${s.idcard}')">编辑</button>
                 <button class="btn-sm btn-danger" onclick="window.toggleStudent('${s.idcard}')">${s.status === '在读' ? '退学' : '恢复'}</button>
@@ -1145,6 +1134,7 @@ async function refreshDashboard() {
         }
         openModal('modal-student');
     }
+
     window.openStudentModal = () => openStudentModal(null);
     window.editStudent = (id) => openStudentModal(id);
     window.saveStudent = async function() {
@@ -1352,7 +1342,6 @@ window.loadSemesterConfig = async function() {
         resultDiv.textContent = result;
     };
     // ==================== 操行分流水 ====================
-       // ==================== 操行分流水 ====================
     window.renderScoreLog = function() {
     const fs = document.getElementById('filter-student')?.value || '';
     const fw = document.getElementById('filter-week')?.value || '';
@@ -1364,20 +1353,20 @@ window.loadSemesterConfig = async function() {
     if (ft === 'add') list = list.filter(l => l.value > 0);
     list.reverse();
     
-    // 星期数组
     const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
     
     document.getElementById('score-log-tbody').innerHTML = list.length
         ? list.map(r => {
             const d = new Date(r.date);
             const weekday = weekDays[d.getDay()];
+            const valueStr = (r.value || 0) !== 0 ? `（${r.value > 0 ? '+' : ''}${r.value}分）` : '';
             return `<tr>
                 <td><input type="checkbox" class="log-checkbox" value="${r.id}" onchange="window.updateSelectAllState()"></td>
                 <td>${r.date} (${weekday})</td>
                 <td>${r.week}</td>
                 <td>${r.student}</td>
                 <td>${r.code}</td>
-                <td>${weekday} ${r.code}：${r.reason || ''}</td>
+                <td>${weekday} ${r.code}：${r.reason || ''}${valueStr}</td>
                 <td style="color:${r.value < 0 ? '#ef4444' : '#10b981'}">${r.value > 0 ? '+' : ''}${r.value}</td>
                 <td>${r.operator || '—'}</td>
                 <td><button class="btn-danger btn-xs" onclick="window.deleteLog(${r.id})">删</button></td>
@@ -1385,25 +1374,92 @@ window.loadSemesterConfig = async function() {
         }).join('')
         : '<tr><td colspan="9">暂无匹配记录</td></tr>';
     
-    // 重置全选框状态
     var selectAll = document.getElementById('select-all-logs');
     if (selectAll) selectAll.checked = false;
 };
 
-    window.deleteLog = async function(id) {
+    // 打开编辑操行分记录模态框
+// 打开编辑操行分记录模态框
+window.editScoreLog = function(id) {
+    const record = logs.find(l => l.id === id);
+    if (!record) { toast('记录未找到', 'error'); return; }
+    
+    if (!document.getElementById('modal-edit-score')) {
+        document.body.insertAdjacentHTML('beforeend', `
+            <div class="modal" id="modal-edit-score">
+                <div class="modal-content">
+                    <h3>编辑操行分记录</h3>
+                    <div class="form-row">
+                        <select id="ems-student"></select>
+                        <input type="date" id="ems-date">
+                    </div>
+                    <div class="form-row">
+                        <input type="number" id="ems-week" style="width:70px">
+                        <input id="ems-code" placeholder="代码">
+                        <input type="number" id="ems-value" placeholder="分值" step="0.5" style="width:80px">
+                    </div>
+                    <input id="ems-reason" placeholder="事由">
+                    <input type="hidden" id="ems-edit-id">
+                    <div style="text-align:right; margin-top:10px">
+                        <button class="btn-outline" onclick="window.closeModal('modal-edit-score')">取消</button>
+                        <button class="btn-primary" onclick="window.saveEditScore()">保存修改</button>
+                    </div>
+                </div>
+            </div>
+        `);
+    }
+    
+    const sSel = document.getElementById('ems-student');
+    sSel.innerHTML = '';
+    students.filter(s => s.status === '在读').forEach(s => {
+        sSel.innerHTML += `<option value="${s.name}" ${s.name === record.student ? 'selected' : ''}>${s.name}</option>`;
+    });
+    
+    document.getElementById('ems-date').value = record.date;
+    document.getElementById('ems-week').value = record.week;
+    document.getElementById('ems-code').value = record.code || '';
+    document.getElementById('ems-value').value = record.value;
+    document.getElementById('ems-reason').value = record.reason || '';
+    document.getElementById('ems-edit-id').value = record.id;
+    
+    openModal('modal-edit-score');
+};
+
+// 保存编辑后的操行分记录
+window.saveEditScore = async function() {
     if (!canModify()) {
-        if (confirm('您是班委，无权直接删除操行分记录。是否提交申请给班主任？')) {
-            await requestModification('删除操行分记录', `记录ID：${id}`);
-        }
+        toast('仅班主任可修改操行分记录', 'error');
         return;
     }
-    if(!confirm('删除？')) return;
-    await sb.from('score_log').delete().eq('id', id);
+    
+    const id = parseInt(document.getElementById('ems-edit-id').value);
+    const student = document.getElementById('ems-student').value;
+    const date = document.getElementById('ems-date').value;
+    const week = parseInt(document.getElementById('ems-week').value);
+    const code = document.getElementById('ems-code').value.trim();
+    const value = parseFloat(document.getElementById('ems-value').value);
+    const reason = document.getElementById('ems-reason').value.trim();
+    
+    if (!student || !date || isNaN(value)) {
+        toast('请填写完整信息', 'error');
+        return;
+    }
+    
+    const { error } = await sb.from('score_log').update({
+        student, date, week, code, value, reason
+    }).eq('id', id);
+    
+    if (error) {
+        toast('修改失败：' + error.message, 'error');
+        return;
+    }
+    
+    closeModal('modal-edit-score');
     await loadData();
     window.renderScoreLog();
     refreshDashboard();
+    toast('操行分记录已修改');
 };
-
     window.openAddScoreModal = function() {
         if (!document.getElementById('modal-score')) document.body.insertAdjacentHTML('beforeend', `<div class="modal" id="modal-score"><div class="modal-content"><h3>新增操行分</h3><div class="form-row"><select id="ms-student"></select><input type="date" id="ms-date"></div><div class="form-row"><input type="number" id="ms-week" value="1" style="width:70px"><select id="ms-code" onchange="window.onCodeChange()"></select><input type="number" id="ms-value" placeholder="分值" style="width:80px"></div><input id="ms-reason" placeholder="事由"><div class="form-row"><input id="ms-operator" value="班主任"><select id="ms-basis"><option>直接记录</option><option>课堂日志</option><option>班级日志</option></select></div><div style="text-align:right;margin-top:10px"><button class="btn-outline" onclick="window.closeModal('modal-score')">取消</button><button class="btn-primary" onclick="window.saveScoreRecord()">保存</button></div></div></div>`);
         document.getElementById('ms-date').value = fmt(new Date());
@@ -1649,14 +1705,12 @@ window.renderWeeklySummary = function() {
     if (isNaN(wk)) { toast('请输入周次', 'error'); return; }
 
     const weekLogs = logs.filter(l => l.week === wk);
-    // 按学生分组
     const groups = {};
     weekLogs.forEach(l => {
         if (!groups[l.student]) groups[l.student] = [];
         groups[l.student].push(l);
     });
 
-    // 生成表格内容
     const activeStudents = students.filter(s => s.status === '在读');
     const tbody = document.getElementById('weekly-summary-tbody');
     if (activeStudents.length === 0) {
@@ -1664,28 +1718,40 @@ window.renderWeeklySummary = function() {
         return;
     }
 
-        let html = '';
+    const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    const allDeduct = getDeductCodes();
+    const allBonus = getBonusCodes();
+
+    let html = '';
     activeStudents.forEach(s => {
         const records = groups[s.name] || [];
-        // 计算本周合计
         const weekTotal = records.reduce((sum, r) => sum + (r.value || 0), 0);
         const weekTotalStr = weekTotal === 0 ? '0' : (weekTotal > 0 ? '+' + weekTotal : weekTotal.toString());
-        // 当前操行分
         const currentScore = calcScore(s.name);
-        
+
         if (records.length === 0) {
             html += `<tr><td>${s.name}</td><td style="color:var(--text-secondary);">无记录</td><td>0</td><td>${currentScore}</td></tr>`;
         } else {
             records.sort((a, b) => new Date(a.date) - new Date(b.date));
-            const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
             const items = records.map((r, i) => {
                 const d = new Date(r.date);
                 const weekday = dayNames[d.getDay()];
-                const codeDesc = r.code ? ` ${r.code}：` : '';
-                const reason = r.reason || '';
+                // 查找代码描述
+                const codeItem = allDeduct.find(c => c.code === r.code) || allBonus.find(c => c.code === r.code);
+                const codeDesc = codeItem ? (codeItem.description || codeItem.desc) : '';
+                // 构建事由文本：如果 reason 中已包含描述，则直接使用，否则补充代码含义
+                let reasonText = r.reason || '';
+                if (codeDesc && !reasonText.includes(codeDesc)) {
+                    // 避免重复拼接
+                    if (r.code && reasonText.startsWith(r.code)) {
+                        reasonText = reasonText;
+                    } else {
+                        reasonText = codeDesc + (reasonText ? '，' + reasonText : '');
+                    }
+                }
                 const value = r.value || 0;
                 const valueStr = value !== 0 ? `（${value > 0 ? '+' : ''}${value}分）` : '';
-                return `${i + 1}.${weekday}${codeDesc}${reason}${valueStr}`;
+                return `${i + 1}.${weekday} ${r.code}：${reasonText}${valueStr}`;
             });
             const summary = items.join('；');
             html += `<tr><td>${s.name}</td><td style="white-space:pre-wrap;">${summary}</td><td style="font-weight:bold; color:${weekTotal >= 0 ? '#10b981' : '#ef4444'}">${weekTotalStr}</td><td>${currentScore}</td></tr>`;
@@ -1916,6 +1982,7 @@ window.updateSelectAllState = function() {
         selectAll.indeterminate = checkedCount > 0 && checkedCount < all.length;
     }
 };
+
 // 批量删除
 window.batchDeleteLogs = async function() {
     if (!canModify()) {
@@ -3038,8 +3105,16 @@ async function initAdminMode() {
             refreshDashboard();
             window.loadRecentAttendance();
             renderRoster();
-            window.renderScoreLog();
-            renderWeeklyTable();
+            // 操行管理页面初始化
+if (document.getElementById('weekly-week-num')) {
+    document.getElementById('weekly-week-num').value = getWeek();
+}
+if (document.getElementById('summary-week-num')) {
+    document.getElementById('summary-week-num').value = getWeek();
+}
+window.renderScoreLog();
+renderWeeklyTable();
+window.renderWeeklySummary();
             renderClassLogs();
             renderDailyLogs();
             renderAlerts();
@@ -3123,8 +3198,15 @@ async function init() {
             refreshDashboard();
             window.loadRecentAttendance();
             renderRoster();
-            window.renderScoreLog();
-            renderWeeklyTable();
+            if (document.getElementById('weekly-week-num')) {
+    document.getElementById('weekly-week-num').value = getWeek();
+}
+if (document.getElementById('summary-week-num')) {
+    document.getElementById('summary-week-num').value = getWeek();
+}
+window.renderScoreLog();
+renderWeeklyTable();
+window.renderWeeklySummary();
             renderClassLogs();
             renderDailyLogs();
             renderAlerts();
@@ -3164,22 +3246,118 @@ async function init() {
 }
   // ==================== 周违纪登记 ====================
     function renderWeeklyTable() {
-        const wk = parseInt(document.getElementById('weekly-week-num').value) || getWeek();
-        const active = students.filter(s => s.status === '在读');
-        const data = weeklyData[wk] || {};
-        const dedCodes = getDeductCodes(), bonCodes = getBonusCodes();
-        document.getElementById('weekly-tbody').innerHTML = active.map(s => {
-            const d = data[s.name] || {}, net = (parseFloat(d.bonus_score)||0) - (parseFloat(d.mon)||0) - (parseFloat(d.tue)||0) - (parseFloat(d.wed)||0) - (parseFloat(d.thu)||0) - (parseFloat(d.fri)||0);
-            const ic = (day) => `<input list="codeList" value="${d[day]||''}" data-student="${s.name}" data-day="${day}" style="width:80px;" placeholder="代码 分">`;
-            return `<tr><td>${s.name}</td><td>${ic('mon')}</td><td>${ic('tue')}</td><td>${ic('wed')}</td><td>${ic('thu')}</td><td>${ic('fri')}</td><td><input list="bonusList" value="${d.bonus_reason||''}" data-student="${s.name}" data-day="bonus_reason" style="width:90px;" placeholder="加分事由"></td><td><input type="number" value="${d.bonus_score||''}" data-student="${s.name}" data-day="bonus_score" style="width:60px;" placeholder="分值"></td><td style="font-weight:700;color:${net<0?'#ef4444':'#10b981'}">${net.toFixed(1)}</td></tr>`;
-        }).join('');
-        let dl = document.getElementById('codeList'); if (dl) dl.remove();
-        dl = document.createElement('datalist'); dl.id = 'codeList'; dedCodes.forEach(c => dl.innerHTML += `<option value="${c.code} ${c.pt}">${c.code} ${c.description}</option>`); bonCodes.forEach(c => dl.innerHTML += `<option value="${c.code} +${c.pt}">${c.code} ${c.description}</option>`); document.body.appendChild(dl);
-        let bl = document.getElementById('bonusList'); if (bl) bl.remove();
-        bl = document.createElement('datalist'); bl.id = 'bonusList'; bonCodes.forEach(c => bl.innerHTML += `<option value="${c.code}">${c.description}</option>`); document.body.appendChild(bl);
-    }
+    const wk = parseInt(document.getElementById('weekly-week-num').value) || getWeek();
+    const active = students.filter(s => s.status === '在读');
+    const data = weeklyData[wk] || {};
+    const dedCodes = getDeductCodes();
+    const bonCodes = getBonusCodes();
+    document.getElementById('weekly-tbody').innerHTML = active.map(s => {
+        const d = data[s.name] || {};
+        const net = (parseFloat(d.bonus_score) || 0) - 
+                    (parseFloat(d.mon) || 0) - (parseFloat(d.tue) || 0) - 
+                    (parseFloat(d.wed) || 0) - (parseFloat(d.thu) || 0) - 
+                    (parseFloat(d.fri) || 0);
+        const ic = (day) => `<input list="codeList" value="${d[day] || ''}" data-student="${s.name}" data-day="${day}" style="width:80px;" placeholder="代码 分">`;
+        return `<tr><td>${s.name}</td>
+            <td>${ic('mon')}</td><td>${ic('tue')}</td><td>${ic('wed')}</td>
+            <td>${ic('thu')}</td><td>${ic('fri')}</td>
+            <td><input list="bonusList" value="${d.bonus_reason || ''}" data-student="${s.name}" data-day="bonus_reason" style="width:90px;" placeholder="加分事由"></td>
+            <td><input type="number" value="${d.bonus_score || ''}" data-student="${s.name}" data-day="bonus_score" style="width:60px;" placeholder="分值"></td>
+            <td style="font-weight:700;color:${net < 0 ? '#ef4444' : '#10b981'}">${net.toFixed(1)}</td>
+        </tr>`;
+    }).join('');
+
+    // 重建 datalist
+    let dl = document.getElementById('codeList'); if (dl) dl.remove();
+    dl = document.createElement('datalist'); dl.id = 'codeList';
+    dedCodes.forEach(c => dl.innerHTML += `<option value="${c.code} ${c.pt}">${c.code} ${c.description || c.desc}</option>`);
+    bonCodes.forEach(c => dl.innerHTML += `<option value="${c.code} +${c.pt}">${c.code} ${c.description || c.desc}</option>`);
+    document.body.appendChild(dl);
+
+    let bl = document.getElementById('bonusList'); if (bl) bl.remove();
+    bl = document.createElement('datalist'); bl.id = 'bonusList';
+    bonCodes.forEach(c => bl.innerHTML += `<option value="${c.code}">${c.description || c.desc}</option>`);
+    document.body.appendChild(bl);
+}
+window.onWeeklyDateChange = function() {
+    const dateVal = document.getElementById('weekly-date').value;
+    if (!dateVal) return;
+    const saved = localStorage.getItem('semester_config');
+    if (!saved) { toast('请先设置学期配置', 'error'); return; }
+    const cfg = JSON.parse(saved);
+    const start = new Date(cfg.startDate);
+    const selected = new Date(dateVal);
+    const diffDays = Math.floor((selected - start) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) { toast('日期早于学期开始', 'error'); return; }
+    const week = Math.ceil((diffDays + 1) / 7);
+    document.getElementById('weekly-week-num').value = week;
+    renderWeeklyTable();
+};window.showCodeLookup = function() {
+    // 如果模态框已存在，先移除重建
+    const oldModal = document.getElementById('modal-code-lookup');
+    if (oldModal) oldModal.remove();
+
+    const dedCodes = getDeductCodes();
+    const bonCodes = getBonusCodes();
+    
+    let allCodes = '';
+    dedCodes.forEach(c => {
+        allCodes += `<tr class="code-row" data-copy="${c.code} ${c.pt}" style="cursor:pointer;">
+            <td style="color:#ef4444;">${c.code}</td>
+            <td>${c.description || c.desc}</td>
+            <td style="color:#ef4444;">${c.pt}</td>
+        </tr>`;
+    });
+    bonCodes.forEach(c => {
+        allCodes += `<tr class="code-row" data-copy="${c.code} +${c.pt}" style="cursor:pointer;">
+            <td style="color:#10b981;">${c.code}</td>
+            <td>${c.description || c.desc}</td>
+            <td style="color:#10b981;">+${c.pt}</td>
+        </tr>`;
+    });
+
+    const modalHtml = `
+        <div class="modal active" id="modal-code-lookup" style="display:flex;">
+            <div class="modal-content" style="max-width:600px; width:95%;">
+                <h3>🔍 代码速查</h3>
+                <input type="text" id="lookup-search" placeholder="输入行为关键字（如：吸烟、手机、卫生）" style="width:100%; margin-bottom:10px;" oninput="window.filterCodeLookup()">
+                <div style="max-height:400px; overflow-y:auto;">
+                    <table id="lookup-table" style="width:100%;">
+                        <thead><tr><th>代码</th><th>事项描述</th><th>分值</th></tr></thead>
+                        <tbody>${allCodes}</tbody>
+                    </table>
+                </div>
+                <p style="font-size:11px; color:var(--text-secondary); margin-top:8px;">💡 点击代码行即可复制，然后粘贴到周表单元格中</p>
+                <button class="btn-outline" onclick="document.getElementById('modal-code-lookup').remove();" style="margin-top:8px;">关闭</button>
+            </div>
+        </div>`;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    // 绑定点击复制事件
+    document.querySelectorAll('#modal-code-lookup .code-row').forEach(row => {
+        row.addEventListener('click', function() {
+            const copyText = this.dataset.copy;
+            navigator.clipboard.writeText(copyText).then(() => {
+                toast('已复制：' + copyText);
+                this.style.backgroundColor = '#e6f7ff';
+                setTimeout(() => { this.style.backgroundColor = ''; }, 500);
+            });
+        });
+    });
+    document.getElementById('lookup-search').focus();
+};
+window.filterCodeLookup = function() {
+    const keyword = document.getElementById('lookup-search').value.toLowerCase();
+    const rows = document.querySelectorAll('#modal-code-lookup .code-row');
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(keyword) ? '' : 'none';
+    });
+};
       window.saveWeeklyData = async function() {
     const wk = parseInt(document.getElementById('weekly-week-num').value) || getWeek();
+    // 读取用户选择的日期，若没选则用今天
+    const selectedDate = document.getElementById('weekly-date').value || fmt(new Date());
     const entries = [];
     document.querySelectorAll('#weekly-tbody tr').forEach(row => {
         const inputs = row.querySelectorAll('input');
@@ -3192,13 +3370,11 @@ async function init() {
     await sb.from('weekly_data').delete().eq('week', wk);
     if (entries.length) await sb.from('weekly_data').insert(entries);
 
-    const today = fmt(new Date());
     const dayNames = { mon:'周一', tue:'周二', wed:'周三', thu:'周四', fri:'周五' };
     const allDeduct = getDeductCodes();
     const allBonus = getBonusCodes();
 
     for (const e of entries) {
-        // 处理周一至周五的每个单元格
         for (const day of ['mon', 'tue', 'wed', 'thu', 'fri']) {
             const val = e[day]?.trim();
             if (!val) continue;
@@ -3206,39 +3382,42 @@ async function init() {
             const code = parts[0];
             const score = parseFloat(parts[1]);
             if (!code || isNaN(score)) continue;
-
             const deductItem = allDeduct.find(c => c.code === code);
             const bonusItem = allBonus.find(c => c.code === code);
-            const desc = deductItem?.desc || bonusItem?.desc || '';
-            const action = score > 0 ? '加分' : '违纪';
-            const reasonText = desc
-                ? `${dayNames[day]}${action}：${desc}（${code}）`
-                : `${dayNames[day]}${action}（${code}）`;
+            const desc = deductItem?.description || deductItem?.desc || bonusItem?.description || bonusItem?.desc || '';
+            const reasonText = desc || code;
 
             await sb.from('score_log').insert({
-                student: e.student, date: today, week: wk,
+                student: e.student,
+                date: selectedDate,    // 使用所选日期
+                week: wk,
                 code: code,
                 reason: reasonText,
                 value: score,
-                operator: '班干', basis: '周表'
+                operator: userProfile?.role || '班主任',
+                basis: '周表'
             });
         }
-
-        // 处理独立的"加分事由"列
         if (e.bonus_score && parseFloat(e.bonus_score) !== 0) {
             const bonusCode = e.bonus_reason?.trim() || 'P2';
             const bonusItem = allBonus.find(c => c.code === bonusCode);
-            const bonusDesc = bonusItem ? `${bonusItem.desc}（${bonusCode}）` : `加分（${bonusCode}）`;
+            const bonusDesc = bonusItem ? (bonusItem.description || bonusItem.desc) : '加分';
             await sb.from('score_log').insert({
-                student: e.student, date: today, week: wk,
+                student: e.student,
+                date: selectedDate,    // 使用所选日期
+                week: wk,
                 code: bonusCode,
-                reason: `周加分：${bonusDesc}`,
+                reason: bonusDesc,
                 value: Math.abs(parseFloat(e.bonus_score)),
-                operator: '班干', basis: '周表'
+                operator: userProfile?.role || '班主任',
+                basis: '周表'
             });
         }
     }
-    await loadData(); renderWeeklyTable(); window.renderScoreLog(); refreshDashboard();
+    await loadData();
+    renderWeeklyTable();
+    window.renderScoreLog();
+    refreshDashboard();
     toast('已保存并同步流水');
 };
 
@@ -3320,16 +3499,16 @@ async function init() {
         : '<tr><td colspan="8">✅ 暂无预警学生</td></tr>';
 }
     // ==================== 谈话记录 ====================
-            function renderTalks() {
+function renderTalks() {
     document.getElementById('talk-tbody').innerHTML = talks.length
         ? talks.map(t => `<tr>
             <td>${t.date}</td>
             <td>${t.student}</td>
             <td>${t.type}</td>
             <td>${t.reason||'—'}</td>
-            <td class="talk-content">${t.points||'—'}</td>
-            <td class="talk-content">${t.response||'—'}</td>
-            <td class="talk-content">${t.followup||'—'}</td>
+            <td>${t.points||'—'}</td>
+            <td>${t.response||'—'}</td>
+            <td>${t.followup||'—'}</td>
             <td>
                 <button class="btn-sm" onclick="window.editTalk(${t.id})">✏️ 编辑</button>
                 <button class="btn-danger btn-xs" onclick="window.deleteTalk(${t.id})">删</button>
@@ -3337,100 +3516,122 @@ async function init() {
         </tr>`).join('')
         : '<tr><td colspan="8">暂无谈话记录</td></tr>';
 }
-window.editTalk = async function(id) {
-    const t = talks.find(t => t.id === id);
-    if (!t) { toast('记录未找到', 'error'); return; }
-    // 打开模态框（如果还没创建则创建）
-    if (!document.getElementById('modal-talk')) {
-        window.openTalkModal(); // 确保模态框存在
-    }
-    // 填充数据
-    document.getElementById('talk-student').value = t.student;
-    document.getElementById('talk-date').value = t.date;
-    document.getElementById('talk-type').value = t.type;
-    document.getElementById('talk-reason').innerHTML = `<option value="${t.reason}" selected>${t.reason}</option>`;
-    document.getElementById('talk-points').value = t.points || '';
-    document.getElementById('talk-response').value = t.response || '';
-    document.getElementById('talk-followup').value = t.followup || '';
-    // 设置隐藏字段标记编辑模式
-    document.getElementById('talk-edit-id').value = id;
-    document.querySelector('#modal-talk h3').textContent = '编辑谈话记录';
-    document.getElementById('talk-edit-id').value = '';
-    document.querySelector('#modal-talk h3').textContent = '新增谈话记录';
-    openModal('modal-talk');
-};
-    window.deleteTalk = async id => {
-    if (!canModify()) {
-        if (confirm('您是班委，无权删除谈话记录。是否提交申请给班主任？')) {
-            await requestModification('删除谈话记录', `记录ID：${id}`);
-        }
-        return;
-    }
-    await sb.from('talks').delete().eq('id', id);
-    await loadData();
-    renderTalks();
-};
-    window.openTalkModal = function() {
-    document.getElementById('talk-edit-id').value = '';
-    document.querySelector('#modal-talk h3').textContent = '新增谈话记录';
-    if(!document.getElementById('modal-talk')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-talk"><div class="modal-content" style="max-width:650px;"><h3>新增谈话记录</h3>
-        <div class="form-row"><select id="talk-student"></select><input type="date" id="talk-date"></div>
-        <div class="form-row"><select id="talk-type"><option>个别谈话</option><option>家长沟通</option></select></div>
-        <div><label style="font-weight:500;">事由（可多选违纪记录）</label>
-            <select id="talk-reason" multiple size="4" style="width:100%;height:auto;" title="按住Ctrl多选"></select>
+
+window.openTalkModal = function() {
+    // 每次打开都重新创建模态框，避免状态残留
+    const oldModal = document.getElementById('modal-talk');
+    if (oldModal) oldModal.remove();
+
+    document.body.insertAdjacentHTML('beforeend', `
+        <div class="modal" id="modal-talk">
+            <div class="modal-content" style="max-width:650px;">
+                <h3>新增谈话记录</h3>
+                <div class="form-row">
+                    <select id="talk-student"></select>
+                    <input type="date" id="talk-date">
+                </div>
+                <div class="form-row">
+                    <select id="talk-type">
+                        <option>个别谈话</option>
+                        <option>家长沟通</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-weight:500;">事由（可多选违纪记录）</label>
+                    <select id="talk-reason" multiple size="4" style="width:100%;height:auto;" title="按住Ctrl多选"></select>
+                </div>
+                <textarea id="talk-points" rows="3" placeholder="谈话要点"></textarea>
+                <textarea id="talk-response" rows="3" placeholder="学生表态"></textarea>
+                <input id="talk-followup" placeholder="后续跟进">
+                <input type="hidden" id="talk-edit-id" value="">
+                <div style="display:flex;gap:8px;margin-top:8px">
+                <button class="btn-outline btn-sm" onclick="window.aiGenerateTalk()">👤 处置建议</button>
+                </div>
+                <div style="text-align:right;margin-top:10px">
+                    <button class="btn-outline" onclick="window.closeModal('modal-talk')">取消</button>
+                    <button class="btn-primary" onclick="window.saveTalk()">保存</button>
+                </div>
+            </div>
         </div>
-        <textarea id="talk-points" rows="3" placeholder="要点"></textarea>
-        <textarea id="talk-response" rows="3" placeholder="表态"></textarea>
-        <input id="talk-followup" placeholder="后续跟进">
-       <input type="hidden" id="talk-edit-id" value="">
-        <div style="display:flex;gap:8px;margin-top:8px">
-            <button class="btn-outline btn-sm" onclick="window.aiGenerateTalk()">👤 处置建议</button>
-        </div>
-        <div style="text-align:right;margin-top:10px">
-            <button class="btn-outline" onclick="window.closeModal('modal-talk')">取消</button>
-            <button class="btn-primary" onclick="window.saveTalk()">保存</button>
-        </div></div></div>`);
+    `);
+
     document.getElementById('talk-date').value = fmt(new Date());
     const studentSel = document.getElementById('talk-student');
-    studentSel.innerHTML = ''; 
-    students.filter(s=>s.status==='在读').forEach(s=>studentSel.innerHTML+=`<option value="${s.name}">${s.name}</option>`);
-    // 监听学生变化，加载该生违纪记录
+    studentSel.innerHTML = '';
+    students.filter(s => s.status === '在读').forEach(s => {
+        studentSel.innerHTML += `<option value="${s.name}">${s.name}</option>`;
+    });
     studentSel.onchange = function() {
         window.loadReasonsForStudent(this.value, 'talk-reason');
     };
+    // 重置为新增状态
+    document.getElementById('talk-edit-id').value = '';
     openModal('modal-talk');
 };
-    window.saveTalk = async function() {
+
+window.editTalk = async function(id) {
+    const t = talks.find(t => t.id === id);
+    if (!t) { toast('记录未找到', 'error'); return; }
+
+    // 先打开模态框
+    if (!document.getElementById('modal-talk')) window.openTalkModal();
+    else openModal('modal-talk');
+
+    // 等待下一帧保证元素已渲染
+    setTimeout(() => {
+        document.getElementById('talk-student').value = t.student;
+        document.getElementById('talk-date').value = t.date;
+        document.getElementById('talk-type').value = t.type;
+        window.loadReasonsForStudent(t.student, 'talk-reason');
+        // 延迟勾选原有的违纪事由
+        setTimeout(() => {
+            const reasonSel = document.getElementById('talk-reason');
+            if (reasonSel && t.reason) {
+                const reasons = t.reason.split('；');
+                for (const opt of reasonSel.options) {
+                    const optText = opt.getAttribute('data-reason') || opt.text;
+                    if (reasons.some(r => optText.includes(r.trim()))) {
+                        opt.selected = true;
+                    }
+                }
+            }
+            document.getElementById('talk-points').value = t.points || '';
+            document.getElementById('talk-response').value = t.response || '';
+            document.getElementById('talk-followup').value = t.followup || '';
+        }, 200);
+        document.getElementById('talk-edit-id').value = id;
+        document.querySelector('#modal-talk h3').textContent = '编辑谈话记录';
+    }, 100);
+};
+
+window.saveTalk = async function() {
     const student = document.getElementById('talk-student').value;
     const date = document.getElementById('talk-date').value;
     const type = document.getElementById('talk-type').value;
-    const points = document.getElementById('talk-points').value;
-    const response = document.getElementById('talk-response').value;
-    const followup = document.getElementById('talk-followup').value;
+    const points = document.getElementById('talk-points').value.trim();
+    const response = document.getElementById('talk-response').value.trim();
+    const followup = document.getElementById('talk-followup').value.trim();
     const editId = document.getElementById('talk-edit-id').value;
 
-    // 获取多选事由并合并
     const reasonSel = document.getElementById('talk-reason');
     let reason = '';
     if (reasonSel && reasonSel.selectedOptions.length > 0) {
         const texts = [];
         for (const opt of reasonSel.selectedOptions) {
-            if (opt.value) texts.push(opt.getAttribute('data-reason') || opt.text);
+            if (opt.value && opt.value !== '') texts.push(opt.getAttribute('data-reason') || opt.text);
         }
         reason = texts.join('；');
     }
 
     if (!student) { toast('请选择学生', 'error'); return; }
-    if (!reason) { toast('请填写事由', 'error'); return; }
+    if (!reason) { toast('请至少选择一个违纪事由', 'error'); return; }
     if (!date) { toast('请选择日期', 'error'); return; }
 
     const data = { student, date, type, reason, points, response, followup };
     let error;
     if (editId) {
-        // 更新现有记录
         ({ error } = await sb.from('talks').update(data).eq('id', parseInt(editId)));
     } else {
-        // 插入新记录
         ({ error } = await sb.from('talks').insert(data));
     }
 
@@ -3440,10 +3641,18 @@ window.editTalk = async function(id) {
         closeModal('modal-talk');
         await loadData();
         renderTalks();
-        toast(editId ? '已更新' : '已保存');
+        toast(editId ? '谈话记录已更新' : '谈话记录已保存');
     }
 };
-    window.aiGenerateTalk = async function() {
+
+window.deleteTalk = async function(id) {
+    if (!confirm('确定删除这条谈话记录吗？')) return;
+    const { error } = await sb.from('talks').delete().eq('id', id);
+    if (error) toast('删除失败', 'error');
+    else { await loadData(); renderTalks(); toast('已删除'); }
+};
+
+window.aiGenerateTalk = async function() {
     const student = document.getElementById('talk-student').value;
     const reasonSel = document.getElementById('talk-reason');
     let reason = '';
@@ -3455,11 +3664,11 @@ window.editTalk = async function(id) {
         reason = texts.join('；');
     }
     if (!student || !reason) { toast('请先选择学生并填写事由', 'error'); return; }
-    const btn = document.querySelector('#modal-talk .btn-outline');
-    btn.disabled = true; btn.innerHTML = '生成中...';
 
-    // 强化提示词，明确班主任身份，禁止任何 Markdown
-    const systemPrompt = '你是一名经验丰富的中职班主任。请以第一人称“我”的口吻，直接给出针对该生违纪行为的谈话方案。方案必须包含三部分，并用【谈话要点】、【学生可能表态】、【后续跟进】作为每部分的小标题。内容要具体、可操作，避免空泛。不要使用任何 Markdown 格式（如 ** 、## 、- 等），纯文本输出。';
+    const btn = document.querySelector('#modal-talk .btn-outline');
+    btn.disabled = true; btn.textContent = '生成中...';
+
+    const systemPrompt = '你是一名经验丰富的中职班主任。请以第一人称“我”的口吻，直接给出针对该生违纪行为的谈话方案。方案必须包含三部分，并用【谈话要点】、【学生可能表态】、【后续跟进】作为每部分的小标题。内容要具体、可操作，避免空泛。不要使用任何 Markdown 格式，纯文本输出。';
     const userPrompt = `学生：${student}，事由：${reason}。请生成谈话方案。`;
 
     try {
@@ -3478,19 +3687,8 @@ window.editTalk = async function(id) {
         });
         const data = await res.json();
         let txt = data.choices[0].message.content;
+        txt = txt.replace(/#{1,6}\s*/g, '').replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/^\s*[-*+]\s/gm, '').replace(/^\d+\.\s/gm, '').trim();
 
-        // 清洗 Markdown 符号
-        txt = txt
-            .replace(/#{1,6}\s*/g, '')          // 去除标题
-            .replace(/\*\*(.*?)\*\*/g, '$1')    // 去除加粗
-            .replace(/___(.*?)___/g, '$1')      // 去除其他加粗
-            .replace(/\*(.*?)\*/g, '$1')        // 去除斜体
-            .replace(/^\s*[-*+]\s/gm, '')       // 去除无序列表符号
-            .replace(/^\d+\.\s/gm, '')          // 去除有序列表数字
-            .replace(/`{1,3}[^`]*`{1,3}/g, '') // 去除代码块
-            .trim();
-
-        // 尝试匹配标题（兼容多种写法）
         const pointsMatch = txt.match(/【(谈话)?要点】\s*([\s\S]*?)(?=【(学生可能)?表态】|【后续跟进】|$)/);
         const responseMatch = txt.match(/【(学生可能)?表态】\s*([\s\S]*?)(?=【后续跟进】|$)/);
         const followupMatch = txt.match(/【后续跟进】\s*([\s\S]*)/);
@@ -3500,14 +3698,12 @@ window.editTalk = async function(id) {
             document.getElementById('talk-response').value = responseMatch ? responseMatch[2].trim() : '';
             document.getElementById('talk-followup').value = followupMatch ? followupMatch[1].trim() : '';
         } else {
-            // 如果标题匹配失败，按双换行拆分成三部分
             const parts = txt.split(/\n{2,}/);
             if (parts.length >= 3) {
                 document.getElementById('talk-points').value = parts[0].trim();
                 document.getElementById('talk-response').value = parts[1].trim();
                 document.getElementById('talk-followup').value = parts.slice(2).join('\n\n').trim();
             } else {
-                // 完全无法拆分，全部放入要点
                 document.getElementById('talk-points').value = txt;
             }
         }
@@ -3515,14 +3711,41 @@ window.editTalk = async function(id) {
         console.error(e);
         toast('AI生成失败', 'error');
     }
-    btn.disabled = false;
-    btn.innerHTML = '👤 处置建议';
+    btn.disabled = false; btn.textContent = '👤 处置建议';
 };
 
     // ==================== 代码管理 ====================
     function renderCodeTable() { const dedCodes = getDeductCodes(), bonCodes = getBonusCodes(); document.getElementById('code-tbody').innerHTML = dedCodes.map(c => `<tr><td>${c.code}</td> <td>${c.description}</td><td style="color:#ef4444">${c.pt}</td><td><button class="btn-sm" onclick="window.openDeductCodeModal('${c.code}')">编辑</button> <button class="btn-sm btn-danger" onclick="window.deleteDeductCode('${c.code}')">删</button></td></tr>`).join(''); document.getElementById('bonus-code-tbody').innerHTML = bonCodes.map(c => `<tr><td>${c.code}</td><td>${c.description}</td><td style="color:#10b981">+${c.pt}</td><td><button class="btn-sm" onclick="window.openBonusCodeModal('${c.code}')">编辑</button> <button class="btn-sm btn-danger" onclick="window.deleteBonusCode('${c.code}')">删</button></td></tr>`).join(''); }
-    window.openDeductCodeModal = function(code=null) { if(!document.getElementById('modal-deduct-code')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-deduct-code"><div class="modal-content"><h3>编辑扣分代码</h3><input id="dc-code" placeholder="代码"><input id="dc-desc" placeholder="事项描述"><input type="number" id="dc-pt" placeholder="扣分（负数）" step="0.5"><div style="margin-top:10px"><button class="btn-primary" onclick="window.saveDeductCode()">保存</button><button class="btn-outline" onclick="window.closeModal('modal-deduct-code')">取消</button></div></div></div>`); if(code){ const c = getDeductCodes().find(c=>c.code===code); document.getElementById('dc-code').value=c.code; document.getElementById('dc-desc').value = c.description;; document.getElementById('dc-pt').value=c.pt; } else { document.getElementById('dc-code').value=''; document.getElementById('dc-desc').value=''; document.getElementById('dc-pt').value=''; } openModal('modal-deduct-code'); };
-    window.saveDeductCode = async function() { const code = document.getElementById('dc-code').value.trim(), desc = document.getElementById('dc-desc').value.trim(), pt = parseFloat(document.getElementById('dc-pt').value); if(!code||!desc||isNaN(pt)){ toast('请完整填写','error'); return; } await sb.from('deduct_codes').upsert({code,desc,pt}); await loadData(); renderCodeTable(); closeModal('modal-deduct-code'); toast('代码已保存'); };
+    window.openDeductCodeModal = function(code=null) {
+    if(!document.getElementById('modal-deduct-code')) {
+        document.body.insertAdjacentHTML('beforeend', `<div class="modal" id="modal-deduct-code"><div class="modal-content"><h3>编辑扣分代码</h3><input id="dc-code" placeholder="代码"><input id="dc-desc" placeholder="事项描述"><input type="number" id="dc-pt" placeholder="扣分（负数）" step="0.5"><div style="margin-top:10px"><button class="btn-primary" onclick="window.saveDeductCode()">保存</button><button class="btn-outline" onclick="window.closeModal('modal-deduct-code')">取消</button></div></div></div>`);
+    }
+    if(code) {
+        const c = getDeductCodes().find(c => c.code === code);
+        if (c) {
+            document.getElementById('dc-code').value = c.code;
+            document.getElementById('dc-desc').value = c.description || c.desc || '';
+            document.getElementById('dc-pt').value = c.pt;
+        }
+    } else {
+        document.getElementById('dc-code').value = '';
+        document.getElementById('dc-desc').value = '';
+        document.getElementById('dc-pt').value = '';
+    }
+    openModal('modal-deduct-code');
+};
+    window.saveDeductCode = async function() {
+    const code = document.getElementById('dc-code').value.trim();
+    const description = document.getElementById('dc-desc').value.trim();
+    const pt = parseFloat(document.getElementById('dc-pt').value);
+    if (!code || !description || isNaN(pt)) { toast('请完整填写', 'error'); return; }
+    const { error } = await sb.from('deduct_codes').upsert({ code, description, pt }, { onConflict: 'code' });
+    if (error) { toast('保存失败：' + error.message, 'error'); return; }
+    await loadData();
+    renderCodeTable();
+    closeModal('modal-deduct-code');
+    toast('代码已保存');
+};
     window.deleteDeductCode = async function(code) {
     if (!canModify()) {
         if (confirm('您是班委，无权删除扣分代码。是否提交申请给班主任？')) {
@@ -3535,8 +3758,36 @@ window.editTalk = async function(id) {
     await loadData();
     renderCodeTable();
 };
-    window.openBonusCodeModal = function(code=null) { if(!document.getElementById('modal-bonus-code')) document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal-bonus-code"><div class="modal-content"><h3>编辑加分代码</h3><input id="bc-code" placeholder="代码"><input id="bc-desc" placeholder="事项描述"><input type="number" id="bc-pt" placeholder="加分（正数）" step="0.5"><div style="margin-top:10px"><button class="btn-primary" onclick="window.saveBonusCode()">保存</button><button class="btn-outline" onclick="window.closeModal('modal-bonus-code')">取消</button></div></div></div>`); if(code){ const c = getBonusCodes().find(c=>c.code===code); document.getElementById('bc-code').value=c.code;document.getElementById('bc-desc').value = c.description;document.getElementById('bc-pt').value=c.pt; } else { document.getElementById('bc-code').value=''; document.getElementById('bc-desc').value=''; document.getElementById('bc-pt').value=''; } openModal('modal-bonus-code'); };
-    window.saveBonusCode = async function() { const code = document.getElementById('bc-code').value.trim(), desc = document.getElementById('bc-desc').value.trim(), pt = parseFloat(document.getElementById('bc-pt').value); if(!code||!desc||isNaN(pt)){ toast('请完整填写','error'); return; } await sb.from('bonus_codes').upsert({code,desc,pt}); await loadData(); renderCodeTable(); closeModal('modal-bonus-code'); toast('代码已保存'); };
+    window.openBonusCodeModal = function(code=null) {
+    if(!document.getElementById('modal-bonus-code')) {
+        document.body.insertAdjacentHTML('beforeend', `<div class="modal" id="modal-bonus-code"><div class="modal-content"><h3>编辑加分代码</h3><input id="bc-code" placeholder="代码"><input id="bc-desc" placeholder="事项描述"><input type="number" id="bc-pt" placeholder="加分（正数）" step="0.5"><div style="margin-top:10px"><button class="btn-primary" onclick="window.saveBonusCode()">保存</button><button class="btn-outline" onclick="window.closeModal('modal-bonus-code')">取消</button></div></div></div>`);
+    }
+    if(code) {
+        const c = getBonusCodes().find(c => c.code === code);
+        if (c) {
+            document.getElementById('bc-code').value = c.code;
+            document.getElementById('bc-desc').value = c.description || c.desc || '';
+            document.getElementById('bc-pt').value = c.pt;
+        }
+    } else {
+        document.getElementById('bc-code').value = '';
+        document.getElementById('bc-desc').value = '';
+        document.getElementById('bc-pt').value = '';
+    }
+    openModal('modal-bonus-code');
+};
+    window.saveBonusCode = async function() {
+    const code = document.getElementById('bc-code').value.trim();
+    const description = document.getElementById('bc-desc').value.trim();
+    const pt = parseFloat(document.getElementById('bc-pt').value);
+    if (!code || !description || isNaN(pt)) { toast('请完整填写', 'error'); return; }
+    const { error } = await sb.from('bonus_codes').upsert({ code, description, pt }, { onConflict: 'code' });
+    if (error) { toast('保存失败：' + error.message, 'error'); return; }
+    await loadData();
+    renderCodeTable();
+    closeModal('modal-bonus-code');
+    toast('代码已保存');
+};
     window.deleteBonusCode = async function(code) {
     if (!canModify()) {
         if (confirm('您是班委，无权删除加分代码。是否提交申请给班主任？')) {
@@ -3902,8 +4153,103 @@ window.changeBrightness = function(val) {
     document.body.style.filter = `brightness(${val/100})`;
     localStorage.setItem('brightness', val);
 };
-window.autoUpgrade = function() { toast('升级功能开发中', 'info'); };
-window.openAlertModal = function() { toast('手动添加预警功能开发中', 'info'); };
+window.autoUpgrade = async function() {
+    const requirement = document.getElementById('upgrade-requirement').value.trim();
+    if (!requirement) { toast('请输入升级需求', 'error'); return; }
+    const btn = document.getElementById('btn-upgrade');
+    const statusDiv = document.getElementById('upgrade-status');
+    const preview = document.getElementById('upgrade-preview');
+    btn.disabled = true; btn.textContent = '⏳ 正在生成...';
+    statusDiv.innerHTML = '';
+    preview.style.display = 'none';
+    try {
+        const systemPrompt = `你是一个专业的前端开发者，擅长HTML/CSS/JS。请根据用户需求，输出完整的单文件HTML代码（班级管理系统升级版），保留原有所有功能，只新增或修改用户要求的部分。不要包含任何解释性文字，只输出纯代码。`;
+        const userPrompt = `现有班级管理系统HTML代码（功能完备），请根据以下需求修改：\n${requirement}\n请输出完整的修改后的HTML代码。`;
+        const htmlCode = await callAI(systemPrompt, userPrompt, 4000);
+        if (!htmlCode || htmlCode.length < 100) throw new Error('AI生成内容过短');
+        preview.textContent = htmlCode;
+        preview.style.display = 'block';
+        statusDiv.innerHTML = `<p style="color:var(--success); margin:8px 0;">✅ 代码生成成功，请预览后部署</p>
+            <button class="btn-primary" onclick="window.deployUpgrade()">📦 确认部署到网站</button>`;
+    } catch (e) {
+        console.error(e);
+        toast('生成失败：' + e.message, 'error');
+        statusDiv.innerHTML = '<p style="color:var(--danger);">生成失败，请重试</p>';
+    }
+    btn.disabled = false; btn.textContent = '🚀 一键升级';
+};
+
+window.deployUpgrade = async function() {
+    const htmlContent = document.getElementById('upgrade-preview').textContent;
+    if (!htmlContent || htmlContent.length < 100) { toast('没有可部署的代码', 'error'); return; }
+    if (!confirm('确定要用生成的代码覆盖当前网站吗？此操作不可撤销！')) return;
+    const statusDiv = document.getElementById('upgrade-status');
+    statusDiv.innerHTML = '<p style="color:var(--warning);">⏳ 正在部署...</p>';
+    try {
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const form = new FormData();
+        form.append('files', blob, 'index.html');
+        const res = await fetch(`https://api.netlify.com/api/v1/sites/${NETLIFY_SITE_ID}/deploys`, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + NETLIFY_TOKEN },
+            body: form
+        });
+        if (!res.ok) throw new Error('部署失败，状态码：' + res.status);
+        const data = await res.json();
+        statusDiv.innerHTML = `<p style="color:var(--success);">🎉 部署成功！网站将在1-2分钟后更新。</p>
+            <a href="${data.deploy_ssl_url || data.deploy_url}" target="_blank">预览新版本</a>`;
+        toast('部署成功');
+    } catch (e) {
+        console.error(e);
+        statusDiv.innerHTML = `<p style="color:var(--danger);">❌ 部署失败：${e.message}</p>`;
+        toast('部署失败', 'error');
+    }
+};
+window.saveAlert = async function() {
+    const student = document.getElementById('alert-student').value;
+    const date = document.getElementById('alert-date').value;
+    if (!student || !date) { toast('请填写学生和日期', 'error'); return; }
+    const sc = calcScore(student);
+    const { error } = await sb.from('alerts').insert({
+        student: student,
+        date: date,
+        score: sc,
+        level: level(sc),
+        no: document.getElementById('alert-no').value,
+        feedback: document.getElementById('alert-feedback').value,
+        measure: document.getElementById('alert-measure').value
+    });
+    if (error) { toast('保存失败：' + error.message, 'error'); return; }
+    await loadData();
+    renderAlerts();
+    closeModal('modal-alert');
+    toast('预警已添加');
+};
+window.openAlertModal = function() {
+    if (!document.getElementById('modal-alert')) {
+        document.body.insertAdjacentHTML('beforeend', `
+            <div class="modal" id="modal-alert">
+                <div class="modal-content">
+                    <h3>新增预警</h3>
+                    <div class="form-row">
+                        <select id="alert-student">
+                            ${students.filter(s => s.status === '在读').map(s => `<option>${s.name}</option>`).join('')}
+                        </select>
+                        <input type="date" id="alert-date" value="${fmt(new Date())}">
+                    </div>
+                    <input id="alert-no" placeholder="编号（可选）">
+                    <textarea id="alert-feedback" placeholder="反馈内容"></textarea>
+                    <textarea id="alert-measure" placeholder="建议处置"></textarea>
+                    <div style="text-align:right; margin-top:10px">
+                        <button class="btn-outline" onclick="window.closeModal('modal-alert')">取消</button>
+                        <button class="btn-primary" onclick="window.saveAlert()">保存</button>
+                    </div>
+                </div>
+            </div>
+        `);
+    }
+    openModal('modal-alert');
+};
 window.deleteAlert = async function(id) {
     if (String(id).startsWith('auto_')) {
         toast('自动生成的预警不可删除', 'error');
@@ -4272,7 +4618,33 @@ window.importGradeExcel = function() {
     };
     input.click();
 };
-
+// 操行管理选项卡切换
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('tab-btn')) {
+        const tabName = e.target.dataset.tab;
+        // 切换按钮样式
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+            btn.style.background = 'transparent';
+            btn.style.fontWeight = '500';
+            btn.style.color = 'var(--text-secondary)';
+        });
+        e.target.classList.add('active');
+        e.target.style.background = '#fff';
+        e.target.style.fontWeight = '600';
+        e.target.style.color = 'var(--text)';
+        // 切换面板
+        document.querySelectorAll('.tab-panel').forEach(panel => {
+            panel.style.display = 'none';
+            panel.classList.remove('active');
+        });
+        const targetPanel = document.getElementById(tabName);
+        if (targetPanel) {
+            targetPanel.style.display = 'block';
+            targetPanel.classList.add('active');
+        }
+    }
+});
 window.onload = init;
 })();
 </script>
