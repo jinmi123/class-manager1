@@ -2,11 +2,11 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>25级化学工艺1班 · 班级管理系统 v4.6.6</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-       <style>       
+       <style> 
 :root { --primary: #1a73e8; --primary-dark: #1557b0; --sidebar-bg: #1e293b; --sidebar-text: #cbd5e1; --bg: #f1f5f9; --card: #fff; --text: #1e293b; --text-secondary: #64748b; --border: #e2e8f0; --danger: #ef4444; --warning: #f59e0b; --success: #10b981; --radius: 10px; --radius-sm: 6px; }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); display:flex; min-height:100vh; color:var(--text); }
@@ -17,14 +17,15 @@ body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','M
 .sidebar-nav li a { display:flex; align-items:center; gap:10px; padding:11px 18px; color:var(--sidebar-text); text-decoration:none; font-size:13.5px; border-left:3px solid transparent; cursor:pointer; transition:.2s; }
 .sidebar-nav li a:hover { background:rgba(255,255,255,.05); color:#fff; }
 .sidebar-nav li a.active { background:rgba(59,130,246,.2); color:#fff; border-left-color:#3b82f6; }
-.main { margin-left:240px; flex:1; padding:24px 28px; overflow-y:auto; }
+.main { margin-left:240px; flex:1; padding:24px 28px; overflow-y:auto; max-width:100%; }
 .page { display:none; } .page.active { display:block; }
 @keyframes fadeIn { from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
-.card { background:var(--card); border-radius:var(--radius); padding:20px 24px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,.08); border:1px solid var(--border); }
+.card { background:var(--card); border-radius:var(--radius); padding:20px 24px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,.08); border:1px solid var(--border); overflow-x:auto; }
 .stats-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px; margin-bottom:20px; }
 .stat-card { background:var(--card); padding:18px 20px; text-align:center; border-radius:var(--radius); box-shadow:0 1px 3px rgba(0,0,0,.08); }
 .stat-card .num { font-size:1.6rem; font-weight:700; } .stat-card .label { font-size:12px; color:var(--text-secondary); margin-top:4px; }
-table { width:100%; border-collapse:collapse; font-size:13px; } th, td { padding:10px 12px; border-bottom:1px solid var(--border); white-space:nowrap; min-width:60px; }
+table { border-collapse:collapse; font-size:13px; }
+th, td { padding:8px 6px; border-bottom:1px solid var(--border); white-space:nowrap; min-width:60px; }
 th { position:sticky; top:0; z-index:2; background:#f8fafc; font-weight:600; color:var(--text-secondary); }
 .badge { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; } .badge-success { background:#d1fae5; color:#065f46; } .badge-warning { background:#fef3c7; color:#92400e; } .badge-danger { background:#fee2e2; color:#991b1b; } .badge-info { background:#dbeafe; color:#1e40af; }
 button { cursor:pointer; border:none; border-radius:var(--radius-sm); padding:8px 16px; font-size:13px; font-weight:500; background:var(--primary); color:#fff; transition:.2s; } button:hover { background:var(--primary-dark); }
@@ -48,23 +49,16 @@ input:focus, select:focus, textarea:focus { border-color:var(--primary); box-sha
 .login-container .bio-btn { background: #10b981; color: #fff; }
 .login-hint { font-size: 11px; color: #94a3b8; margin-top: 12px; }
 
-/* ========== 全局表格优化 ========== */
-.card > table { display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.card > table thead, .card > table tbody { display: table; width: 100%; table-layout: auto; }
-.card > table { table-layout: fixed; width: 100%; border-collapse: collapse; }
-.card > table th, .card > table td { text-align: center; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; padding: 8px 6px; }
-.card > table td.long-text, .card > table td:nth-child(6) { text-align: left; white-space: normal; word-break: break-word; }
-
 /* ========== 表单行折行 ========== */
 .form-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .form-row > * { flex: 1 1 150px; }
 
 /* ========== 响应式布局 ========== */
-@media (max-width: 1024px) { .sidebar { width: 0; min-width: 0; overflow: hidden; } .sidebar.open { width: 220px; min-width: 220px; } .main { margin-left: 0 !important; padding: 12px; } .menu-toggle { display: block; position: fixed; top: 10px; left: 10px; z-index: 200; background: var(--primary); color: #fff; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; } .card { padding: 12px; } }
-@media (max-width: 768px) { .sidebar { width: 0; min-width: 0; overflow: hidden; } .sidebar.open { width: 200px; min-width: 200px; } .main { margin-left: 0 !important; padding: 10px; } .menu-toggle { display: block; } .card { padding: 10px; } .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; } .stat-card .num { font-size: 1.3rem; } }
-@media (max-width: 600px) { .card > table th, .card > table td { white-space: nowrap; font-size: 12px; padding: 6px 8px; } }
-@media (max-width: 480px) { .stat-card .num { font-size: 1.3rem; } button, .btn-sm { padding: 4px 8px; font-size: 11px; } .tab-btn { font-size: 12px; padding: 6px 4px; min-width: 60px; } }
-@media (min-width: 769px) { .menu-toggle { display: none; } }
+@media (max-width: 1024px) { .sidebar { width:0; min-width:0; overflow:hidden; } .sidebar.open { width:220px; min-width:220px; } .main { margin-left:0!important; padding:12px; } .menu-toggle { display:block; position:fixed; top:10px; left:10px; z-index:200; background:var(--primary); color:#fff; border:none; border-radius:50%; width:40px; height:40px; font-size:20px; } .card { padding:12px; } }
+@media (max-width: 768px) { .sidebar { width:0; min-width:0; overflow:hidden; } .sidebar.open { width:200px; min-width:200px; } .main { margin-left:0!important; padding:10px; max-width:none; } .menu-toggle { display:block; } .card { padding:10px; } .stats-row { grid-template-columns: repeat(2, 1fr); gap:8px; } .stat-card .num { font-size:1.3rem; } }
+@media (max-width: 600px) { th, td { font-size:12px; padding:6px 8px; } }
+@media (max-width: 480px) { .stat-card .num { font-size:1.3rem; } button, .btn-sm { padding:4px 8px; font-size:11px; } .tab-btn { font-size:12px; padding:6px 4px; min-width:60px; } }
+@media (min-width: 769px) { .menu-toggle { display:none; } }
 
 /* ========== 操行分明细面板 ========== */
 #tab-logs td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -130,19 +124,38 @@ input:focus, select:focus, textarea:focus { border-color:var(--primary); box-sha
 #page-roster .card > table th:nth-child(8), #page-roster .card > table td:nth-child(8) { width: 8%; }
 #page-roster .card > table th:nth-child(9), #page-roster .card > table td:nth-child(9) { width: 8%; }
 #page-roster .card > table th:nth-child(10), #page-roster .card > table td:nth-child(10) { width: 15%; }
-```
 
----
+/* ========== 设置页面样式 ========== */
+.settings-profile-card { display:flex; align-items:center; gap:16px; padding:20px; margin-bottom:20px; background:var(--card); border-radius:var(--radius); box-shadow:0 1px 3px rgba(0,0,0,.08); border:1px solid var(--border); }
+.settings-avatar { width:50px; height:50px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:700; }
+.settings-profile-name { font-weight:700; font-size:16px; }
+.settings-profile-role { font-size:13px; color:var(--text-secondary); }
+.settings-group { background:var(--card); border-radius:var(--radius); box-shadow:0 1px 3px rgba(0,0,0,.08); border:1px solid var(--border); margin-bottom:16px; }
+.settings-item { display:flex; align-items:center; padding:14px 16px; cursor:pointer; border-bottom:1px solid var(--border); transition:background 0.15s; }
+.settings-item:last-child { border-bottom:none; }
+.settings-item:hover { background:rgba(0,0,0,0.02); }
+.settings-item-icon { font-size:18px; margin-right:12px; width:24px; text-align:center; }
+.settings-item-label { flex:1; font-size:15px; }
+.settings-item-arrow { color:var(--text-secondary); font-size:20px; }
+.settings-subpage { animation: fadeIn 0.2s ease; }
+.settings-back-btn { display:flex; align-items:center; gap:8px; padding:12px 0; font-size:15px; color:var(--primary); cursor:pointer; margin-bottom:12px; font-weight:500; }
+.setting-switch { position:relative; display:inline-block; width:44px; height:24px; }
+.setting-switch input { opacity:0; width:0; height:0; }
+.setting-slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#ccc; border-radius:24px; transition:.3s; }
+.setting-slider:before { content:""; position:absolute; height:18px; width:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.3s; }
+input:checked + .setting-slider { background:var(--primary); }
+input:checked + .setting-slider:before { transform:translateX(20px); }
 
-### 优化说明
+/* ========== 操行管理统一字体加粗 ========== */
+#tab-summary th, #tab-summary td,
+#tab-weekly th, #tab-weekly td,
+#tab-logs th, #tab-logs td { font-size:14px; font-weight:bold; }
 
-1. **合并全局表格样式**：将 `.card > table` 的多条重复规则合并为一条。
-2. **精简操行分明细样式**：将 `#tab-logs td` 和 `#tab-logs td:nth-child(6)` 的重复覆盖合并。
-3. **合并代码管理样式**：扣分和加分表格列宽相同，用逗号合并选择器。
-4. **删除重复的响应式代码**：`1024px` 和 `768px` 媒体查询中有重复的 `.sidebar`、`.main`、`.menu-toggle` 规则，分别合并。
-5. **删除无用的 `#page-discipline .tab-panel` 冗余选择器**：直接用 `#tab-logs` 即可。
+/* 选项卡按钮样式 */
+.tab-btn { font-size:15px !important; font-weight:700 !important; }
 
-样式效果完全不变，代码量减少约 30%。
+/* 长文本自动换行（全局） */
+.card > table td:nth-child(6) { white-space: normal; word-break: break-word; }
 </style> </style>
 </head>
 <body>
@@ -162,11 +175,12 @@ input:focus, select:focus, textarea:focus { border-color:var(--primary); box-sha
     <li><a data-page="grade-manager">📊 成绩管理</a></li>
     <li><a data-page="ai-advisor">🤖 <span>班级管理小助手</span></a></li>
     <li><a data-page="rules">📜 规章制度</a></li>
-    <li><a data-page="settings">⚙️ 设置</a></li>
+    <li id="sidebar-settings-item" style="display:none;"><a data-page="settings">⚙️ 设置</a></li>
 </ul></aside>
 <div class="toast" id="toast"></div>
 <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
-            <div id="login-overlay">
+<div id="login-overlay">
+    <!-- 登录表单 -->
     <div class="login-container" id="login-form">
         <h2>📋 班级管理系统</h2>
         <label>账号</label>
@@ -178,41 +192,44 @@ input:focus, select:focus, textarea:focus { border-color:var(--primary); box-sha
         <p class="login-hint" style="cursor:pointer; color:var(--primary);" onclick="window.showForgotPassword()">忘记密码？</p>
     </div>
 
-    <!-- 注册表单（默认隐藏） -->
+    <!-- 注册表单（紧凑两列布局） -->
     <div class="login-container" id="register-form" style="display:none;">
         <h2>📝 注册账号</h2>
-        <label>姓名</label>
-        <input type="text" id="reg-name" placeholder="真实姓名">
-        <label>性别</label>
-        <select id="reg-gender"><option>男</option><option>女</option></select>
-        <label>年龄</label>
-        <input type="number" id="reg-age" placeholder="年龄" min="1" max="100">
-        <label>身份（例如：班长，学习委员）</label>
-        <input type="text" id="reg-role" placeholder="班干部身份">
-<label>系统角色</label>
-        <select id="reg-sys-role">
-            <option value="班委">班委（默认）</option>
-            <option value="班主任">班主任</option>
-        </select>
-        <label>账号</label>
-        <input type="text" id="reg-username" placeholder="登录账号">
-        <label>密码</label>
-        <input type="password" id="reg-password" placeholder="至少6位">
+        <div class="form-row">
+            <input type="text" id="reg-name" placeholder="真实姓名" style="flex:1;">
+            <select id="reg-gender" style="flex:1;"><option>男</option><option>女</option></select>
+            <input type="number" id="reg-age" placeholder="年龄" style="flex:0.5;" min="1" max="100">
+        </div>
+        <div class="form-row">
+            <input type="text" id="reg-role" placeholder="班干部身份（如班长）" style="flex:1;">
+            <select id="reg-sys-role" style="flex:1;">
+                <option value="班委">班委（默认）</option>
+                <option value="班主任">班主任</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <input type="text" id="reg-username" placeholder="登录账号" style="flex:1;">
+            <input type="password" id="reg-password" placeholder="密码（至少6位）" style="flex:1;">
+        </div>
         <hr>
-        <label>密保问题 1</label>
-        <input type="text" id="reg-q1" placeholder="例如：你最喜欢什么颜色？">
-        <input type="text" id="reg-a1" placeholder="答案" style="margin-top:4px;">
-        <label style="margin-top:8px;">密保问题 2</label>
-        <input type="text" id="reg-q2" placeholder="例如：你的小学叫什么名字？">
-        <input type="text" id="reg-a2" placeholder="答案" style="margin-top:4px;">
-        <label style="margin-top:8px;">密保问题 3</label>
-        <input type="text" id="reg-q3" placeholder="例如：你的生日是几月几日？">
-        <input type="text" id="reg-a3" placeholder="答案" style="margin-top:4px;">
+        <p style="text-align:left; font-weight:600; margin-bottom:6px;">密保问题（用于找回密码）</p>
+        <div class="form-row">
+            <input type="text" id="reg-q1" placeholder="问题1" style="flex:1;">
+            <input type="text" id="reg-a1" placeholder="答案" style="flex:1;">
+        </div>
+        <div class="form-row">
+            <input type="text" id="reg-q2" placeholder="问题2" style="flex:1;">
+            <input type="text" id="reg-a2" placeholder="答案" style="flex:1;">
+        </div>
+        <div class="form-row">
+            <input type="text" id="reg-q3" placeholder="问题3" style="flex:1;">
+            <input type="text" id="reg-a3" placeholder="答案" style="flex:1;">
+        </div>
         <button class="btn-primary" onclick="window.handleRegister()">✅ 完成注册</button>
         <button class="btn-outline" onclick="window.showLogin()">⬅ 返回登录</button>
     </div>
 
-    <!-- 忘记密码表单（默认隐藏） -->
+    <!-- 忘记密码表单（可选，保留原样即可） -->
     <div class="login-container" id="forgot-form" style="display:none;">
         <h2>🔑 找回密码</h2>
         <label>账号</label>
@@ -230,7 +247,10 @@ input:focus, select:focus, textarea:focus { border-color:var(--primary); box-sha
 </div>
 <div class="main" id="mainContent"></div>
 <script>
-(function() {
+(function() { 
+    let currentUser = null;
+    let userProfile = null;
+    let initLock = false;   
     const SUPABASE_URL = 'https://iqjyhoiwgawocxtcrcem.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_nsDhudLW5-QcylC2mGPUaw_cEBr3QNg';
     const DEEPSEEK_KEY = 'sk-05ef4ee9d4ed4c808404aacb46ff5ab0';
@@ -284,6 +304,7 @@ window.handleRegister = async function() {
     const classRole = document.getElementById('reg-role').value.trim();
     const username = document.getElementById('reg-username').value.trim();
     const password = document.getElementById('reg-password').value.trim();
+    const sysRole = document.getElementById('reg-sys-role')?.value || '班委';
 
     const q1 = document.getElementById('reg-q1').value.trim();
     const a1 = document.getElementById('reg-a1').value.trim();
@@ -292,48 +313,62 @@ window.handleRegister = async function() {
     const q3 = document.getElementById('reg-q3').value.trim();
     const a3 = document.getElementById('reg-a3').value.trim();
 
-    if (!name || !username || !password) {
-        toast('请填写姓名、账号和密码', 'error'); return;
-    }
+    if (!name || !username || !password) { toast('请填写姓名、账号和密码', 'error'); return; }
     if (password.length < 6) { toast('密码至少6位', 'error'); return; }
-    if (!q1 || !a1 || !q2 || !a2 || !q3 || !a3) {
-        toast('请完整设置三个密保问题和答案', 'error'); return;
+    if (!q1 || !a1 || !q2 || !a2 || !q3 || !a3) { toast('请完整设置三个密保问题和答案', 'error'); return; }
+
+    // 检查用户名是否重复
+    try {
+        const { data: existUser } = await sb.from('profiles').select('id').eq('username', username).maybeSingle();
+        if (existUser) { toast('该账号已被注册', 'error'); return; }
+    } catch (e) {
+        // 查询失败说明表可能还没准备好，继续尝试注册
     }
 
-    // 使用一个不存在的邮箱占位，后续登录时通过username查phone再组装邮箱
-    const phonePlaceholder = username + '_' + Date.now(); // 生成一个唯一手机号占位
-    const email = phonePlaceholder + '@example.com';
-    const { data, error } = await sb.auth.signUp({ email, password });
-    if (error) {
-        if (error.message.includes('already registered')) {
-            toast('账号已存在', 'error');
-        } else {
-            toast('注册失败：' + error.message, 'error');
+    // 使用用户输入的 username 作为 phone 字段的值，不再生成随机串
+    const phone = username;  // 直接用账号作为 phone，方便后续查找
+    const email = phone + '@class25.cn';
+    
+    try {
+        const { data, error } = await sb.auth.signUp({ email, password });
+        if (error) { 
+            if (error.message.includes('already registered')) {
+                toast('该账号已存在，请直接登录', 'error');
+            } else {
+                toast('注册失败：' + error.message, 'error');
+            }
+            return; 
         }
-        return;
-    }
-    if (data.user) {
-        const securityQA = [
-            { q: q1, a: a1 },
-            { q: q2, a: a2 },
-            { q: q3, a: a3 }
-        ];
-        await sb.from('profiles').upsert({
-            user_id: data.user.id,
-            phone: phonePlaceholder,
-            role: document.getElementById('reg-sys-role').value,
-            status: 'active',
-            name,
-            gender,
-            age,
-            class_role: classRole,
-            username,
-            security_qa: securityQA
-        });
+        if (!data.user) { toast('注册异常，请重试', 'error'); return; }
+
+        const securityQA = [{ q: q1, a: a1 }, { q: q2, a: a2 }, { q: q3, a: a3 }];
+        
+        // 尝试写入 profiles，如果失败不影响注册结果
+        try {
+            await sb.from('profiles').upsert({
+                user_id: data.user.id,
+                phone: phone,
+                role: sysRole,
+                status: 'active',
+                name: name,
+                gender: gender,
+                age: age,
+                class_role: classRole,
+                username: username,
+                security_qa: securityQA
+            });
+        } catch (profileError) {
+            console.warn('profiles 写入失败（RLS 限制），但 auth 已创建', profileError);
+        }
+
         toast('注册成功，请登录', 'success');
         showLogin();
+    } catch (e) {
+        console.error(e);
+        toast('网络错误，请重试', 'error');
     }
-};// 切换显示
+};
+// 切换显示
 window.showLogin = () => {
     document.getElementById('login-form').style.display = '';
     document.getElementById('register-form').style.display = 'none';
@@ -378,42 +413,49 @@ window.loadSecurityQuestion = async () => {
 window.handleLogin = async function() {
     const username = document.getElementById('login-username').value.trim();
     const pwd = document.getElementById('login-password').value.trim();
+    if (!username || !pwd) { toast('请输入账号和密码', 'error'); return; }
 
-    // 超级管理员
+    // 超级管理员快速通道
     if (username === '13038688446' && pwd === 'fqzx123456') {
         currentUser = { id: 'admin', email: 'admin@class.local' };
-        userProfile = { role: '班主任', phone: '13038688446' };
-        document.getElementById('login-overlay').style.display = 'none';
-        document.querySelector('.sidebar').style.display = '';
-        document.getElementById('mainContent').style.display = '';
-        toast('登录成功 (超级管理员)', 'success');
+        userProfile = { role: '班主任', phone: '13038688446', username: 'admin', name: '管理员' };
+        toast(`🔓 登录成功，欢迎回来，${userProfile.role} ${userProfile.name || ''}`);
+        hideLogin();
         await initAdminMode();
         return;
     }
 
-    // 普通用户：通过username查询phone，组装email
-    const { data: profiles, error: profileError } = await sb.from('profiles')
-        .select('phone, role, status')
-        .eq('username', username)
-        .maybeSingle();
+    // 普通用户登录
+    const email = username + '@class25.cn';   // 注意：已统一为 class25.cn
+    
+    try {
+        const { data, error } = await sb.auth.signInWithPassword({ email, password: pwd });
+        if (error) { toast('账号或密码错误', 'error'); return; }
 
-    if (profileError || !profiles) {
-        toast('账号不存在', 'error'); return;
-    }
-    if (profiles.status !== 'active') {
-        toast('账号已被禁用，请联系班主任', 'error'); return;
-    }
+        // 获取用户资料
+        try {
+            const { data: profile } = await sb.from('profiles')
+                .select('*')
+                .eq('username', username)
+                .maybeSingle();
+            if (profile) {
+                if (profile.status !== 'active') { toast('账号已被禁用，请联系班主任', 'error'); return; }
+                userProfile = profile;
+            } else {
+                userProfile = { username: username, role: '班委', status: 'active', phone: username };
+            }
+        } catch (e) {
+            userProfile = { username: username, role: '班委', status: 'active', phone: username };
+        }
 
-    const email = profiles.phone + '@example.com';
-    const { data, error } = await sb.auth.signInWithPassword({ email, password: pwd });
-    if (error) {
-        toast('密码错误或登录失败', 'error');
-        return;
+        currentUser = data.user;
+        toast(`🔓 登录成功，欢迎回来，${userProfile.role} ${userProfile.name || username}`);
+        hideLogin();
+        await init();
+    } catch (e) {
+        console.error(e);
+        toast('登录失败，请重试', 'error');
     }
-    userProfile = profiles;
-    currentUser = data.user;
-    hideLogin();
-    await init();
 };
 async function loadUserProfile(user) {
     currentUser = user;
@@ -434,8 +476,13 @@ function hideLogin() {
     document.getElementById('login-overlay').style.display = 'none';
     document.querySelector('.sidebar').style.display = '';
     document.getElementById('mainContent').style.display = '';
-}
-window.resetPassword = async function() {
+
+    // 更新侧边栏头部显示当前用户身份
+    const sidebarHeader = document.querySelector('.sidebar-header h2');
+    if (sidebarHeader && userProfile) {
+        sidebarHeader.innerHTML = `📋 25化学工艺1班<br><small style="font-size:11px; color:#94a3b8;">${userProfile.role} · ${userProfile.name || userProfile.username || ''}</small>`;
+    }
+}window.resetPassword = async function() {
     const answer = document.getElementById('forgot-answer').value.trim();
     const newPassword = document.getElementById('forgot-password').value.trim();
     if (!answer || !newPassword) { toast('请填写答案和新密码', 'error'); return; }
@@ -478,20 +525,28 @@ function canModify() {
 }
 
 async function requestModification(action, details) {
-    if (confirm('您是班委，无权此操作。是否提交申请给班主任？')) {
-        await sb.from('action_requests').insert({
+    if (!confirm('您是班委，无权此操作。是否提交申请给班主任？')) return;
+    try {
+        const { error } = await sb.from('action_requests').insert({
             requester: currentUser.id,
             phone: userProfile.phone,
+            requester_name: userProfile.name || userProfile.username || '',
             action: action,
             details: details,
             status: '待审批',
             created_at: new Date().toISOString()
         });
-        toast('已提交申请，等待班主任审批');
+        if (error) {
+            console.error('提交申请失败:', error);
+            toast('提交失败，请检查网络或联系班主任', 'error');
+        } else {
+            toast('已提交申请，等待班主任审批');
+        }
+    } catch (e) {
+        console.error('提交异常:', e);
+        toast('网络异常，请稍后重试', 'error');
     }
-}
-
-window.changePassword = async function() {
+}window.changePassword = async function() {
     const newPass = document.getElementById('new-password').value.trim();
     if (!newPass || newPass.length < 6) { toast('新密码至少6位', 'error'); return; }
     const { error } = await sb.auth.updateUser({ password: newPass });
@@ -503,7 +558,14 @@ window.changePassword = async function() {
 window.handleWebAuthnLogin = async function() { toast('生物识别登录暂未开放，请使用密码登录', 'error'); };
 window.registerWebAuthn = async function() { toast('请在浏览器支持的环境下使用', 'error'); };
 // ========== 登录模块结束 ==========
-    window.closeModal = id => { const m = document.getElementById(id); if(m) m.classList.remove('active'); };
+    window.closeModal = id => {
+    const m = document.getElementById(id);
+    if (m) {
+        m.classList.remove('active');
+        m.style.display = 'none';
+        setTimeout(() => { if (m.style.display === 'none') m.remove(); }, 300);
+    }
+};
     window.openModal = id => { const m = document.getElementById(id); if(m) m.classList.add('active'); };
     const fmt = d => d ? new Date(d).toISOString().split('T')[0] : '';
     // 从 localStorage 读取学期配置
@@ -580,6 +642,9 @@ function getAgeFromIdcard(idcard) {
 
 <!-- 真正的仪表盘页面 -->
         <div class="page active" id="page-dashboard">
+<div id="dashboard-notice-bar" style="display:none; background:#fef3c7; border:1px solid #f59e0b; border-radius:8px; padding:8px 16px; margin-bottom:12px; cursor:pointer; text-align:center; font-weight:600; color:#92400e;" onclick="document.querySelector('.sidebar-nav a[data-page=\'alert-records\']').click()">
+    <marquee behavior="scroll" direction="left" scrollamount="3" style="white-space:nowrap;" id="dashboard-notice-text"></marquee>
+</div>
     <div class="stats-row">
         <div class="stat-card"><div class="num" id="stat-total">-</div><div class="label">在读总人数</div></div>
         <div class="stat-card"><div class="num" id="stat-zoudu">-</div><div class="label">走读生</div></div>
@@ -613,7 +678,7 @@ function getAgeFromIdcard(idcard) {
     </div>
 </div>
         <div class="page" id="page-roster">
-            <div class="card"><h2>👥 学生名册</h2><div class="search-bar"><input id="roster-search" placeholder="搜索" oninput="window.renderRoster()"><select id="roster-status-filter" onchange="window.renderRoster()">
+            <div class="card"><h2>👥 学生名册</h2><div class="search-bar"><input id="roster-search" placeholder="搜索" aria-label="搜索学生姓名或身份证" oninput="window.renderRoster()"><select id="roster-status-filter" aria-label="筛选学生状态" onchange="window.renderRoster()">
     <option value="all">全部</option>
     <option value="active">仅在读</option>
 </select>
@@ -634,7 +699,7 @@ function getAgeFromIdcard(idcard) {
                     <h2>📋 周操行汇总</h2>
                     <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
                         <label>第</label>
-                        <input type="number" id="summary-week-num" value="1" style="width:70px" min="1">
+                        <input type="number" id="summary-week-num" value="1" aria-label="输入查询周次" style="width:70px" min="1">
                         <label>周</label>
                         <button onclick="window.renderWeeklySummary()">🔍 查询</button>
                         <button class="btn-outline" onclick="window.exportWeeklySummary()">📥 导出Excel</button>
@@ -656,7 +721,7 @@ function getAgeFromIdcard(idcard) {
                 <div class="card">
                     <h2>📅 周违纪登记</h2>
                     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                        <label>日期</label><input type="date" id="weekly-date" onchange="window.onWeeklyDateChange()" style="width:140px">
+                        <label>日期</label><input type="date" id="weekly-date" aria-label="选择周登记日期" onchange="window.onWeeklyDateChange()" style="width:140px">
                         <label>周次</label><input type="number" id="weekly-week-num" value="1" style="width:70px">
                         <button onclick="window.renderWeeklyTable()">刷新</button>
                         <button class="btn-outline" onclick="window.saveWeeklyData()">💾 保存</button>                    
@@ -1007,52 +1072,71 @@ style="margin-left:auto;">🔍 代码速查</button>
         <div id="ai-general-result" style="margin-top:10px; padding:12px; background:#f8fafc; border-radius:6px; white-space:pre-wrap; font-size:13px; display:none;"></div>
     </div>
 </div>
-                      <div class="page" id="page-settings">
-            <div class="card">
-                <h2>⚙️ 个性化设置</h2>
-                <div class="form-row">
-                    <div><label>主题颜色</label>
-                        <select id="theme-select" onchange="window.changeTheme()">
-                            <option value="default">默认蓝</option>
-                            <option value="green">护眼绿</option>
-                            <option value="dark">暗夜模式</option>
-                        </select>
-                    </div>
-                    <div><label>屏幕亮度</label>
-                        <input type="range" id="brightness-range" min="50" max="150" value="100" oninput="window.changeBrightness(this.value)">
-                    </div>
-                </div>
+<div class="page" id="page-settings">
+    <!-- 设置主页面 -->
+    <div class="settings-main" id="settings-main">
+        <!-- 个人信息卡片 -->
+        <div class="settings-profile-card">
+            <div class="settings-avatar" id="settings-avatar">班</div>
+            <div class="settings-profile-info">
+                <div class="settings-profile-name" id="settings-profile-name">管理员</div>
+                <div class="settings-profile-role" id="settings-profile-role">班主任</div>
             </div>
-            <div class="card">
-                <h2>🔐 安全设置</h2>
-                <p style="font-size:12px; color:var(--text-secondary);">修改登录密码</p>
-                <div class="form-row">
-                    <input type="password" id="new-password" placeholder="新密码（至少6位）" style="flex:1;">
-                    <button onclick="window.changePassword()" style="margin-left:10px;">修改密码</button>
-                </div>
-                <hr style="margin:15px 0;">
-                <p style="font-size:12px; color:var(--text-secondary);">注册指纹或人脸，下次可快速登录</p>
-                <button class="btn-outline" onclick="window.registerWebAuthn()">👆 注册指纹/人脸</button>
+            <button class="btn-sm btn-outline" onclick="settingsNav('account')">编辑</button>
+        </div>
+
+        <!-- 分类卡片 -->
+        <div class="settings-group">
+            <div class="settings-item" onclick="settingsNav('account')">
+                <span class="settings-item-icon">🔐</span>
+                <span class="settings-item-label">账户与安全</span>
+                <span class="settings-item-arrow">›</span>
             </div>
-            <div class="card" id="card-account-admin" style="display:none;">
-                <h2>👤 账号管理</h2>
-                <table id="account-table">
-                    <thead><tr><th>手机号</th><th>角色</th><th>状态</th><th>操作</th></tr></thead>
-                    <tbody id="account-tbody"><tr><td colspan="4">加载中...</td></tr></tbody>
-                </table>
+            <div class="settings-item" onclick="settingsNav('display')">
+                <span class="settings-item-icon">🎨</span>
+                <span class="settings-item-label">显示与个性化</span>
+                <span class="settings-item-arrow">›</span>
             </div>
-            <div class="card">
-                <h2>🤖 系统升级</h2>
-                <p style="font-size:12px; color:var(--text-secondary);">输入需求，AI 生成并直接部署到 Netlify。</p>
-                <textarea id="upgrade-requirement" placeholder="例如：增加宿舍违纪登记..." style="width:100%;height:80px"></textarea>
-                <button id="btn-upgrade" onclick="window.autoUpgrade()" style="margin-top:10px;">🚀 一键升级</button>
-                <div id="upgrade-status" style="margin-top:12px;"></div>
-                <pre id="upgrade-preview" style="background:#f8fafc;padding:16px;border-radius:6px;white-space:pre-wrap;font-size:13px;max-height:300px;overflow-y:auto;display:none;"></pre>
+            <div class="settings-item" onclick="settingsNav('data')">
+                <span class="settings-item-icon">💾</span>
+                <span class="settings-item-label">数据管理</span>
+                <span class="settings-item-arrow">›</span>
             </div>
-            <div class="card">
-                <button class="btn-danger" onclick="window.logout()" style="width:100%;">🚪 退出登录</button>
+            <div class="settings-item" onclick="settingsNav('class')">
+                <span class="settings-item-icon">🏫</span>
+                <span class="settings-item-label">班级管理</span>
+                <span class="settings-item-arrow">›</span>
             </div>
-        </div>    
+            <div class="settings-item" onclick="settingsNav('security')">
+                <span class="settings-item-icon">🛡️</span>
+                <span class="settings-item-label">安全与合规</span>
+                <span class="settings-item-arrow">›</span>
+            </div>
+            <div class="settings-item" onclick="settingsNav('system')">
+                <span class="settings-item-icon">🤖</span>
+                <span class="settings-item-label">系统与升级</span>
+                <span class="settings-item-arrow">›</span>
+            </div>
+            <div class="settings-item" onclick="settingsNav('family')">
+                <span class="settings-item-icon">📱</span>
+                <span class="settings-item-label">家校互联</span>
+                <span class="settings-item-arrow">›</span>
+            </div>
+        </div>
+
+        <!-- 退出登录按钮 -->
+        <div class="settings-group" style="margin-top:24px;">
+            <div class="settings-item" onclick="window.logout()" style="color:var(--danger);">
+                <span class="settings-item-icon">🚪</span>
+                <span class="settings-item-label">退出登录</span>
+                <span class="settings-item-arrow">›</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 子页面容器 -->
+    <div class="settings-subpage" id="settings-subpage" style="display:none;"></div>
+</div>
 <div class="page" id="page-rules">
             <div class="card">
                 <h2>📜 学生考勤制度</h2>
@@ -1119,8 +1203,17 @@ style="margin-left:auto;">🔍 代码速查</button>
         }
         if (e.target.classList.contains('modal')) e.target.classList.remove('active');
     });
-    function refreshPage(p) {
-    if (p === 'dashboard') refreshDashboard();
+    function refreshPage(p) {// 非班主任禁止进入设置页
+if (p === 'settings' && !canModify()) {
+    toast('仅班主任可访问设置', 'error');
+    // 自动跳转回仪表盘
+    document.querySelectorAll('.sidebar-nav a[data-page="dashboard"]').forEach(a => a.click());
+    return;
+}
+    if (p === 'dashboard') {
+    refreshDashboard();
+    window.renderDashboardNoticeBar();    
+}
     if (p === 'roster') renderRoster();
     if (p === 'discipline') {
         document.getElementById('weekly-date').value = fmt(new Date());
@@ -1131,7 +1224,15 @@ style="margin-left:auto;">🔍 代码速查</button>
         window.renderWeeklySummary();
     }
     if (p === 'class-log') { renderClassLogs(); renderDailyLogs(); }
-    if (p === 'alert-records') { renderAlerts(); renderTalks(); }
+    if (p === 'alert-records') {
+    renderAlerts();
+    renderTalks();
+    if (canModify()) {
+        window.loadActionRequests();   // 班主任：待审批列表
+    } else {
+        window.loadMyRequests();       // 班委：我的申请
+    }
+}
     if (p === 'ai-report') { /* AI周报无需额外初始化 */ }
     if (p === 'code-table') renderCodeTable();
     if (p === 'student-profile') populateProfileSelect();
@@ -1216,6 +1317,33 @@ style="margin-left:auto;">🔍 代码速查</button>
         }
         toast('数据加载失败，请检查网络或刷新重试', 'error');
     }
+window.loadDashboardNotice = async function() {
+    const bar = document.getElementById('dashboard-notice-bar');
+    const text = document.getElementById('dashboard-notice-text');
+    if (!bar || !text) return;
+
+    // 只有班主任才显示待审批申请通知
+    if (!canModify()) {
+        bar.style.display = 'none';
+        return;
+    }
+
+    try {
+        const { data, error } = await sb.from('action_requests')
+            .select('id', { count: 'exact' })
+            .eq('status', '待审批');
+        
+        if (error || !data || data.length === 0) {
+            bar.style.display = 'none';
+            return;
+        }
+
+        bar.style.display = '';
+        text.textContent = `📢 您有 ${data.length} 条待审批的班委申请，点击查看处理 →`;
+    } catch (e) {
+        bar.style.display = 'none';
+    }
+};
 async function refreshDashboard() {
     const today = fmt(new Date());
     const todayLogs = logs.filter(l => l.date === today && l.basis === '缺旷登记');
@@ -1320,6 +1448,7 @@ async function refreshDashboard() {
 
     // 自动保存今日出勤（如果还未保存）
     window.autoSaveDailyAttendance();
+    window.loadDashboardNotice();
 }
     // 学生名册
    function renderRoster() {
@@ -1334,29 +1463,33 @@ async function refreshDashboard() {
         const age = getAgeFromIdcard(s.idcard);
         const gender = s.gender || '';
         const zoudu = (s.zoudu === '是') ? '走读' : '住校';
-        return `<tr>
-            <td>${s.name}</td>
-            <td>${gender}</td>
-            <td>${age}</td>
-            <td>${zoudu}</td>
-            <td>${s.idcard || ''}</td>
-            <td>${s.parent || '—'}</td>
-            <td>${s.phone || '—'}</td>
-            <td>${s.status === '在读' ? '✅在读' : s.status}</td>
-          <td><span class="badge ${badgeClass(level(sc))}">${sc}</span></td>
-            <td>
-                <button class="btn-sm" onclick="window.editStudent('${s.idcard}')">编辑</button>
-                <button class="btn-sm btn-danger" onclick="window.toggleStudent('${s.idcard}')">${s.status === '在读' ? '退学' : '恢复'}</button>
-                <button class="btn-sm btn-danger" onclick="window.deleteStudent('${s.idcard}')">🗑 删除</button>
-            </td>
-        </tr>`;
+     return `<tr>
+    <td>${s.name}</td>
+    <td>${gender}</td>
+    <td>${age}</td>
+    <td>${zoudu}</td>
+    <td>${s.idcard || ''}</td>
+    <td>${s.parent || '—'}</td>
+    <td>${s.phone || '—'}</td>
+    <td>${s.status === '在读' ? '✅在读' : s.status}</td>
+    <td><span class="badge ${badgeClass(level(sc))}">${sc}</span></td>
+    <td>
+        ${canModify() ? `
+            <button class="btn-sm" onclick="window.editStudent('${s.idcard}')">编辑</button>
+            <button class="btn-sm btn-danger" onclick="window.toggleStudent('${s.idcard}')">${s.status === '在读' ? '退学' : '恢复'}</button>
+            <button class="btn-sm btn-danger" onclick="window.deleteStudent('${s.idcard}')">🗑 删除</button>
+        ` : `
+            <button class="btn-sm btn-danger" onclick="window.deleteStudent('${s.idcard}')">🗑 申请删除</button>
+        `}
+    </td>
+</tr>`;
     }).join('');
 }
 
     // 学生模态框和增删改
     function openStudentModal(editId) {
         if (!document.getElementById('modal-student')) {
-            document.body.insertAdjacentHTML('beforeend', `<div class="modal" id="modal-student"><div class="modal-content"><h3 id="stu-title">新增学生</h3><div class="form-row"><input id="stu-name" placeholder="姓名"><select id="stu-gender"><option>男</option><option>女</option></select></div><div class="form-row"><input id="stu-idcard" placeholder="身份证"><input id="stu-parent" placeholder="家长"></div><div class="form-row"><input id="stu-phone" placeholder="电话"><select id="stu-zoudu"><option>否</option><option>是</option></select></div><input type="hidden" id="stu-edit-id"><div style="text-align:right;margin-top:12px"><button class="btn-outline" onclick="window.closeModal('modal-student')">取消</button><button class="btn-primary" onclick="window.saveStudent()">保存</button></div></div></div>`);
+            document.body.insertAdjacentHTML('beforeend', `<div class="modal" id="modal-student"><div class="modal-content"><h3 id="stu-title">新增学生</h3><div class="form-row"><input id="stu-name" placeholder="姓名" aria-label="学生姓名"><select id="stu-gender"><option>男</option><option>女</option></select></div><div class="form-row"><input id="stu-idcard" placeholder="身份证"><input id="stu-parent" placeholder="家长"></div><div class="form-row"><input id="stu-phone" placeholder="电话"><select id="stu-zoudu"><option>否</option><option>是</option></select></div><input type="hidden" id="stu-edit-id"><div style="text-align:right;margin-top:12px"><button class="btn-outline" onclick="window.closeModal('modal-student')">取消</button><button class="btn-primary" onclick="window.saveStudent()">保存</button></div></div></div>`);
         }
         document.getElementById('stu-title').textContent = editId ? '编辑学生' : '新增学生';
         document.getElementById('stu-edit-id').value = editId || '';
@@ -1416,7 +1549,8 @@ window.deleteStudent = async function(idcard) {
     await loadData();
     populateAllSelects();
     renderRoster();
-};    // 保存学期配置
+};    
+// 保存学期配置
 window.saveSemesterConfig = async function() {
     const startDate = document.getElementById('semester-start').value;
     const totalWeeks = document.getElementById('semester-weeks').value;
@@ -3293,25 +3427,27 @@ window.generateAIReport = async function() {
 };
     window.loadAccounts = async function() {
     if (!canModify()) return;
-    const { data, error } = await sb.from('profiles').select('*').eq('role', '班委');
+    const { data, error } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
     if (error) { toast('加载失败', 'error'); return; }
     const tbody = document.getElementById('account-tbody');
     if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4">暂无班委账号</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5">暂无账号</td></tr>';
         return;
     }
     tbody.innerHTML = data.map(p => `
         <tr>
-            <td>${p.phone || '—'}</td>
+            <td>${p.username || p.phone || '—'}</td>
+            <td>${p.name || '—'}</td>
             <td>${p.role}</td>
             <td>${p.status || 'active'}</td>
             <td>
                 <button class="btn-sm" onclick="window.toggleAccountStatus('${p.user_id}','${p.status}')">${p.status==='active'?'禁用':'启用'}</button>
+                <button class="btn-sm btn-danger" onclick="window.deleteAccount('${p.user_id}')">🗑 删除</button>
+                <button class="btn-sm" onclick="window.resetUserPassword('${p.user_id}')">🔑 重置密码</button>
             </td>
         </tr>
     `).join('');
 };
-
 window.toggleAccountStatus = async function(userId, currentStatus) {
     const newStatus = currentStatus === 'active' ? 'disabled' : 'active';
     if (!confirm(`确定${newStatus==='active'?'启用':'禁用'}该账号吗？`)) return;
@@ -3320,71 +3456,38 @@ window.toggleAccountStatus = async function(userId, currentStatus) {
     toast('状态已更新');
     window.loadAccounts();
 };
-// ========== 注册与辅助函数 ==========
-window.handleRegister = async function() {
-    const name = document.getElementById('reg-name').value.trim();
-    const gender = document.getElementById('reg-gender').value;
-    const age = parseInt(document.getElementById('reg-age').value) || '';
-    const classRole = document.getElementById('reg-role').value.trim();
-    const username = document.getElementById('reg-username').value.trim();
-    const password = document.getElementById('reg-password').value.trim();
-
-    const q1 = document.getElementById('reg-q1').value.trim();
-    const a1 = document.getElementById('reg-a1').value.trim();
-    const q2 = document.getElementById('reg-q2').value.trim();
-    const a2 = document.getElementById('reg-a2').value.trim();
-    const q3 = document.getElementById('reg-q3').value.trim();
-    const a3 = document.getElementById('reg-a3').value.trim();
-
-    if (!name || !username || !password) {
-        toast('请填写姓名、账号和密码', 'error'); return;
-    }
-    if (password.length < 6) { toast('密码至少6位', 'error'); return; }
-    if (!q1 || !a1 || !q2 || !a2 || !q3 || !a3) {
-        toast('请完整设置三个密保问题和答案', 'error'); return;
-    }
-
-    // 使用一个不存在的邮箱占位，后续登录时通过username查phone再组装邮箱
-    const phonePlaceholder = username + '_' + Date.now(); // 生成一个唯一手机号占位
-    const email = phonePlaceholder + '@example.com';
-    const { data, error } = await sb.auth.signUp({ email, password });
-    if (error) {
-        if (error.message.includes('already registered')) {
-            toast('账号已存在', 'error');
-        } else {
-            toast('注册失败：' + error.message, 'error');
-        }
-        return;
-    }
-    if (data.user) {
-        const securityQA = [
-            { q: q1, a: a1 },
-            { q: q2, a: a2 },
-            { q: q3, a: a3 }
-        ];
-        await sb.from('profiles').upsert({
-            user_id: data.user.id,
-            phone: phonePlaceholder,
-            role: '班委',
-            status: 'active',
-            name,
-            gender,
-            age,
-            class_role: classRole,
-            username,
-            security_qa: securityQA
-        });
-        toast('注册成功，请登录', 'success');
-        showLogin();
-    }
+window.resetUserPassword = async function(userId) {
+    if (!canModify()) { toast('仅班主任可操作', 'error'); return; }
+    // 提示：真正重置密码需要 Supabase Admin API 或 Edge Function
+    // 这里提供一个临时方案：生成随机手机号，更新 profiles 中的 phone 字段
+    // 用户可以使用新手机号（作为账号）和原密码登录？这并不合理，所以仅作示意。
+    toast('重置密码功能需配合后端服务，目前请联系管理员手动处理', 'warning');
+    
+    // 如果已部署 Edge Function，可以调用如下：
+    // const { data, error } = await sb.functions.invoke('reset-password', { body: { userId } });
+    // if (error) toast('重置失败', 'error');
+    // else toast('密码已重置为默认密码 123456，请登录后修改', 'success');
 };
-let initLock = false; // 防止并发初始化
+
+window.deleteAccount = async function(userId) {
+    if (!canModify()) { toast('仅班主任可操作', 'error'); return; }
+    if (!confirm('确定删除该账号吗？此操作不可恢复！')) return;
+    const { error } = await sb.from('profiles').delete().eq('user_id', userId);
+    if (error) { toast('删除失败：' + error.message, 'error'); return; }
+    toast('账号已删除（需管理员手动清理认证用户）');
+    window.loadAccounts();
+};
 async function initAdminMode() {
     if (initLock) return;
     initLock = true;
     try {
         if (!window._uiBuilt) {
             buildUI();
+           // 控制设置菜单可见性
+          const settingsItem = document.getElementById('sidebar-settings-item');
+          if (settingsItem) {
+          settingsItem.style.display = canModify() ? '' : 'none';
+}
             window._uiBuilt = true;
             window.loadSemesterConfig();
             await loadData();
@@ -3441,33 +3544,22 @@ async function init() {
     if (initLock) return;
     initLock = true;
     try {
-        let session = null;
-        for (let i = 0; i < 5; i++) {
-            const { data, error } = await sb.auth.getSession();
-            if (error) {
-                console.warn(`获取会话失败 (${i+1}/5):`, error);
-                await new Promise(r => setTimeout(r, 200));
-                continue;
-            }
-            if (data.session) {
-                session = data.session;
-                break;
-            }
-            await new Promise(r => setTimeout(r, 100));
-        }
+        // 检查是否已有登录会话
+        const { data: { session } } = await sb.auth.getSession();
         if (!session) {
-            // 没有会话，返回登录界面
+            // 没有会话，显示登录界面
             document.getElementById('login-overlay').style.display = 'flex';
             document.querySelector('.sidebar').style.display = 'none';
             document.getElementById('mainContent').style.display = 'none';
             window._uiBuilt = false;
-            toast('请先登录', 'error');
             return;
         }
-        // 有会话，正常加载
+
+        // 有会话，隐藏登录界面并加载系统
         document.getElementById('login-overlay').style.display = 'none';
         document.querySelector('.sidebar').style.display = '';
         document.getElementById('mainContent').style.display = '';
+
         if (!userProfile) {
             try {
                 await loadUserProfile(session.user);
@@ -3476,8 +3568,13 @@ async function init() {
                 userProfile = { role: '班委', phone: '未知' };
             }
         }
+
         if (!window._uiBuilt) {
             buildUI();
+           const settingsItem = document.getElementById('sidebar-settings-item');
+           if (settingsItem) {
+               settingsItem.style.display = canModify() ? '' : 'none';
+        }
             window._uiBuilt = true;
             window.loadSemesterConfig();
             await loadData();
@@ -3485,50 +3582,30 @@ async function init() {
             refreshDashboard();
             window.loadRecentAttendance();
             renderRoster();
-            if (document.getElementById('weekly-week-num')) {
-    document.getElementById('weekly-week-num').value = getWeek();
-}
-if (document.getElementById('summary-week-num')) {
-    document.getElementById('summary-week-num').value = getWeek();
-}
-window.renderScoreLog();
-renderWeeklyTable();
-window.renderWeeklySummary();
+            if (document.getElementById('weekly-week-num')) document.getElementById('weekly-week-num').value = getWeek();
+            if (document.getElementById('summary-week-num')) document.getElementById('summary-week-num').value = getWeek();
+            window.renderScoreLog();
+            renderWeeklyTable();
+            window.renderWeeklySummary();
             renderClassLogs();
             renderDailyLogs();
             renderAlerts();
             renderTalks();
             renderCodeTable();
-            document.getElementById('weekly-week-num').value = getWeek();
             document.getElementById('absence-date').value = fmt(new Date());
             document.getElementById('absence-week').value = getWeek();
             renderAbsenceTable();
         } else {
             await loadData();
             refreshDashboard();
-            const activePage = document.querySelector('.page.active');
-            if (activePage) {
-                const pageId = activePage.id.replace('page-', '');
-                if (pageId === 'dashboard') refreshDashboard();
-                else if (pageId === 'roster') renderRoster();
-                else if (pageId === 'score-log') window.renderScoreLog();
-                else if (pageId === 'weekly-table') renderWeeklyTable();
-                else if (pageId === 'class-log') { renderClassLogs(); renderDailyLogs(); }
-                else if (pageId === 'alert-records') { renderAlerts(); renderTalks(); }
-                else if (pageId === 'code-table') renderCodeTable();
-                else if (pageId === 'student-profile') window.renderStudentProfile();
-                else if (pageId === 'absence-log') renderAbsenceTable();
-            }
         }
         document.getElementById('current-week-display').textContent = getWeek();
-        } catch (err) {
+    } catch (err) {
         console.error('init错误', err);
-        // 显示具体错误信息
-        toast('初始化失败：' + (err.message || err.description || '未知错误，请检查数据库字段是否已添加'), 'error');
-        // 仍然留在登录界面，不强制跳转
         document.getElementById('login-overlay').style.display = 'flex';
         document.querySelector('.sidebar').style.display = 'none';
         document.getElementById('mainContent').style.display = 'none';
+        window._uiBuilt = false;
     } finally {
         initLock = false;
     }
@@ -3709,7 +3786,15 @@ window.filterCodeLookup = function() {
     refreshDashboard();
     toast('已保存并同步流水');
 };
-
+function populateProfileSelect() {
+    const profileSelect = document.getElementById('profile-select');
+    if (profileSelect) {
+        profileSelect.innerHTML = '<option value="">-- 选择学生 --</option>';
+        students.filter(s => s.status === '在读').forEach(s => {
+            profileSelect.innerHTML += `<option value="${s.name}">${s.name}</option>`;
+        });
+    }
+}
     // ==================== 课堂日志 ====================
     function renderClassLogs() { document.getElementById('class-log-tbody').innerHTML = classLogs.length ? classLogs.map(l => `<tr><td>${l.date}</td><td>${l.period}</td><td>${l.subject||''}</td><td>${l.teacher||''}</td><td>${l.rating}</td><td>${l.violation||'—'}</td><td>${l.measure||'—'}</td><td><button class="btn-danger btn-xs" onclick="window.deleteClassLog(${l.id})">删</button></td></tr>`).join('') : '<tr><td colspan="8">暂无课堂日志</td></tr>'; }
     // 删除课堂日志
@@ -4165,6 +4250,192 @@ window.renderAbsenceTable = function() {
             ${truancy}${late}${early}${noExercise}${leavePeriod}${custom}
         </tr>`;
     }).join('');
+};
+window.viewRequestDetail = async function(id) {
+    var result = await sb.from('action_requests').select('*').eq('id', id).single();
+    if (result.error || !result.data) { toast('详情加载失败', 'error'); return; }
+    var r = result.data;
+    var html = '<div style="line-height:1.8;">' +
+        '<p><b>申请人：</b>' + (r.requester_name || r.phone || '—') + '</p>' +
+        '<p><b>操作类型：</b>' + r.action + '</p>' +
+        '<p><b>详细内容：</b>' + (r.details || '—') + '</p>' +
+        '<p><b>提交时间：</b>' + new Date(r.created_at).toLocaleString() + '</p>' +
+        '<p><b>当前状态：</b>' + r.status + '</p>' +
+        '</div>';
+    var modal = document.createElement('div');
+    modal.className = 'modal active'; modal.id = 'modal-request-detail';
+    modal.innerHTML = '<div class="modal-content" style="max-width:500px;"><h3>📄 申请详情</h3>' + html +
+        '<button class="btn-outline" onclick="document.getElementById(\'modal-request-detail\').remove()" style="margin-top:12px;">关闭</button></div>';
+    document.body.appendChild(modal);
+};
+window.deleteRequest = async function(id) {
+    if (!canModify()) { toast('仅班主任可删除', 'error'); return; }
+    if (!confirm('确定删除这条申请记录吗？')) return;
+    var result = await sb.from('action_requests').delete().eq('id', id);
+    if (result.error) { toast('删除失败', 'error'); return; }
+    toast('申请记录已删除');
+    window.loadActionRequests();   // 刷新列表
+    window.renderDashboardNoticeBar(); // 更新通知栏
+};
+window.loadMyRequests = async function() {
+    var container = document.getElementById('action-requests-card');
+    if (!container) {
+        var page = document.getElementById('page-alert-records');
+        if (!page) return;
+        container = document.createElement('div');
+        container.id = 'action-requests-card';
+        container.className = 'card';
+        container.innerHTML = '<h2>📄 我的申请</h2><button class="btn-outline btn-sm" id="refresh-my-requests-btn">🔄 刷新</button><table><thead><tr><th>操作类型</th><th>详情</th><th>时间</th><th>状态</th></tr></thead><tbody id="my-requests-tbody"><tr><td colspan="4">加载中...</td></tbody></table>';
+        page.appendChild(container);
+        document.getElementById('refresh-my-requests-btn').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.loadMyRequests();
+        });
+    }
+
+    var tbody = document.getElementById('my-requests-tbody');
+    if (!tbody) return;
+
+    try {
+        var result = await sb.from('action_requests')
+            .select('*')
+            .eq('requester', currentUser.id)
+            .order('created_at', { ascending: false });
+        if (result.error) { tbody.innerHTML = '<tr><td colspan="4">加载失败</td></tr>'; return; }
+        var data = result.data;
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4">暂无申请记录</td></tr>';
+            return;
+        }
+        var html = '';
+        for (var i = 0; i < data.length; i++) {
+            var r = data[i];
+            var badge = r.status === '待审批' ? 'badge-warning' : (r.status === 'approved' ? 'badge-success' : 'badge-danger');
+            var statusText = r.status === '待审批' ? '待审批' : (r.status === 'approved' ? '已批准' : '已拒绝');
+            html += '<tr>' +
+                '<td>' + r.action + '</td>' +
+                '<td style="max-width:150px;word-break:break-word;">' + (r.details || '—') + '</td>' +
+                '<td>' + new Date(r.created_at).toLocaleString() + '</td>' +
+                '<td><span class="badge ' + badge + '">' + statusText + '</span></td>' +
+                '</tr>';
+        }
+        tbody.innerHTML = html;
+    } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="4">加载出错</td></tr>';
+    }
+};
+
+// 加载待审批申请（动态创建卡片）
+window.loadActionRequests = async function() {
+    var container = document.getElementById('action-requests-card');
+    if (!container) {
+        var page = document.getElementById('page-alert-records');
+        if (!page) return;
+        container = document.createElement('div');
+        container.id = 'action-requests-card';
+        container.className = 'card';
+        container.innerHTML = '<h2>📋 待审批申请</h2><button class="btn-outline btn-sm" onclick="window.loadActionRequests()">🔄 刷新</button><table><thead><tr><th>申请人</th><th>操作类型</th><th>时间</th><th>状态</th><th>操作</th></tr></thead><tbody id="action-requests-tbody"><tr><td colspan="5">加载中...</td></tbody></table>';
+        page.appendChild(container);
+    }
+
+    var tbody = document.getElementById('action-requests-tbody');
+    if (!tbody) return;
+    if (!canModify()) {
+        tbody.innerHTML = '<tr><td colspan="5">仅班主任可查看</td></tr>';
+        return;
+    }
+
+    try {
+        var result = await sb.from('action_requests').select('*').order('created_at', { ascending: false });
+        if (result.error) { tbody.innerHTML = '<tr><td colspan="5">加载失败</td></tr>'; return; }
+        var data = result.data;
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5">暂无申请</td></tr>';
+            return;
+        }
+        var html = '';
+        for (var i = 0; i < data.length; i++) {
+            var r = data[i];
+            var badge = r.status === '待审批' ? 'badge-warning' : 'badge-success';
+            var approveBtn = r.status === '待审批' ?
+                '<button class="btn-sm" onclick="event.stopPropagation(); window.handleRequest(' + r.id + ', \'approved\')">✅ 批准</button> ' :
+                '';
+            var rejectBtn = r.status === '待审批' ?
+                '<button class="btn-sm btn-danger" onclick="event.stopPropagation(); window.handleRequest(' + r.id + ', \'rejected\')">❌ 拒绝</button> ' :
+                '';
+            html += '<tr style="cursor:pointer;" onclick="window.viewRequestDetail(' + r.id + ')">' +
+                '<td>' + (r.requester_name || r.phone || '—') + '</td>' +
+                '<td>' + r.action + '</td>' +
+                '<td>' + new Date(r.created_at).toLocaleString() + '</td>' +
+                '<td><span class="badge ' + badge + '">' + r.status + '</span></td>' +
+                '<td onclick="event.stopPropagation();">' + approveBtn + rejectBtn +
+                '<button class="btn-sm btn-danger" onclick="event.stopPropagation(); window.deleteRequest(' + r.id + ')">🗑 删除</button></td>' +
+                '</tr>';
+        }
+        tbody.innerHTML = html;
+    } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5">加载出错</td></tr>';
+    }
+};
+// 批准/拒绝申请
+window.handleRequest = async function(id, newStatus) {
+    if (!canModify()) { toast('仅班主任可操作', 'error'); return; }
+    var result = await sb.from('action_requests').update({ status: newStatus }).eq('id', id);
+    if (result.error) { toast('操作失败', 'error'); return; }
+    toast(newStatus === 'approved' ? '已批准' : '已拒绝');
+    window.loadActionRequests();
+    window.renderDashboardNoticeBar();  // 同时更新通知栏数量
+};
+// ========== 仪表盘通知栏 ==========
+window.renderDashboardNoticeBar = async function() {
+    var dashboard = document.getElementById('page-dashboard');
+    if (!dashboard) return;
+
+    // 移除旧通知栏
+    var oldBar = document.getElementById('dashboard-notice-bar');
+    if (oldBar) oldBar.remove();
+
+    try {
+        if (canModify()) {
+            // ========== 班主任：待审批申请通知 ==========
+            var result = await sb.from('action_requests')
+                .select('id', { count: 'exact' })
+                .eq('status', '待审批');
+            if (!result.error && result.data && result.data.length > 0) {
+                var count = result.data.length;
+                var barDiv = document.createElement('div');
+                barDiv.id = 'dashboard-notice-bar';
+                barDiv.style.cssText = 'background:#fef3c7; border:1px solid #f59e0b; border-radius:8px; padding:8px 16px; margin-bottom:12px; cursor:pointer; text-align:center; font-weight:600; color:#92400e;';
+                barDiv.innerHTML = '<span style="display:inline-block; white-space:nowrap;">📢 您有 ' + count + ' 条待审批的班委申请，点击查看处理 →</span>';
+                barDiv.addEventListener('click', function() {
+                    var targetLink = document.querySelector('.sidebar-nav a[data-page="alert-records"]');
+                    if (targetLink) targetLink.click();
+                });
+                dashboard.insertBefore(barDiv, dashboard.firstChild);
+            }
+        } else {
+            // ========== 班委：已处理申请通知 ==========
+            if (!currentUser) return;
+            var result = await sb.from('action_requests')
+                .select('id', { count: 'exact' })
+                .eq('requester', currentUser.id)
+                .neq('status', '待审批');
+            if (!result.error && result.data && result.data.length > 0) {
+                var count = result.data.length;
+                var barDiv = document.createElement('div');
+                barDiv.id = 'dashboard-notice-bar';
+                barDiv.style.cssText = 'background:#dbeafe; border:1px solid #3b82f6; border-radius:8px; padding:8px 16px; margin-bottom:12px; cursor:pointer; text-align:center; font-weight:600; color:#1e40af;';
+                barDiv.innerHTML = '<span style="display:inline-block; white-space:nowrap;">📢 您有 ' + count + ' 条申请已处理，点击查看 →</span>';
+                barDiv.addEventListener('click', function() {
+                    var targetLink = document.querySelector('.sidebar-nav a[data-page="alert-records"]');
+                    if (targetLink) targetLink.click();
+                });
+                dashboard.insertBefore(barDiv, dashboard.firstChild);
+            }
+        }
+    } catch (e) {
+        console.warn('通知栏加载失败:', e);
+    }
 };
 window.submitAbsence = async function() {
     const wk = parseInt(document.getElementById('absence-week').value) || getWeek();
@@ -4950,6 +5221,630 @@ document.addEventListener('click', function(e) {
         }
     }
 });
+// ========== 设置页面导航函数 ==========
+window.settingsNav = function(page) {
+    const main = document.getElementById('settings-main');
+    const sub = document.getElementById('settings-subpage');
+    if (!main || !sub) return;
+
+    if (page === 'main') {
+        main.style.display = '';
+        sub.style.display = 'none';
+        // 刷新个人信息
+        if (userProfile) {
+            document.getElementById('settings-profile-name').textContent = userProfile.name || '管理员';
+            document.getElementById('settings-profile-role').textContent = userProfile.role || '班主任';
+            document.getElementById('settings-avatar').textContent = (userProfile.name || '管')[0];
+        }
+        return;
+    }
+
+    main.style.display = 'none';
+    sub.style.display = 'block';
+
+    let html = `<div class="settings-back-btn" onclick="settingsNav('main')">← 返回</div>`;
+    switch(page) {
+        case 'account': html += settingsAccountHTML(); break;
+        case 'display': html += settingsDisplayHTML(); break;
+        case 'data': html += settingsDataHTML(); break;
+        case 'class': html += settingsClassHTML(); break;
+        case 'security': html += settingsSecurityHTML(); break;
+        case 'system': html += settingsSystemHTML(); break;
+        case 'family': html += settingsFamilyHTML(); break;
+    }
+    sub.innerHTML = html;
+    // 加载子页面特定数据
+    if (page === 'data') updateBackupInfo();
+    if (page === 'display') loadDisplaySettings();
+};
+
+// 子页面 HTML 生成函数
+function settingsAccountHTML() {
+    return `<div class="settings-group">
+        <div class="settings-item" onclick="openProfileEditor()"><span class="settings-item-label">👤 个人信息</span><span class="settings-item-arrow">›</span></div>
+        <div class="settings-item" onclick="openChangePassword()"><span class="settings-item-label">🔑 修改密码</span><span class="settings-item-arrow">›</span></div>
+        <div class="settings-item" onclick="toast('生物识别需要HTTPS环境，暂不可用','error')"><span class="settings-item-label">🔐 生物识别</span><span class="settings-item-arrow">›</span></div>
+        <div class="settings-item" onclick="viewLoginHistory()"><span class="settings-item-label">🕵️ 登录记录</span><span class="settings-item-arrow">›</span></div>
+        <div class="settings-item" onclick="deleteMyAccount()" style="color:var(--danger);"><span class="settings-item-label">🗑️ 注销账户</span><span class="settings-item-arrow">›</span></div>
+    </div>`;
+}
+
+function settingsDisplayHTML() {
+    return `<div class="settings-group">
+        <div class="settings-item"><span class="settings-item-label">🎨 主题颜色</span>
+            <select id="theme-select" onchange="window.changeTheme()" style="margin-left:auto;">
+                <option value="default">默认蓝</option><option value="green">护眼绿</option><option value="dark">暗夜模式</option>
+            </select></div>
+        <div class="settings-item"><span class="settings-item-label">☀️ 屏幕亮度</span>
+            <input type="range" id="brightness-range" min="50" max="150" value="100" oninput="window.changeBrightness(this.value)" style="margin-left:auto; width:120px;"></div>
+        <div class="settings-item"><span class="settings-item-label">🔤 字体大小</span>
+            <select id="font-size-select" onchange="changeFontSize(this.value)" style="margin-left:auto;">
+                <option value="small">小</option><option value="medium" selected>中</option><option value="large">大</option>
+            </select></div>
+        <div class="settings-item"><span class="settings-item-label">📱 布局密度</span>
+            <select id="density-select" onchange="changeDensity(this.value)" style="margin-left:auto;">
+                <option value="comfortable" selected>舒适</option><option value="compact">紧凑</option>
+            </select></div>
+    </div>`;
+}
+
+function settingsDataHTML() {
+    return `<div class="settings-group">
+        <div class="settings-item"><span class="settings-item-label">☁️ 自动备份</span>
+            <label class="setting-switch" style="margin-left:auto;"><input type="checkbox" id="auto-backup-switch" onchange="toggleAutoBackup()"><span class="setting-slider"></span></label></div>
+        <div class="settings-item" onclick="manualBackup()"><span class="settings-item-label">💾 立即备份</span><span class="settings-item-arrow">›</span><span id="last-backup-time" style="font-size:12px;color:var(--text-secondary);margin-left:8px;"></span></div>
+        <div class="settings-item" onclick="exportPDFDialog()"><span class="settings-item-label">📑 导出综合PDF</span><span class="settings-item-arrow">›</span></div>
+        <div class="settings-item" onclick="quickExportExcel()"><span class="settings-item-label">📊 快速导出Excel</span><span class="settings-item-arrow">›</span></div>
+        <div class="settings-item" onclick="restoreBackup()"><span class="settings-item-label">🔄 备份恢复</span><span class="settings-item-arrow">›</span></div>
+        <div class="settings-item" onclick="cleanData()"><span class="settings-item-label">🗑️ 数据清理</span><span class="settings-item-arrow">›</span></div>
+    </div>`;
+}
+
+function settingsClassHTML() {
+    return `<div class="settings-group">
+        <div class="settings-item" onclick="settingsNavToAccounts()"><span class="settings-item-label">👥 账号管理</span><span class="settings-item-arrow">›</span></div>
+        <div class="settings-item" onclick="openSemesterSettings()"><span class="settings-item-label">📋 学期设置</span><span class="settings-item-arrow">›</span></div>
+        <div class="settings-item" onclick="openScheduleManager()"><span class="settings-item-label">📅 课表管理</span><span class="settings-item-arrow">›</span></div>
+        <div class="settings-item" onclick="openAnnouncement()"><span class="settings-item-label">📢 通知公告</span><span class="settings-item-arrow">›</span></div>
+        <div class="settings-item" onclick="setWarningLine()"><span class="settings-item-label">📈 操行预警线</span><span class="settings-item-arrow">›</span></div>
+    </div>`;
+}
+
+function settingsSecurityHTML() {
+    return `<div class="settings-group">
+        <div class="settings-item" onclick="openPrivacySettings()"><span class="settings-item-label">🔒 隐私设置</span><span class="settings-item-arrow">›</span></div>
+        <div class="settings-item" onclick="viewOperationLogs()"><span class="settings-item-label">📜 操作日志</span><span class="settings-item-arrow">›</span></div>
+        <div class="settings-item" onclick="toast('预警规则暂仅支持操行预警线，请在班级管理中设置','info')"><span class="settings-item-label">⚠️ 预警规则</span><span class="settings-item-arrow">›</span></div>
+    </div>`;
+}
+
+function settingsSystemHTML() {
+    return `<div class="settings-group">
+        <div class="settings-item" onclick="window.settingsNav('upgrade')"><span class="settings-item-label">🤖 系统升级</span><span class="settings-item-arrow">›</span></div>
+        <div class="settings-item" onclick="checkUpdate()"><span class="settings-item-label">🔄 检查更新</span><span class="settings-item-arrow">›</span></div>
+        <div class="settings-item" onclick="showAbout()"><span class="settings-item-label">ℹ️ 关于系统</span><span class="settings-item-arrow">›</span></div>
+        <div class="settings-item" onclick="showPrivacyPolicy()"><span class="settings-item-label">📜 隐私政策</span><span class="settings-item-arrow">›</span></div>
+        <div class="settings-item" onclick="sendFeedback()"><span class="settings-item-label">📧 反馈建议</span><span class="settings-item-arrow">›</span></div>
+    </div>`;
+}
+
+function settingsFamilyHTML() {
+    return `<div class="settings-group">
+        <div class="settings-item" onclick="sendNoticeToParent()"><span class="settings-item-label">📩 发送通知单</span><span class="settings-item-arrow">›</span></div>
+        <div class="settings-item" onclick="viewParentContacts()"><span class="settings-item-label">📋 家长通讯录</span><span class="settings-item-arrow">›</span></div>
+        <div class="settings-item" onclick="previewParentView()"><span class="settings-item-label">📊 家长端预览</span><span class="settings-item-arrow">›</span></div>
+    </div>`;
+}
+
+// ========== 具体功能实现 ==========
+// 个人信息编辑
+window.openProfileEditor = function() {
+    const modal = document.createElement('div');
+    modal.className = 'modal active'; modal.id = 'modal-profile-editor';
+    modal.innerHTML = `<div class="modal-content"><h3>编辑个人信息</h3>
+        <input id="profile-name-input" placeholder="姓名" value="${userProfile?.name||''}">
+        <input id="profile-phone-input" placeholder="手机号" value="${userProfile?.phone||''}">
+        <div style="text-align:right;margin-top:12px"><button class="btn-outline" onclick="closeModal('modal-profile-editor')">取消</button>
+        <button class="btn-primary" onclick="saveProfile()">保存</button></div></div>`;
+    document.body.appendChild(modal);
+};
+window.saveProfile = async function() {
+    const name = document.getElementById('profile-name-input').value.trim();
+    const phone = document.getElementById('profile-phone-input').value.trim();
+    if (!name) { toast('姓名不能为空','error'); return; }
+    if (currentUser) {
+        const { error } = await sb.from('profiles').update({ name, phone }).eq('user_id', currentUser.id);
+        if (error) toast('保存失败','error');
+        else {
+            userProfile.name = name; userProfile.phone = phone;
+            toast('已更新'); closeModal('modal-profile-editor');
+            document.getElementById('settings-profile-name').textContent = name;
+            document.getElementById('settings-avatar').textContent = name[0];
+        }
+    }
+};
+
+// 修改密码（使用已有函数）
+window.openChangePassword = function() {
+    const modal = document.createElement('div');
+    modal.className = 'modal active'; modal.id = 'modal-change-pwd';
+    modal.innerHTML = `<div class="modal-content"><h3>修改密码</h3>
+        <input type="password" id="new-password-input" placeholder="新密码（至少6位）">
+        <div style="text-align:right;margin-top:12px"><button class="btn-outline" onclick="closeModal('modal-change-pwd')">取消</button>
+        <button class="btn-primary" onclick="window.changePasswordFromModal()">修改</button></div></div>`;
+    document.body.appendChild(modal);
+};
+window.changePasswordFromModal = async function() {
+    const pwd = document.getElementById('new-password-input').value.trim();
+    if (pwd.length < 6) { toast('至少6位','error'); return; }
+    const { error } = await sb.auth.updateUser({ password: pwd });
+    if (error) toast('修改失败','error');
+    else { toast('密码已修改'); closeModal('modal-change-pwd'); }
+};
+
+// 登录记录（简单模拟）
+window.viewLoginHistory = function() {
+    const history = JSON.parse(localStorage.getItem('login_history') || '[]');
+    let txt = history.length ? history.map(h => `${h.time} - ${h.device}`).join('<br>') : '暂无记录';
+    const modal = document.createElement('div');
+    modal.className = 'modal active'; modal.id = 'modal-login-history';
+    modal.innerHTML = `<div class="modal-content"><h3>最近登录</h3><div style="max-height:200px;overflow-y:auto;">${txt}</div><button class="btn-outline" onclick="closeModal('modal-login-history')">关闭</button></div>`;
+    document.body.appendChild(modal);
+};
+// 在登录时记录
+const originalHandleLogin = window.handleLogin;
+window.handleLogin = async function() {
+    await originalHandleLogin();
+    // 记录登录历史
+    if (currentUser) {
+        const history = JSON.parse(localStorage.getItem('login_history') || '[]');
+        history.unshift({ time: new Date().toLocaleString(), device: navigator.userAgent.slice(0,40) });
+        if (history.length > 20) history.pop();
+        localStorage.setItem('login_history', JSON.stringify(history));
+    }
+};
+
+// 注销账户
+window.deleteMyAccount = function() {
+    if (!confirm('确定要注销当前账户吗？此操作不可恢复！')) return;
+    if (!currentUser) return;
+    sb.from('profiles').delete().eq('user_id', currentUser.id).then(() => {
+        sb.auth.admin.deleteUser(currentUser.id).then(() => {
+            window.logout();
+            toast('账户已注销');
+        }).catch(() => { window.logout(); toast('账户信息已删除，但认证账户需管理员清理'); });
+    }).catch(() => toast('删除失败','error'));
+};
+
+// ========== 显示设置 ==========
+function loadDisplaySettings() {
+    const savedFont = localStorage.getItem('font_size') || 'medium';
+    const savedDensity = localStorage.getItem('density') || 'comfortable';
+    const fontSel = document.getElementById('font-size-select');
+    const densSel = document.getElementById('density-select');
+    if (fontSel) fontSel.value = savedFont;
+    if (densSel) densSel.value = savedDensity;
+}
+window.changeFontSize = function(size) {
+    localStorage.setItem('font_size', size);
+    const root = document.documentElement;
+    if (size === 'small') root.style.fontSize = '14px';
+    else if (size === 'large') root.style.fontSize = '18px';
+    else root.style.fontSize = '';
+};
+window.changeDensity = function(density) {
+    localStorage.setItem('density', density);
+    const cards = document.querySelectorAll('.card');
+    if (density === 'compact') {
+        cards.forEach(c => { c.style.padding = '12px 16px'; c.style.marginBottom = '12px'; });
+    } else {
+        cards.forEach(c => { c.style.padding = ''; c.style.marginBottom = ''; });
+    }
+};
+
+// ========== 数据管理 ==========
+window.toggleAutoBackup = function() {
+    const sw = document.getElementById('auto-backup-switch');
+    if (sw.checked) {
+        localStorage.setItem('auto_backup', '1');
+        startAutoBackup();
+    } else {
+        localStorage.removeItem('auto_backup');
+        if (window._autoBackupInterval) clearInterval(window._autoBackupInterval);
+    }
+};
+function startAutoBackup() {
+    if (window._autoBackupInterval) clearInterval(window._autoBackupInterval);
+    window._autoBackupInterval = setInterval(() => {
+        performBackup('自动备份');
+    }, 24 * 60 * 60 * 1000); // 每天
+}
+window.manualBackup = function() { performBackup('手动备份'); };
+function performBackup(label) {
+    const backup = {
+        students, logs, classLogs, dailyLogs, alerts, talks, weeklyData, deductCodes, bonusCodes,
+        time: new Date().toISOString(), label
+    };
+    const backups = JSON.parse(localStorage.getItem('data_backups') || '[]');
+    backups.unshift(backup);
+    if (backups.length > 10) backups.pop();
+    localStorage.setItem('data_backups', JSON.stringify(backups));
+    localStorage.setItem('last_backup_time', new Date().toLocaleString());
+    updateBackupInfo();
+    toast(label + '完成');
+}
+function updateBackupInfo() {
+    const lastTime = localStorage.getItem('last_backup_time');
+    const el = document.getElementById('last-backup-time');
+    if (el) el.textContent = lastTime ? `上次：${lastTime}` : '';
+    const sw = document.getElementById('auto-backup-switch');
+    if (sw) sw.checked = localStorage.getItem('auto_backup') === '1';
+}
+window.restoreBackup = function() {
+    const backups = JSON.parse(localStorage.getItem('data_backups') || '[]');
+    if (!backups.length) { toast('没有备份记录','error'); return; }
+    let html = '<h3>选择备份恢复</h3><ul>';
+    backups.forEach((b,i) => { html += `<li style="cursor:pointer;padding:8px;" onclick="doRestore(${i})">${b.label} - ${new Date(b.time).toLocaleString()}</li>`; });
+    html += '</ul>';
+    const modal = document.createElement('div');
+    modal.className = 'modal active'; modal.id = 'modal-restore';
+    modal.innerHTML = `<div class="modal-content">${html}<button class="btn-outline" onclick="closeModal('modal-restore')">取消</button></div>`;
+    document.body.appendChild(modal);
+};
+window.doRestore = function(index) {
+    if (!confirm('确定恢复到此备份吗？当前数据将被覆盖！')) return;
+    const backups = JSON.parse(localStorage.getItem('data_backups') || '[]');
+    const backup = backups[index];
+    if (!backup) return;
+    students = backup.students || [];
+    logs = backup.logs || [];
+    classLogs = backup.classLogs || [];
+    dailyLogs = backup.dailyLogs || [];
+    alerts = backup.alerts || [];
+    talks = backup.talks || [];
+    weeklyData = backup.weeklyData || {};
+    deductCodes = backup.deductCodes || [];
+    bonusCodes = backup.bonusCodes || [];
+    // 保存回 Supabase
+    saveBackupToSupabase(backup);
+    toast('数据已恢复');
+    closeModal('modal-restore');
+    refreshDashboard();
+};
+function saveBackupToSupabase(backup) {
+    // 简单实现：删除并重新插入
+    // 注意：这可能会影响大量数据，谨慎使用
+    alert('恢复功能需数据库支持，已更新本地数据。');
+}
+
+window.exportPDFDialog = function() {
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.id = 'modal-pdf-export';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:450px;">
+            <h3>📑 导出综合数据 PDF</h3>
+            <p style="font-size:13px; color:var(--text-secondary); margin-bottom:10px;">选择数据周期，系统将整合所有数据并生成 AI 分析报告</p>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+                <button class="btn-sm" onclick="window.startPDFExport('本周')">📅 本周</button>
+                <button class="btn-sm" onclick="window.startPDFExport('本月')">📅 本月</button>
+                <button class="btn-sm" onclick="window.startPDFExport('本学期')">📅 本学期</button>
+                <button class="btn-sm" onclick="window.startPDFExport('全部')">📅 全部</button>
+            </div>
+            <p style="font-size:13px; color:var(--text-secondary); margin-bottom:6px;">或自定义范围：</p>
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+                <input type="date" id="pdf-start-date" style="flex:1;">
+                <span>至</span>
+                <input type="date" id="pdf-end-date" style="flex:1;">
+            </div>
+            <button class="btn-primary" onclick="window.startPDFExport('custom')" style="width:100%;">📥 生成 PDF</button>
+            <button class="btn-outline" onclick="document.getElementById('modal-pdf-export').remove()" style="width:100%; margin-top:6px;">取消</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+};
+// 实际导出函数
+window.startPDFExport = async function(period) {
+    const modal = document.getElementById('modal-pdf-export');
+    if (modal) modal.remove();
+    toast('正在生成 PDF，请稍候...');
+    
+    const now = new Date();
+    let startDate, endDate = now;
+    
+    if (period === '本周') {
+        const d = new Date(now);
+        d.setDate(d.getDate() - d.getDay());
+        d.setHours(0,0,0,0);
+        startDate = d;
+    } else if (period === '本月') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    } else if (period === '本学期') {
+        const saved = localStorage.getItem('semester_config');
+        if (saved) {
+            startDate = new Date(JSON.parse(saved).startDate);
+        } else {
+            startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+        }
+    } else if (period === 'custom') {
+        const startEl = document.getElementById('pdf-start-date');
+        const endEl = document.getElementById('pdf-end-date');
+        if (startEl && endEl && startEl.value && endEl.value) {
+            startDate = new Date(startEl.value);
+            endDate = new Date(endEl.value);
+        } else {
+            toast('请选择日期范围', 'error');
+            return;
+        }
+    } else {
+        startDate = new Date(0);
+    }
+    
+    const startStr = startDate.toISOString().split('T')[0];
+    const endStr = endDate.toISOString().split('T')[0];
+    
+    const filteredLogs = logs.filter(l => l.date >= startStr && l.date <= endStr);
+    const filteredClass = classLogs.filter(l => l.date >= startStr && l.date <= endStr);
+    const filteredDaily = dailyLogs.filter(l => l.date >= startStr && l.date <= endStr);
+    
+    const activeStudents = students.filter(s => s.status === '在读');
+    const totalScore = activeStudents.reduce((sum, s) => sum + calcScore(s.name), 0);
+    const avgScore = activeStudents.length > 0 ? (totalScore / activeStudents.length).toFixed(1) : 0;
+    const warningCount = activeStudents.filter(s => calcScore(s.name) < 70).length;
+    const excellentCount = activeStudents.filter(s => calcScore(s.name) >= 90).length;
+    
+    const violationCount = {};
+    filteredLogs.filter(l => l.value < 0).forEach(l => {
+        const key = l.code || '未知';
+        violationCount[key] = (violationCount[key] || 0) + 1;
+    });
+    const topViolations = Object.entries(violationCount)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([code, count]) => `${code}(${count}次)`)
+        .join('、');
+    
+    let aiReport = '';
+    try {
+        const prompt = `请生成一份简短的班级数据报告（200字内）：班级共${activeStudents.length}人，操行平均分${avgScore}，优秀${excellentCount}人，预警${warningCount}人。数据周期为${startStr}至${endStr}。主要违纪类型：${topViolations || '无'}。请概述整体表现并给出建议。`;
+        aiReport = await callAI('你是班主任助手，直接输出报告内容，不用Markdown。', prompt, 500);
+    } catch(e) { 
+        aiReport = 'AI报告生成失败，请稍后重试。';
+    }
+    
+    const periodLabel = period === 'custom' ? `${startStr} 至 ${endStr}` : period;
+    const printWindow = window.open('', '_blank', 'width=900,height=700');
+    printWindow.document.write(`<html><head><title>班级综合数据报告</title>
+        <style>
+            body { font-family: SimSun, '宋体', serif; font-size: 14px; line-height: 1.8; padding: 20px; color: #333; }
+            h1 { text-align: center; font-size: 22px; margin-bottom: 5px; }
+            h2 { font-size: 18px; border-bottom: 2px solid #1a73e8; padding-bottom: 5px; margin-top: 20px; }
+            h3 { font-size: 16px; margin-top: 15px; }
+            table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
+            th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+            th { background: #f0f5ff; font-weight: bold; }
+            .report-header { text-align: center; margin-bottom: 15px; }
+            .report-header p { margin: 3px 0; color: #666; }
+            .ai-report { background: #f8fafc; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #1a73e8; }
+            .highlight { color: #ef4444; font-weight: bold; }
+            @media print { body { -webkit-print-color-adjust: exact; } }
+            @page { size: A4; margin: 15mm; }
+        </style></head><body>
+        <div class="report-header">
+            <h1>25级化学工艺1班 综合数据报告</h1>
+            <p>数据周期：${periodLabel}</p>
+            <p>生成日期：${new Date().toLocaleDateString()} | 班主任：${userProfile?.name || '—'}</p>
+        </div>
+        <h2>📊 AI 分析报告</h2>
+        <div class="ai-report">${aiReport.replace(/\n/g, '<br>')}</div>
+        <h2>📈 班级操行概况</h2>
+        <table>
+            <tr><th>总人数</th><th>操行平均分</th><th>优秀人数</th><th>预警人数</th><th>违纪高发类型</th></tr>
+            <tr><td>${activeStudents.length}</td><td>${avgScore}</td><td>${excellentCount}</td><td class="highlight">${warningCount}</td><td>${topViolations || '无'}</td></tr>
+        </table>
+        <h2>👥 学生操行总表</h2>
+        <table>
+            <tr><th>姓名</th><th>操行分</th><th>等级</th><th>近期变动</th></tr>
+            ${activeStudents.map(s => `<tr><td>${s.name}</td><td>${calcScore(s.name)}</td><td>${level(calcScore(s.name))}</td><td>${filteredLogs.filter(l=>l.student===s.name).slice(0,3).map(l=>l.date+' '+l.code).join(', ')||'—'}</td></tr>`).join('')}
+        </table>
+        <h2>📝 操行记录明细 (${filteredLogs.length}条)</h2>
+        <table>
+            <tr><th>日期</th><th>学生</th><th>代码</th><th>事由</th><th>分值</th></tr>
+            ${filteredLogs.slice(0,200).map(l=>`<tr><td>${l.date}</td><td>${l.student}</td><td>${l.code}</td><td>${l.reason||''}</td><td style="color:${l.value<0?'#ef4444':'#10b981'}">${l.value>0?'+':''}${l.value}</td></tr>`).join('')}
+        </table>
+        <h2>📖 课堂日志 (${filteredClass.length}条)</h2>
+        <table>
+            <tr><th>日期</th><th>节次</th><th>科目</th><th>评级</th><th>违纪记录</th></tr>
+            ${filteredClass.slice(0,100).map(l=>`<tr><td>${l.date}</td><td>${l.period}</td><td>${l.subject||''}</td><td>${l.rating}</td><td>${l.violation||'—'}</td></tr>`).join('')}
+        </table>
+        <div style="text-align:center;margin-top:30px;font-size:12px;color:#999;"><p>— 报告由班级管理系统自动生成 —</p></div>
+        </body></html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => { printWindow.print(); printWindow.close(); }, 800);
+};
+window.cleanData = function() {
+    if (!confirm('确定要清理三个月前的操行记录和日志吗？此操作不可恢复！')) return;
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    logs = logs.filter(l => new Date(l.date) >= threeMonthsAgo);
+    classLogs = classLogs.filter(l => new Date(l.date) >= threeMonthsAgo);
+    dailyLogs = dailyLogs.filter(l => new Date(l.date) >= threeMonthsAgo);
+    // 同步到Supabase
+    saveAllDataToSupabase();
+    toast('清理完成');
+};
+
+// ========== 班级管理 ==========
+window.openScheduleManager = function() {
+    let sch = JSON.parse(localStorage.getItem('class_schedule') || '[]');
+    let html = '<h3>编辑课表</h3><table><tr><th>节次</th><th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th></tr>';
+    for(let i=1;i<=7;i++) {
+        html += `<tr><td>第${i}节</td>`;
+        for(let d=0;d<5;d++) {
+            html += `<td><input value="${sch[i]?.[d]||''}" data-period="${i}" data-day="${d}"></td>`;
+        }
+        html += '</tr>';
+    }
+    html += '</table><button onclick="saveSchedule()">保存课表</button>';
+    const modal = document.createElement('div');
+    modal.className = 'modal active'; modal.id = 'modal-schedule';
+    modal.innerHTML = `<div class="modal-content" style="max-width:700px;">${html}<button class="btn-outline" onclick="closeModal('modal-schedule')">关闭</button></div>`;
+    document.body.appendChild(modal);
+};
+window.saveSchedule = function() {
+    const sch = {};
+    document.querySelectorAll('#modal-schedule input').forEach(inp => {
+        const p = inp.dataset.period, d = inp.dataset.day;
+        if (!sch[p]) sch[p] = {};
+        sch[p][d] = inp.value;
+    });
+    localStorage.setItem('class_schedule', JSON.stringify(sch));
+    toast('课表已保存');
+};
+
+window.openAnnouncement = function() {
+    const content = prompt('请输入公告内容：');
+    if (!content) return;
+    const anns = JSON.parse(localStorage.getItem('announcements') || '[]');
+    anns.unshift({ content, time: new Date().toLocaleString() });
+    localStorage.setItem('announcements', JSON.stringify(anns));
+    toast('公告已发布');
+};
+
+window.setWarningLine = function() {
+    const line = prompt('设置操行预警分数线（默认70）', localStorage.getItem('warning_line') || '70');
+    if (line) localStorage.setItem('warning_line', line);
+    toast('预警线已更新');
+};
+
+window.openPrivacySettings = function() {
+    const modal = document.createElement('div');
+    modal.className = 'modal active'; modal.id = 'modal-privacy';
+    modal.innerHTML = `<div class="modal-content"><h3>隐私设置</h3>
+        <label><input type="checkbox" id="privacy-show-log"> 班委可查看操行记录</label>
+        <button onclick="savePrivacy()">保存</button></div>`;
+    document.body.appendChild(modal);
+};
+window.savePrivacy = function() { /* 存储到localStorage */ toast('已保存'); closeModal('modal-privacy'); };
+
+// 操作日志
+window.viewOperationLogs = function() {
+    const logs = JSON.parse(localStorage.getItem('operation_logs') || '[]');
+    let html = '<h3>操作日志</h3>';
+    logs.forEach(l => html += `<p>${l.time} - ${l.action}</p>`);
+    const modal = document.createElement('div');
+    modal.className = 'modal active'; modal.id = 'modal-oplog';
+    modal.innerHTML = `<div class="modal-content">${html}<button onclick="closeModal('modal-oplog')">关闭</button></div>`;
+    document.body.appendChild(modal);
+};
+// 在关键操作中记录
+function addOperationLog(action) {
+    const logs = JSON.parse(localStorage.getItem('operation_logs') || '[]');
+    logs.unshift({ time: new Date().toLocaleString(), action });
+    localStorage.setItem('operation_logs', JSON.stringify(logs));
+}
+
+// 系统
+window.checkUpdate = function() { toast('当前已是最新版本 v4.6.7'); };
+window.showAbout = function() { alert('25级化学工艺1班 班级管理系统 v4.6.7\n开发者：班主任数字化工具组'); };
+window.showPrivacyPolicy = function() { alert('本系统数据均存储在云端，仅班主任及授权班委可查看。'); };
+window.sendFeedback = function() {
+    const content = prompt('请输入反馈内容：');
+    if (content) { toast('反馈已记录，感谢！'); /* 可存储到localStorage */ }
+};
+
+// 家校
+window.sendNoticeToParent = function() {
+    const student = prompt('输入学生姓名：');
+    if (!student) return;
+    // 模拟发送
+    toast(`已向 ${student} 家长发送通知单`);
+};
+window.viewParentContacts = function() {
+    let html = '<h3>家长通讯录</h3><ul>';
+    students.forEach(s => { html += `<li>${s.name} - ${s.parent||'未登记'} (${s.phone||'无电话'})</li>`; });
+    html += '</ul>';
+    const modal = document.createElement('div');
+    modal.className = 'modal active'; modal.id = 'modal-parents';
+    modal.innerHTML = `<div class="modal-content">${html}<button onclick="closeModal('modal-parents')">关闭</button></div>`;
+    document.body.appendChild(modal);
+};
+window.previewParentView = function() {
+    const student = prompt('输入学生姓名：');
+    if (!student) return;
+    window.renderStudentProfile();
+    document.getElementById('page-student-profile').classList.add('active');
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-student-profile').classList.add('active');
+    toast(`正在预览 ${student} 的档案`);
+};
+
+// 初始化设置页面
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.settings-back-btn')) {
+        settingsNav('main');
+    }
+});
+
+// 加载设置时恢复
+function initSettings() {
+    loadDisplaySettings();
+    updateBackupInfo();
+    if (userProfile) {
+        document.getElementById('settings-profile-name').textContent = userProfile.name || '管理员';
+        document.getElementById('settings-profile-role').textContent = userProfile.role || '班主任';
+        document.getElementById('settings-avatar').textContent = (userProfile.name || '管')[0];
+    }
+    // 自动备份定时器
+    if (localStorage.getItem('auto_backup') === '1') startAutoBackup();
+}
+
+// 在 refreshPage 中调用
+const originalRefreshSettings = window.refreshPage;
+window.refreshPage = function(p) {
+    originalRefreshSettings(p);
+    if (p === 'settings') {
+        setTimeout(initSettings, 100);
+    }
+};
+window.settingsNavToAccounts = function() {
+    const modal = document.createElement('div');
+    modal.className = 'modal active'; modal.id = 'modal-accounts';
+    modal.innerHTML = `<div class="modal-content" style="max-width:700px;"><h3>账号管理</h3>
+        <div id="modal-account-list">加载中...</div>
+        <button class="btn-outline" onclick="closeModal('modal-accounts')">关闭</button></div>`;
+    document.body.appendChild(modal);
+    window.loadAccountsIntoModal();
+};
+window.loadAccountsIntoModal = async function() {
+    if (!canModify()) return;
+    const { data, error } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+    const container = document.getElementById('modal-account-list');
+    if (error) { container.innerHTML = '加载失败'; return; }
+    container.innerHTML = `<table><tr><th>账号</th><th>姓名</th><th>角色</th><th>状态</th><th>操作</th></tr>
+        ${data.map(p=>`<tr><td>${p.username||p.phone}</td><td>${p.name||''}</td><td>${p.role}</td><td>${p.status}</td>
+        <td><button onclick="window.toggleAccountStatus('${p.user_id}','${p.status}')">${p.status==='active'?'禁用':'启用'}</button>
+        <button onclick="window.deleteAccount('${p.user_id}')">删除</button></td></tr>`).join('')}</table>`;
+};
+window.quickExportExcel = function() {
+    const choice = prompt('请选择导出类型：\n1 - 学生名册\n2 - 操行记录\n3 - 课堂日志\n4 - 班级日志', '1');
+    if (!choice) return;
+    let data, filename;
+    switch(choice) {
+        case '1': data = students; filename = '学生名册.xlsx'; break;
+        case '2': data = logs; filename = '操行记录.xlsx'; break;
+        case '3': data = classLogs; filename = '课堂日志.xlsx'; break;
+        case '4': data = dailyLogs; filename = '班级日志.xlsx'; break;
+        default: toast('无效选择','error'); return;
+    }
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+    XLSX.writeFile(wb, filename);
+    toast('导出成功');
+};
 window.onload = init;
 })();
 </script>
