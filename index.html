@@ -6,7 +6,7 @@
     <title>25级化学工艺1班 · 班级管理系统 v4.6.6</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-       <style> 
+       <style>
 :root { --primary: #1a73e8; --primary-dark: #1557b0; --sidebar-bg: #1e293b; --sidebar-text: #cbd5e1; --bg: #f1f5f9; --card: #fff; --text: #1e293b; --text-secondary: #64748b; --border: #e2e8f0; --danger: #ef4444; --warning: #f59e0b; --success: #10b981; --radius: 10px; --radius-sm: 6px; }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); display:flex; min-height:100vh; color:var(--text); }
@@ -156,6 +156,206 @@ input:checked + .setting-slider:before { transform:translateX(20px); }
 
 /* 长文本自动换行（全局） */
 .card > table td:nth-child(6) { white-space: normal; word-break: break-word; }
+
+/* ========== 缺旷登记表格（固定列 + 居中对齐，无错位） ========== */
+#page-absence-log .table-wrap {
+    overflow-x: auto !important;
+    max-height: 65vh;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+#page-absence-log .table-wrap table {
+    width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    min-width: 1000px;
+}
+#page-absence-log .table-wrap thead th {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 5 !important;
+    background: #f8fafc !important;
+    padding: 8px 4px;
+    text-align: center !important;
+    vertical-align: middle;
+}
+/* 第1列：选择框 (宽50px) */
+#page-absence-log .table-wrap th:first-child,
+#page-absence-log .table-wrap td:first-child {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 4 !important;
+    background: var(--card) !important;
+    width: 50px !important;
+    min-width: 50px !important;
+    max-width: 50px !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    padding: 8px 2px;
+}
+/* 第2列：学生姓名 (宽80px, left=50px) */
+#page-absence-log .table-wrap th:nth-child(2),
+#page-absence-log .table-wrap td:nth-child(2) {
+    position: sticky !important;
+    left: 50px !important;
+    z-index: 4 !important;
+    background: var(--card) !important;
+    width: 80px !important;
+    min-width: 80px !important;
+    max-width: 80px !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    padding: 8px 4px;
+}
+/* 表头固定列背景 */
+#page-absence-log .table-wrap thead th:first-child,
+#page-absence-log .table-wrap thead th:nth-child(2) {
+    background: #f8fafc !important;
+    z-index: 6 !important;
+}
+/* 其余列也居中 */
+#page-absence-log .table-wrap th:not(:first-child):not(:nth-child(2)),
+#page-absence-log .table-wrap td:not(:first-child):not(:nth-child(2)) {
+    text-align: center;
+    vertical-align: middle;
+    padding: 8px 4px;
+}
+
+/* ========== 累计处分预警 / 手机管理处分预警表格居中 ========== */
+#discipline-table,
+#phone-discipline-table {
+    width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse;
+}
+#discipline-table th,
+#discipline-table td,
+#phone-discipline-table th,
+#phone-discipline-table td {
+    text-align: center !important;
+    vertical-align: middle !important;
+    word-break: break-word;
+    padding: 8px 4px;
+}
+/* 学生列占40%，其余均分 */
+#discipline-table th:nth-child(1),
+#discipline-table td:nth-child(1),
+#phone-discipline-table th:nth-child(1),
+#phone-discipline-table td:nth-child(1) {
+    width: 40%;
+}
+#discipline-table th:nth-child(2),
+#discipline-table td:nth-child(2),
+#discipline-table th:nth-child(3),
+#discipline-table td:nth-child(3),
+#discipline-table th:nth-child(4),
+#discipline-table td:nth-child(4),
+#phone-discipline-table th:nth-child(2),
+#phone-discipline-table td:nth-child(2),
+#phone-discipline-table th:nth-child(3),
+#phone-discipline-table td:nth-child(3) {
+    width: 20%;
+}
+
+/* ========== 全局表格铺满 ========== */
+.card table {
+    width: 100% !important;
+}
+#page-dashboard .card table {
+    width: 100% !important;
+    min-width: 100% !important;
+}
+#page-alert-records .card table,
+#page-warning-notice .card table,
+#page-grade-manager .card table,
+#page-attendance-history .card table,
+#page-class-log .card table,
+#page-code-table .card table,
+#page-roster .card table {
+    width: 100% !important;
+    min-width: 100% !important;
+    table-layout: auto !important;
+}
+#grade-table,
+#comprehensive-table {
+    width: 100% !important;
+}
+#page-warning-notice table {
+    width: 100% !important;
+}
+
+/* 按钮右对齐（预警通知单） */
+#page-warning-notice div[style*="text-align:left"] {
+    text-align: right !important;
+}
+/* 预警与谈话页面所有表格居中对齐 */
+#page-alert-records .card table {
+    table-layout: fixed !important;
+    width: 100% !important;
+}
+
+#page-alert-records .card th,
+#page-alert-records .card td {
+    text-align: center !important;
+    vertical-align: middle !important;
+    word-break: break-word;
+    padding: 8px 4px;
+}
+
+/* 谈话记录表格 - 列宽分配 */
+#talk-tbody th:nth-child(1), #talk-tbody td:nth-child(1) { width: 12%; }  /* 日期 */
+#talk-tbody th:nth-child(2), #talk-tbody td:nth-child(2) { width: 10%; }  /* 学生 */
+#talk-tbody th:nth-child(3), #talk-tbody td:nth-child(3) { width: 10%; }  /* 类型 */
+#talk-tbody th:nth-child(4), #talk-tbody td:nth-child(4) { width: 20%; }  /* 事由 */
+#talk-tbody th:nth-child(5), #talk-tbody td:nth-child(5) { width: 18%; }  /* 要点 */
+#talk-tbody th:nth-child(6), #talk-tbody td:nth-child(6) { width: 15%; }  /* 表态 */
+#talk-tbody th:nth-child(7), #talk-tbody td:nth-child(7) { width: 10%; }  /* 后续 */
+#talk-tbody th:nth-child(8), #talk-tbody td:nth-child(8) { width: 5%; }   /* 操作 */
+
+/* 待审批申请表格 - 列宽分配 */
+#action-requests-tbody th:nth-child(1), #action-requests-tbody td:nth-child(1) { width: 20%; }  /* 申请人 */
+#action-requests-tbody th:nth-child(2), #action-requests-tbody td:nth-child(2) { width: 15%; }  /* 操作类型 */
+#action-requests-tbody th:nth-child(3), #action-requests-tbody td:nth-child(3) { width: 20%; }  /* 时间 */
+#action-requests-tbody th:nth-child(4), #action-requests-tbody td:nth-child(4) { width: 15%; }  /* 状态 */
+#action-requests-tbody th:nth-child(5), #action-requests-tbody td:nth-child(5) { width: 30%; }  /* 操作 */
+/* 预警通知表格：允许关键列换行 */
+#alert-tbody td:nth-child(1),
+#alert-tbody td:nth-child(3),
+#alert-tbody td:nth-child(4),
+#alert-tbody td:nth-child(5) {
+    white-space: nowrap;     /* 日期、分数、等级、编号 保持不换行 */
+}
+
+#alert-tbody td:nth-child(6),
+#alert-tbody td:nth-child(7) {
+    white-space: normal;     /* 反馈、建议处置 允许自动换行 */
+    word-break: break-word;
+    vertical-align: top;
+}
+
+/* 适当调整各列宽度（表头与内容一致） */
+#alert-tbody th:nth-child(1), #alert-tbody td:nth-child(1) { width: 12%; }
+#alert-tbody th:nth-child(2), #alert-tbody td:nth-child(2) { width: 10%; }
+#alert-tbody th:nth-child(3), #alert-tbody td:nth-child(3) { width: 6%; }
+#alert-tbody th:nth-child(4), #alert-tbody td:nth-child(4) { width: 6%; }
+#alert-tbody th:nth-child(5), #alert-tbody td:nth-child(5) { width: 6%; }
+#alert-tbody th:nth-child(6), #alert-tbody td:nth-child(6) { width: 30%; }
+#alert-tbody th:nth-child(7), #alert-tbody td:nth-child(7) { width: 30%; }
+/* 谈话记录 & 待审批申请表格：关键列换行、居中 */
+#talk-tbody td,
+#action-requests-tbody td {
+    word-break: break-word;  /* 允许在单词/字符中间换行 */
+    white-space: normal;     /* 覆盖全局 nowrap，允许换行 */
+    vertical-align: middle;  /* 垂直居中 */
+    text-align: center;
+}
+
+/* 操作列保持单行，避免按钮错位 */
+#talk-tbody td:last-child,
+#action-requests-tbody td:last-child {
+    white-space: nowrap;
+}
 </style> </style>
 </head>
 <body>
@@ -176,6 +376,7 @@ input:checked + .setting-slider:before { transform:translateX(20px); }
     <li><a data-page="ai-advisor">🤖 <span>班级管理小助手</span></a></li>
     <li><a data-page="rules">📜 规章制度</a></li>
     <li id="sidebar-settings-item" style="display:none;"><a data-page="settings">⚙️ 设置</a></li>
+    <li id="sidebar-logout-item" style="display:none;"><a onclick="window.logout()" style="cursor:pointer;">🚪 退出登录</a></li>
 </ul></aside>
 <div class="toast" id="toast"></div>
 <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
@@ -300,7 +501,7 @@ window.sendForgotCode = async () => {
 window.handleRegister = async function() {
     const name = document.getElementById('reg-name').value.trim();
     const gender = document.getElementById('reg-gender').value;
-    const age = parseInt(document.getElementById('reg-age').value) || '';
+    const ageInput = document.getElementById('reg-age').value.trim();
     const classRole = document.getElementById('reg-role').value.trim();
     const username = document.getElementById('reg-username').value.trim();
     const password = document.getElementById('reg-password').value.trim();
@@ -313,62 +514,103 @@ window.handleRegister = async function() {
     const q3 = document.getElementById('reg-q3').value.trim();
     const a3 = document.getElementById('reg-a3').value.trim();
 
-    if (!name || !username || !password) { toast('请填写姓名、账号和密码', 'error'); return; }
+    // 必填项验证
+    if (!name) { toast('请输入真实姓名', 'error'); return; }
+    if (!username) { toast('请输入登录账号', 'error'); return; }
+    if (!password) { toast('请输入密码', 'error'); return; }
     if (password.length < 6) { toast('密码至少6位', 'error'); return; }
-    if (!q1 || !a1 || !q2 || !a2 || !q3 || !a3) { toast('请完整设置三个密保问题和答案', 'error'); return; }
 
-    // 检查用户名是否重复
+    const age = parseInt(ageInput);
+    if (ageInput && isNaN(age)) { toast('年龄必须为数字', 'error'); return; }
+
+    if (!q1 || !a1) { toast('请完整填写第一个密保问题和答案', 'error'); return; }
+    if (!q2 || !a2) { toast('请完整填写第二个密保问题和答案', 'error'); return; }
+    if (!q3 || !a3) { toast('请完整填写第三个密保问题和答案', 'error'); return; }
+
+    // 检查用户名是否已存在
     try {
         const { data: existUser } = await sb.from('profiles').select('id').eq('username', username).maybeSingle();
-        if (existUser) { toast('该账号已被注册', 'error'); return; }
+        if (existUser) { toast('该账号已被注册，请更换账号', 'error'); return; }
     } catch (e) {
-        // 查询失败说明表可能还没准备好，继续尝试注册
+        // 忽略，继续注册
     }
 
-    // 使用用户输入的 username 作为 phone 字段的值，不再生成随机串
-    const phone = username;  // 直接用账号作为 phone，方便后续查找
-    const email = phone + '@class25.cn';
-    
+    const phone = username;
+    const email = phone + '@myschool.com';
+
+    // 将 securityQA 提前定义，确保整个函数内可用
+    const securityQA = [{ q: q1, a: a1 }, { q: q2, a: a2 }, { q: q3, a: a3 }];
+
     try {
         const { data, error } = await sb.auth.signUp({ email, password });
-        if (error) { 
+        if (error) {
+            console.error('注册错误详情:', error.message);
             if (error.message.includes('already registered')) {
-                toast('该账号已存在，请直接登录', 'error');
+                // 尝试自动登录
+                const { error: signInError } = await sb.auth.signInWithPassword({ email, password });
+                if (signInError) {
+                    toast('该账号已存在，但密码错误，请返回登录页面手动登录', 'error');
+                    showLogin();
+                    return;
+                }
+
+                // 登录成功，补全 profiles 资料
+                const { data: sessionData } = await sb.auth.getSession();
+                if (sessionData.session) {
+                    const ageVal = parseInt(document.getElementById('reg-age').value) || null;
+                    await sb.from('profiles').upsert({
+                        user_id: sessionData.session.user.id,
+                        phone: phone,
+                        role: sysRole,
+                        status: 'active',
+                        name: name,
+                        gender: gender,
+                        age: isNaN(ageVal) ? null : ageVal,
+                        class_role: classRole,
+                        username: username,
+                        security_qa: securityQA
+                    });
+                    toast('账号已存在，已自动登录并更新资料', 'success');
+                    currentUser = sessionData.session.user;
+                    userProfile = { phone, role: sysRole, status: 'active', name, gender, age: ageVal, class_role: classRole, username };
+                    hideLogin();
+                    await init();
+                }
+                return;
             } else {
                 toast('注册失败：' + error.message, 'error');
+                return;
             }
-            return; 
         }
         if (!data.user) { toast('注册异常，请重试', 'error'); return; }
 
-        const securityQA = [{ q: q1, a: a1 }, { q: q2, a: a2 }, { q: q3, a: a3 }];
-        
-        // 尝试写入 profiles，如果失败不影响注册结果
-        try {
-            await sb.from('profiles').upsert({
-                user_id: data.user.id,
-                phone: phone,
-                role: sysRole,
-                status: 'active',
-                name: name,
-                gender: gender,
-                age: age,
-                class_role: classRole,
-                username: username,
-                security_qa: securityQA
-            });
-        } catch (profileError) {
-            console.warn('profiles 写入失败（RLS 限制），但 auth 已创建', profileError);
+        // 保存用户资料
+        const { error: profileError } = await sb.from('profiles').upsert({
+            user_id: data.user.id,
+            phone: phone,
+            role: sysRole,
+            status: 'active',
+            name: name,
+            gender: gender,
+            age: isNaN(age) ? null : age,
+            class_role: classRole,
+            username: username,
+            security_qa: securityQA
+        });
+
+        if (profileError) {
+            console.error('用户资料保存失败:', profileError);
+            toast('注册成功，但个人资料保存异常，请联系班主任', 'error');
+        } else {
+            toast('注册成功，请登录', 'success');
         }
 
-        toast('注册成功，请登录', 'success');
         showLogin();
     } catch (e) {
         console.error(e);
         toast('网络错误，请重试', 'error');
     }
-};
-// 切换显示
+};// 切换显示
 window.showLogin = () => {
     document.getElementById('login-form').style.display = '';
     document.getElementById('register-form').style.display = 'none';
@@ -415,19 +657,25 @@ window.handleLogin = async function() {
     const pwd = document.getElementById('login-password').value.trim();
     if (!username || !pwd) { toast('请输入账号和密码', 'error'); return; }
 
-    // 超级管理员快速通道
+    // 超级管理员快速通道（修复：恢复了 if 条件）
     if (username === '13038688446' && pwd === 'fqzx123456') {
         currentUser = { id: 'admin', email: 'admin@class.local' };
-        userProfile = { role: '班主任', phone: '13038688446', username: 'admin', name: '管理员' };
+        userProfile = {
+            role: '班主任',
+            phone: '13038688446',
+            username: 'admin',
+            name: '管理员',
+            class_role: '班主任'
+        };
         toast(`🔓 登录成功，欢迎回来，${userProfile.role} ${userProfile.name || ''}`);
         hideLogin();
         await initAdminMode();
         return;
     }
 
-    // 普通用户登录
-    const email = username + '@class25.cn';   // 注意：已统一为 class25.cn
-    
+    // 普通用户登录（邮箱域名已统一为 @myschool.com）
+    const email = username + '@myschool.com';
+
     try {
         const { data, error } = await sb.auth.signInWithPassword({ email, password: pwd });
         if (error) { toast('账号或密码错误', 'error'); return; }
@@ -477,11 +725,24 @@ function hideLogin() {
     document.querySelector('.sidebar').style.display = '';
     document.getElementById('mainContent').style.display = '';
 
-    // 更新侧边栏头部显示当前用户身份
-    const sidebarHeader = document.querySelector('.sidebar-header h2');
-    if (sidebarHeader && userProfile) {
-        sidebarHeader.innerHTML = `📋 25化学工艺1班<br><small style="font-size:11px; color:#94a3b8;">${userProfile.role} · ${userProfile.name || userProfile.username || ''}</small>`;
-    }
+    // 强制从数据库刷新当前用户资料，确保侧边栏信息准确
+    (async () => {
+        if (currentUser && currentUser.id) {
+            try {
+                const { data, error } = await sb.from('profiles')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .maybeSingle();
+                if (!error && data) {
+                    userProfile = data; // 更新全局用户资料
+                }
+            } catch (e) {
+                console.warn('刷新用户资料失败', e);
+            }
+        }
+        // 更新侧边栏显示
+        updateSidebar();
+    })();
 }window.resetPassword = async function() {
     const answer = document.getElementById('forgot-answer').value.trim();
     const newPassword = document.getElementById('forgot-password').value.trim();
@@ -518,10 +779,57 @@ window.logout = async function() {
     document.getElementById('login-password').value = '';
     toast('已退出登录');
 };
+function updateSidebar() {
+// 控制侧边栏退出登录按钮的可见性：仅班委可见
+const logoutItem = document.getElementById('sidebar-logout-item');
+if (logoutItem) {
+    logoutItem.style.display = (userProfile && userProfile.role !== '班主任') ? '' : 'none';
+}
+    // 更新侧边栏头部（显示角色和姓名）
+    const sidebarHeader = document.querySelector('.sidebar-header h2');
+    if (sidebarHeader && userProfile) {
+        const displayName = userProfile.name || userProfile.username || userProfile.phone || '';
+        const displayRole = userProfile.class_role || userProfile.role || '';
+        sidebarHeader.innerHTML = `📋 25化学工艺1班<br><small style="font-size:11px; color:#94a3b8;">${displayRole} · ${displayName}</small>`;
+    }
+
+    // 更新设置菜单可见性
+    const settingsItem = document.getElementById('sidebar-settings-item');
+    if (settingsItem) {
+        settingsItem.style.display = canModify() ? '' : 'none';
+    }
+}
 function canModify() {
+function updateSidebar() {
+    // 更新侧边栏头部（显示角色和姓名）
+    const sidebarHeader = document.querySelector('.sidebar-header h2');
+    if (sidebarHeader && userProfile) {
+        const displayName = userProfile.name || userProfile.username || userProfile.phone || '';
+        const displayRole = userProfile.class_role || userProfile.role || '';
+        sidebarHeader.innerHTML = `📋 25化学工艺1班<br><small style="font-size:11px; color:#94a3b8;">${displayRole} · ${displayName}</small>`;
+    }
+
+    // 更新设置菜单可见性
+    const settingsItem = document.getElementById('sidebar-settings-item');
+    if (settingsItem) {
+        settingsItem.style.display = canModify() ? '' : 'none';
+    }
+}
     const result = userProfile && userProfile.role === '班主任';
     if (!result) console.log('权限不足，当前角色：', userProfile?.role);
     return result;
+}
+function getOperatorName() {
+    if (!userProfile) return '未知用户';
+    var name = userProfile.name || userProfile.username || userProfile.phone || '';
+    var role = userProfile.class_role || userProfile.role || '班委';
+    return name + '（' + role + '）';
+}
+function getOperatorName() {
+    if (!userProfile) return '未知用户';
+    var name = userProfile.name || userProfile.username || userProfile.phone || '';
+    var role = userProfile.class_role || userProfile.role || '班委';
+    return name + '（' + role + '）';
 }
 
 async function requestModification(action, details) {
@@ -975,7 +1283,7 @@ style="margin-left:auto;">🔍 代码速查</button>
             </div>
 
             <!-- 操作按钮靠左 -->
-            <div style="text-align:left; margin-bottom:20px;">
+            <div style="text-align:right; margin-bottom:20px;">
                 <button class="btn-outline btn-sm" onclick="window.generateWarningMeasureAI()">🤖 AI生成处置建议</button>
                 <button class="btn-outline btn-sm" onclick="window.saveWarningNotice()">💾 保存存档</button>
                 <button class="btn-outline" onclick="window.printWarningNotice()">🖨️ 打印通知单</button>
@@ -1219,6 +1527,8 @@ if (p === 'settings' && !canModify()) {
         document.getElementById('weekly-date').value = fmt(new Date());
         document.getElementById('weekly-week-num').value = getWeek();
         document.getElementById('summary-week-num').value = getWeek();
+        var filterWeekInput = document.getElementById('filter-week');
+        if (filterWeekInput) filterWeekInput.value = getWeek();
         window.renderScoreLog();
         renderWeeklyTable();
         window.renderWeeklySummary();
@@ -1628,6 +1938,7 @@ window.loadSemesterConfig = async function() {
 
     // AI 公共调用函数（自动清洗结果）
    async function callAI(systemPrompt, userPrompt, maxTokens = 500) {
+          return 'AI功能暂未开启，请联系管理员。';
     try {
         const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
             method: 'POST',
@@ -3389,7 +3700,7 @@ window.savePhoneViolation = async function() {
     const { error } = await sb.from('score_log').insert({
         student, date: fmt(new Date()), week: getWeek(), code,
         reason: reason ? `${desc} - ${reason}` : desc,
-        value: pt, operator: '班主任', basis: '直接记录'
+        value: pt, operator: getOperatorName(), basis: '直接记录'
     });
     if (error) { toast('保存失败：' + error.message, 'error'); return; }
     closeModal('modal-phone-violation');
@@ -3427,9 +3738,10 @@ window.generateAIReport = async function() {
 };
     window.loadAccounts = async function() {
     if (!canModify()) return;
+    const tbody = document.getElementById('account-tbody');
+    if (!tbody) return;  // 元素不存在时直接退出，不报错
     const { data, error } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
     if (error) { toast('加载失败', 'error'); return; }
-    const tbody = document.getElementById('account-tbody');
     if (!data || data.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5">暂无账号</td></tr>';
         return;
@@ -3456,6 +3768,78 @@ window.toggleAccountStatus = async function(userId, currentStatus) {
     toast('状态已更新');
     window.loadAccounts();
 };
+// 弹出编辑账号信息的模态框
+window.editAccount = function(userId, currentName, currentClassRole, currentRole) {
+    // 移除可能已存在的旧模态框
+    const oldModal = document.getElementById('modal-edit-account');
+    if (oldModal) oldModal.remove();
+
+    const html = `
+        <div class="modal-content" style="max-width:450px;">
+            <h3>✏️ 编辑账号信息</h3>
+            <div style="margin-bottom:10px;">
+                <label>姓名</label>
+                <input type="text" id="edit-account-name" value="${currentName.replace(/"/g, '&quot;')}" placeholder="真实姓名" style="width:100%;">
+            </div>
+            <div style="margin-bottom:10px;">
+                <label>班级职务</label>
+                <input type="text" id="edit-account-class-role" value="${currentClassRole.replace(/"/g, '&quot;')}" placeholder="如：班长、劳动委员" style="width:100%;">
+            </div>
+            <div style="margin-bottom:10px;">
+                <label>系统角色</label>
+                <select id="edit-account-role" style="width:100%;">
+                    <option value="班委" ${currentRole === '班委' ? 'selected' : ''}>班委</option>
+                    <option value="班主任" ${currentRole === '班主任' ? 'selected' : ''}>班主任</option>
+                </select>
+            </div>
+            <div style="text-align:right;">
+                <button class="btn-outline" onclick="document.getElementById('modal-edit-account').remove()">取消</button>
+                <button class="btn-primary" onclick="window.saveEditAccount('${userId}')">💾 保存</button>
+            </div>
+        </div>
+    `;
+    const modal = document.createElement('div');
+    modal.id = 'modal-edit-account';
+    modal.className = 'modal active';
+    modal.innerHTML = html;
+    document.body.appendChild(modal);
+};
+
+// 保存编辑后的账号信息
+window.saveEditAccount = async function(userId) {
+    const name = document.getElementById('edit-account-name').value.trim();
+    const classRole = document.getElementById('edit-account-class-role').value.trim();
+    const role = document.getElementById('edit-account-role').value;
+
+    if (!name) { toast('姓名不能为空', 'error'); return; }
+
+    const { error } = await sb.from('profiles').update({
+        name: name,
+        class_role: classRole,
+        role: role
+    }).eq('user_id', userId);
+
+    if (error) {
+        toast('更新失败：' + error.message, 'error');
+    } else {
+        toast('账号信息已更新');
+        document.getElementById('modal-edit-account').remove();
+        window.loadAccountsIntoModal();  // 刷新列表
+        // 如果编辑的是当前登录用户，同步更新侧边栏显示
+        if (currentUser && currentUser.id === userId) {
+            userProfile.name = name;
+            userProfile.class_role = classRole;
+            userProfile.role = role;
+            const sidebarHeader = document.querySelector('.sidebar-header h2');
+            if (sidebarHeader) {
+                const displayName = userProfile.name || userProfile.username || userProfile.phone || '';
+                const displayRole = userProfile.class_role || userProfile.role || '';
+                sidebarHeader.innerHTML = `📋 25化学工艺1班<br><small style="font-size:11px; color:#94a3b8;">${displayRole} · ${displayName}</small>`;
+            }
+        }
+    }
+};
+
 window.resetUserPassword = async function(userId) {
     if (!canModify()) { toast('仅班主任可操作', 'error'); return; }
     // 提示：真正重置密码需要 Supabase Admin API 或 Edge Function
@@ -3471,11 +3855,17 @@ window.resetUserPassword = async function(userId) {
 
 window.deleteAccount = async function(userId) {
     if (!canModify()) { toast('仅班主任可操作', 'error'); return; }
-    if (!confirm('确定删除该账号吗？此操作不可恢复！')) return;
-    const { error } = await sb.from('profiles').delete().eq('user_id', userId);
-    if (error) { toast('删除失败：' + error.message, 'error'); return; }
-    toast('账号已删除（需管理员手动清理认证用户）');
-    window.loadAccounts();
+    if (!confirm('确定要永久删除该账号吗？此操作不可恢复！')) return;
+
+    // 调用数据库函数，同时删除认证用户和资料
+    const { error } = await sb.rpc('delete_user_complete', { user_id: userId });
+    if (error) {
+        toast('删除失败：' + error.message, 'error');
+    } else {
+        toast('账号已彻底删除');
+        window.loadAccounts();       // 刷新账号管理列表
+        window.loadAccountsIntoModal(); // 刷新弹窗列表（如果在弹窗中）
+    }
 };
 async function initAdminMode() {
     if (initLock) return;
@@ -3531,6 +3921,7 @@ window.renderWeeklySummary();
                 else if (pageId === 'absence-log') renderAbsenceTable();
             }
         }
+        updateSidebar();
         document.getElementById('current-week-display').textContent = getWeek();
     } catch (err) {
         console.error('管理员模式初始化失败', err);
@@ -3599,6 +3990,7 @@ async function init() {
             await loadData();
             refreshDashboard();
         }
+        updateSidebar(); 
         document.getElementById('current-week-display').textContent = getWeek();
     } catch (err) {
         console.error('init错误', err);
@@ -4067,10 +4459,21 @@ window.aiGenerateTalk = async function() {
                 max_tokens: 600
             })
         });
-        const data = await res.json();
-        let txt = data.choices[0].message.content;
+
+        if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(`请求失败 (${res.status}): ${errText}`);
+        }
+
+        const json = await res.json();
+        if (!json.choices || !json.choices[0] || !json.choices[0].message) {
+            throw new Error('AI 返回数据异常');
+        }
+
+        let txt = json.choices[0].message.content;
         txt = txt.replace(/#{1,6}\s*/g, '').replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/^\s*[-*+]\s/gm, '').replace(/^\d+\.\s/gm, '').trim();
 
+        // 按标题分割内容
         const pointsMatch = txt.match(/【(谈话)?要点】\s*([\s\S]*?)(?=【(学生可能)?表态】|【后续跟进】|$)/);
         const responseMatch = txt.match(/【(学生可能)?表态】\s*([\s\S]*?)(?=【后续跟进】|$)/);
         const followupMatch = txt.match(/【后续跟进】\s*([\s\S]*)/);
@@ -4089,13 +4492,13 @@ window.aiGenerateTalk = async function() {
                 document.getElementById('talk-points').value = txt;
             }
         }
+        toast('生成成功');
     } catch (e) {
         console.error(e);
-        toast('AI生成失败', 'error');
+        toast('AI生成失败: ' + e.message, 'error');
     }
     btn.disabled = false; btn.textContent = '👤 处置建议';
 };
-
     // ==================== 代码管理 ====================
     function renderCodeTable() { const dedCodes = getDeductCodes(), bonCodes = getBonusCodes(); document.getElementById('code-tbody').innerHTML = dedCodes.map(c => `<tr><td>${c.code}</td> <td>${c.description}</td><td style="color:#ef4444">${c.pt}</td><td><button class="btn-sm" onclick="window.openDeductCodeModal('${c.code}')">编辑</button> <button class="btn-sm btn-danger" onclick="window.deleteDeductCode('${c.code}')">删</button></td></tr>`).join(''); document.getElementById('bonus-code-tbody').innerHTML = bonCodes.map(c => `<tr><td>${c.code}</td><td>${c.description}</td><td style="color:#10b981">+${c.pt}</td><td><button class="btn-sm" onclick="window.openBonusCodeModal('${c.code}')">编辑</button> <button class="btn-sm btn-danger" onclick="window.deleteBonusCode('${c.code}')">删</button></td></tr>`).join(''); }
     window.openDeductCodeModal = function(code=null) {
@@ -4190,7 +4593,7 @@ window.renderAbsenceTable = function() {
     const wk = parseInt(document.getElementById('absence-week').value) || getWeek();
     document.getElementById('absence-week').value = wk;
 
-    // 显示星期几
+    // 星期显示（保留原逻辑）
     const dayOfWeek = new Date(date).getDay();
     const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
     const weekdayStr = weekDays[dayOfWeek];
@@ -4217,26 +4620,28 @@ window.renderAbsenceTable = function() {
             <option value="7">第7节</option><option value="8">第8节</option>
         </optgroup>
     `;
-    // 自定义事项时段选项（早上、下午、晚上）
     const customPeriodOptions = `
         <option value="am">早上</option>
         <option value="pm">下午</option>
         <option value="eve">晚上</option>
     `;
 
+    // 固定列样式（左0为选择列，左40px为学生列）
+    const stickyCol0 = 'position:sticky; left:0; background:var(--card); z-index:1;';
+    const stickyCol1 = 'position:sticky; left:40px; background:var(--card); z-index:1;';
+
     document.getElementById('absence-tbody').innerHTML = active.map(s => {
         const truancy = `<td><select multiple size="4" data-student="${s.name}" data-type="TRUANCY" data-date="${date}" style="width:100px;" title="按住Ctrl多选">${periodOptions}</select></td>`;
         const late = `<td><select multiple size="4" data-student="${s.name}" data-type="LATE" data-date="${date}" style="width:100px;" title="按住Ctrl多选">${periodOptions}</select></td>`;
         const early = `<td><select multiple size="4" data-student="${s.name}" data-type="LEAVE_EARLY" data-date="${date}" style="width:100px;" title="按住Ctrl多选">${periodOptions}</select></td>`;
         const noExercise = `<td><select multiple size="4" data-student="${s.name}" data-type="NO_EXERCISE" data-date="${date}" style="width:100px;" title="按住Ctrl多选">${periodOptions}</select></td>`;
-                const leavePeriod = `<td style="min-width:180px;">
+        const leavePeriod = `<td style="min-width:180px;">
             <select multiple size="4" data-student="${s.name}" data-type="LEAVE_PERIOD" data-date="${date}" style="width:100px;" title="按住Ctrl多选请假节次">${periodOptions}</select>
             <select data-student="${s.name}" data-type="LEAVE_TYPE" style="width:70px; display:inline-block; margin-left:4px;">
                 <option value="事假">事假</option>
                 <option value="病假">病假</option>
             </select>
         </td>`;
-        // 自定义事项：时段多选 + 描述输入
         const custom = `<td style="min-width:200px;">
             <select multiple size="3" data-student="${s.name}" data-type="CUSTOM_PERIOD" data-date="${date}" style="width:80px; display:inline-block;" title="选择时段">
                 ${customPeriodOptions}
@@ -4245,8 +4650,8 @@ window.renderAbsenceTable = function() {
         </td>`;
 
         return `<tr>
-            <td><input type="checkbox" data-student="${s.name}"></td>
-            <td>${s.name}</td>
+            <td style="${stickyCol0}"><input type="checkbox" data-student="${s.name}"></td>
+            <td style="${stickyCol1}">${s.name}</td>
             ${truancy}${late}${early}${noExercise}${leavePeriod}${custom}
         </tr>`;
     }).join('');
@@ -4380,13 +4785,63 @@ window.loadActionRequests = async function() {
 // 批准/拒绝申请
 window.handleRequest = async function(id, newStatus) {
     if (!canModify()) { toast('仅班主任可操作', 'error'); return; }
+
+    // 更新申请状态
     var result = await sb.from('action_requests').update({ status: newStatus }).eq('id', id);
     if (result.error) { toast('操作失败', 'error'); return; }
+
     toast(newStatus === 'approved' ? '已批准' : '已拒绝');
+
+    // 如果批准，尝试自动执行对应的删除操作
+    if (newStatus === 'approved') {
+        var { data: request } = await sb.from('action_requests').select('*').eq('id', id).single();
+        if (request) {
+            try {
+                if (request.action === '删除学生') {
+                    var idcard = (request.details || '').replace('身份证：', '').trim();
+                    if (idcard) {
+                        var { error: delError } = await sb.from('students').delete().eq('idcard', idcard);
+                        if (delError) {
+                            toast('自动删除学生失败: ' + delError.message, 'error');
+                        } else {
+                            toast('已批准并成功删除学生');
+                            await loadData();
+                            populateAllSelects();
+                            renderRoster();
+                            refreshDashboard();
+                        }
+                    } else {
+                        toast('已批准，但无法解析身份证号，请手动删除', 'warning');
+                    }
+                }
+                else if (request.action === '删除操行分记录') {
+                    var logId = (request.details || '').replace('记录ID：', '').trim();
+                    if (logId) {
+                        var { error: delError } = await sb.from('score_log').delete().eq('id', parseInt(logId));
+                        if (delError) {
+                            toast('自动删除操行分记录失败: ' + delError.message, 'error');
+                        } else {
+                            toast('已批准并删除操行分记录');
+                            await loadData();
+                            window.renderScoreLog();
+                            refreshDashboard();
+                        }
+                    } else {
+                        toast('已批准，但无法解析记录ID，请手动删除', 'warning');
+                    }
+                }
+                // 后续可扩展其他操作类型
+            } catch (e) {
+                console.error('自动执行申请失败:', e);
+                toast('自动执行出错，请手动处理', 'error');
+            }
+        }
+    }
+
+    // 刷新申请列表和仪表盘通知
     window.loadActionRequests();
-    window.renderDashboardNoticeBar();  // 同时更新通知栏数量
-};
-// ========== 仪表盘通知栏 ==========
+    window.renderDashboardNoticeBar();
+};// ========== 仪表盘通知栏 ==========
 window.renderDashboardNoticeBar = async function() {
     var dashboard = document.getElementById('page-dashboard');
     if (!dashboard) return;
@@ -4459,11 +4914,11 @@ window.submitAbsence = async function() {
         const eve = periods.filter(p => p >= 7 && p <= 8);
         const points = (code === 'A1' ? -2 : pt);
         if (am.length) {
-            await sb.from('score_log').insert({ student, date, week: wk, code, reason: `${reasonPrefix}上午${am.length}节（第${am.join(',')}节）`, value: am.length * points, operator: '班主任', basis: '缺旷登记' });
+            await sb.from('score_log').insert({ student, date, week: wk, code, reason: `${reasonPrefix}上午${am.length}节（第${am.join(',')}节）`, value: am.length * points, operator: getOperatorName(), basis: '缺旷登记' });
             totalRecords++;
         }
         if (pm.length) {
-            await sb.from('score_log').insert({ student, date, week: wk, code, reason: `${reasonPrefix}下午${pm.length}节（第${pm.join(',')}节）`, value: pm.length * points, operator: '班主任', basis: '缺旷登记' });
+            await sb.from('score_log').insert({ student, date, week: wk, code, reason: `${reasonPrefix}下午${pm.length}节（第${pm.join(',')}节）`, value: pm.length * points, operator: getOperatorName(), basis: '缺旷登记' });
             totalRecords++;
         }
         if (eve.length) {
@@ -4475,7 +4930,7 @@ window.submitAbsence = async function() {
         student, date, week: wk, code: eveCode, 
         reason: `${reasonPrefix}晚自习（第${eve.join(',')}节）`, 
         value: evePoints, 
-        operator: '班主任', basis: '缺旷登记' 
+        operator: getOperatorName(), basis: '缺旷登记' 
     });
     totalRecords++;
 }
@@ -4652,7 +5107,7 @@ window.submitAbsence = async function() {
 
                 await sb.from('score_log').insert({
                     student, date, week: wk, code: '请假',
-                    reason, value, operator: '班主任', basis: '缺旷登记'
+                    reason, value, operator: getOperatorName(), basis: '缺旷登记'
                 });
                 totalRecords++;
             }
@@ -4670,7 +5125,7 @@ window.submitAbsence = async function() {
                 await sb.from('score_log').insert({
                     student, date, week: wk, code: 'Z3',
                     reason: mergedReason,
-                    value: 0, operator: '班主任', basis: '缺旷登记'
+                    value: 0, operator: getOperatorName(), basis: '缺旷登记'
                 });
                 totalRecords++;
             }
@@ -5806,8 +6261,21 @@ const originalRefreshSettings = window.refreshPage;
 window.refreshPage = function(p) {
     originalRefreshSettings(p);
     if (p === 'settings') {
-        setTimeout(initSettings, 100);
+    const savedTheme = localStorage.getItem('theme') || 'default';
+    const themeSelect = document.getElementById('theme-select');
+    if (themeSelect) { themeSelect.value = savedTheme; window.changeTheme(); }
+    const savedBrightness = localStorage.getItem('brightness') || '100';
+    const brightnessRange = document.getElementById('brightness-range');
+    if (brightnessRange) { brightnessRange.value = savedBrightness; window.changeBrightness(savedBrightness); }
+    // 安全处理 card-account-admin，仅当元素存在时操作
+    const cardAdmin = document.getElementById('card-account-admin');
+    if (canModify()) {
+        if (cardAdmin) cardAdmin.style.display = '';
+        window.loadAccounts();
+    } else {
+        if (cardAdmin) cardAdmin.style.display = 'none';
     }
+}
 };
 window.settingsNavToAccounts = function() {
     const modal = document.createElement('div');
@@ -5820,13 +6288,41 @@ window.settingsNavToAccounts = function() {
 };
 window.loadAccountsIntoModal = async function() {
     if (!canModify()) return;
-    const { data, error } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
     const container = document.getElementById('modal-account-list');
-    if (error) { container.innerHTML = '加载失败'; return; }
-    container.innerHTML = `<table><tr><th>账号</th><th>姓名</th><th>角色</th><th>状态</th><th>操作</th></tr>
-        ${data.map(p=>`<tr><td>${p.username||p.phone}</td><td>${p.name||''}</td><td>${p.role}</td><td>${p.status}</td>
-        <td><button onclick="window.toggleAccountStatus('${p.user_id}','${p.status}')">${p.status==='active'?'禁用':'启用'}</button>
-        <button onclick="window.deleteAccount('${p.user_id}')">删除</button></td></tr>`).join('')}</table>`;
+    if (!container) return;
+    try {
+        const { data, error } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+        if (error) { container.innerHTML = '加载失败'; return; }
+        if (!data || data.length === 0) {
+            container.innerHTML = '<p style="text-align:center;">暂无账号</p>';
+            return;
+        }
+        let html = '<table style="width:100%; text-align:center; border-collapse:collapse;">';
+        html += '<tr><th>账号</th><th>姓名</th><th>职务</th><th>系统角色</th><th>状态</th><th>操作</th></tr>';
+        for (let i = 0; i < data.length; i++) {
+            const p = data[i];
+            const statusText = p.status === 'active' ? '启用' : '禁用';
+            const displayName = p.name || '—';
+            const displayClassRole = p.class_role || '—';
+            html += '<tr>' +
+                '<td>' + (p.username || p.phone || '—') + '</td>' +
+                '<td>' + displayName + '</td>' +
+                '<td>' + displayClassRole + '</td>' +
+                '<td>' + (p.role || '—') + '</td>' +
+                '<td>' + statusText + '</td>' +
+                '<td>' +
+                '<button class="btn-sm" onclick="window.editAccount(\'' + p.user_id + '\', \'' + (p.name || '') + '\', \'' + (p.class_role || '') + '\', \'' + (p.role || '') + '\')">✏️ 编辑</button> ' +
+                '<button class="btn-sm" onclick="window.toggleAccountStatus(\'' + p.user_id + '\', \'' + p.status + '\')">' + (p.status === 'active' ? '禁用' : '启用') + '</button> ' +
+                '<button class="btn-sm" onclick="window.resetUserPassword(\'' + p.user_id + '\')">🔑 重置密码</button> ' +
+                '<button class="btn-sm btn-danger" onclick="window.deleteAccount(\'' + p.user_id + '\')">🗑 删除</button>' +
+                '</td>' +
+                '</tr>';
+        }
+        html += '</table>';
+        container.innerHTML = html;
+    } catch (e) {
+        container.innerHTML = '<p style="text-align:center; color:red;">加载出错</p>';
+    }
 };
 window.quickExportExcel = function() {
     const choice = prompt('请选择导出类型：\n1 - 学生名册\n2 - 操行记录\n3 - 课堂日志\n4 - 班级日志', '1');
