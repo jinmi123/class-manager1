@@ -385,7 +385,7 @@ input:checked + .setting-slider:before { transform:translateX(20px); }
 #comprehensive-table th:nth-child(1),
 #comprehensive-table td:nth-child(1) { width: 40%; }
 #comprehensive-table th:nth-child(2),
-#comprehensive-table td:nth-child(2) { width: 20%; }
+#comprehensive-table td:nth-child(2) { width: 20%; }buildUI()
 #comprehensive-table th:nth-child(3),
 #comprehensive-table td:nth-child(3) { width: 20%; }
 #comprehensive-table th:nth-child(4),
@@ -1013,6 +1013,16 @@ function getAgeFromIdcard(idcard) {
     </div>
     <div class="card"><h2>⚠️ 重点关注</h2><table><tbody id="dashboard-alert-tbody"></tbody></table></div>
     <div class="card"><h2>📋 最近变动</h2><table><tbody id="dashboard-recent-tbody"></tbody></table></div>
+<div class="card">
+    <h2>🏆 评优候选人（自动筛选）</h2>
+    <button class="btn-outline btn-sm" onclick="window.renderCandidates()">🔄 刷新名单</button>
+    <div style="margin-top:8px; font-size:13px; color:var(--text-secondary);">
+        📌 根据《优秀学生、优秀学生干部评选方案》自动筛选，仅供参考，最终由班主任确认。
+    </div>
+    <div id="candidates-container" style="margin-top:10px;">
+        <p>点击刷新按钮生成名单</p>
+    </div>
+</div>
 
     <!-- ✅ 新增：保存按钮 + 近7日表格 -->
     <div style="text-align:right; margin-bottom:10px;">
@@ -1032,7 +1042,7 @@ function getAgeFromIdcard(idcard) {
     <option value="active">仅在读</option>
 </select>
 <button onclick="window.openStudentModal()">+ 新增</button></div>
-            <table><thead><tr><th>姓名</th><th>性别</th><th>年龄</th><th>走读/住校</th><th>身份证</th><th>家长</th><th>电话</th><th>状态</th><th>操行分</th><th>操作</th></tr></thead><tbody id="roster-tbody"></tbody></table></div>
+            <table><thead><tr><th>姓名</th><th>性别</th><th>年龄</th><th>走读/住校</th><th>身份证</th><th>家长</th><th>电话</th><th>状态</th><th>学生身份</th><th>操行分</th><th>操作</th></tr></thead><tbody id="roster-tbody"></tbody></table></div>
         </div>
                        <div class="page" id="page-discipline">
             <!-- 顶部选项卡 -->
@@ -1534,6 +1544,7 @@ style="margin-left:auto;">🔍 代码速查</button>
             <a onclick="document.getElementById('sec4').scrollIntoView({behavior:'smooth'})">第四部分 助学金</a>
             <a onclick="document.getElementById('sec5').scrollIntoView({behavior:'smooth'})">第五部分 违纪处分</a>
             <a onclick="document.getElementById('sec6').scrollIntoView({behavior:'smooth'})">附件</a>
+<a onclick="document.getElementById('sec7').scrollIntoView({behavior:'smooth'})">评优方案</a>
         </div>
     </div>
 
@@ -1780,7 +1791,367 @@ style="margin-left:auto;">🔍 代码速查</button>
 本条例于2025年3月修订，2025年3月1日起施行。
 受处分学生对处分有异议的可向学校提出书面申诉。</div>
     </div>
-</div>      </div>`;    }   // buildUI 函数结束
+</div>
+<div class="page" id="page-rules">
+    <style>
+        #page-rules .handbook-nav {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+        }
+        #page-rules .handbook-nav h3 {
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+        #page-rules .handbook-nav a {
+            display: inline-block;
+            margin: 3px 8px;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 13px;
+            text-decoration: none;
+        }
+        #page-rules .handbook-nav a:hover {
+            text-decoration: underline;
+        }
+        #page-rules .card h3 {
+            border-left: 4px solid var(--primary);
+            padding-left: 10px;
+            margin: 16px 0 8px;
+            font-size: 15px;
+        }
+        #page-rules .card .clause {
+            margin: 6px 0;
+            padding-left: 16px;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+    </style>
+
+    <!-- 目录导航 -->
+    <div class="handbook-nav">
+        <h3>📑 福泉市中等职业学校《学生手册》目录</h3>
+        <div>
+            <a onclick="document.getElementById('sec1').scrollIntoView({behavior:'smooth'})">第一部分 行为规范</a>
+            <a onclick="document.getElementById('sec2').scrollIntoView({behavior:'smooth'})">第二部分 校纪校规</a>
+            <a onclick="document.getElementById('sec3').scrollIntoView({behavior:'smooth'})">第三部分 考核评比</a>
+            <a onclick="document.getElementById('sec4').scrollIntoView({behavior:'smooth'})">第四部分 助学金</a>
+            <a onclick="document.getElementById('sec5').scrollIntoView({behavior:'smooth'})">第五部分 违纪处分</a>
+            <a onclick="document.getElementById('sec6').scrollIntoView({behavior:'smooth'})">附件</a>
+            <a onclick="document.getElementById('sec7').scrollIntoView({behavior:'smooth'})">评优方案</a>
+        </div>
+    </div>
+
+    <!-- 第一部分：行为规范 -->
+    <div class="card" id="sec1">
+        <h2>第一部分 行为规范</h2>
+        <h3>一、中职学生守则</h3>
+        <div class="clause" style="white-space:pre-wrap;">（一）热爱祖国，拥护中国共产党的领导，积极践行社会主义核心价值观。
+（二）遵纪守法，强化法律意识，遵守校规校纪，弘扬社会公德、职业道德、家庭美德。
+（三）热爱专业，善于学习，勤于思考，乐于探究，积极参加社会实践和志愿服务活动。
+（四）珍爱生命，远离危险；永远牢记安全第一，时刻保持身心两健，注重讲究环境卫生，未成年人必须远离危险。
+（五）自尊自爱，自信自强；自觉养成良好的学习习惯、生活习惯和行为习惯，知行合一，举止文明、健康向上。
+（六）热爱劳动，勤俭朴素；积极参与学校和社会公益活动，自己的事自己做，遇事多合作，累活抢着做。
+（七）孝敬父母，尊敬师长；礼貌待人，有恭敬之心、仁爱之心、善德之心、感恩之心。
+（八）热爱集体，爱护公物；关键时刻敢于用实际行动维护集体荣誉、团队形象、公共利益。
+（九）诚实守信，言行一致；知错就改，见贤者思齐，见恶者内省，人有不得，反求诸已。
+（十）注重环保，节约资源；珍爱自然环境，不随手乱丢乱扔，珍惜每一粒粮食、每一滴水、每一度电、每一张纸。</div>
+
+        <h3>二、中职学生公约</h3>
+        <div class="clause" style="white-space:pre-wrap;">（一）爱祖国，有梦想。爱党爱国，拥护宪法;服务人民，奉献社会;立志高远，复兴中华。
+（二）爱学习，有专长。崇尚科学，追求真知;勤学苦练，精益求精;不会就学，不懂就问。不愚昧无知，不浅尝辄止，不知难而退。
+（三）爱劳动，图自强。尊重劳动，勇于创造;艰苦奋斗，勤俭节约;从我做起，脚踏实地。不好逸恶劳，不奢侈浪费，不眼高手低。
+（四）讲文明，重修养。尊师孝亲，友善待人;诚实守信，言行一致;知错就改，见贤思齐。不恃强凌弱，不弄虚作假，不自甘落后。
+（五）遵法纪，守规章。遵守法律，依法做事;遵守校纪，依纪行为;遵守行规，依规行事。不惹事生非，不损坏公物，不违规操作。
+（六）辨美丑，立形象。情趣健康，向善向美;仪容整洁，衣着得体;举止文明，落落大方。不言语粗俗，不衣冠不整，不近"黄赌毒"。
+（七）强体魄，保健康。按时作息，坚持锻炼;讲究卫生，保持清洁;珍爱生命，注意安全。不晚睡晚起，不抽烟酗酒，不沉迷网络。
+（八）树自信，勇担当。自尊自信，乐观向上;珍惜青春，不怕挫折;敬业乐群，勇担责任。不消极悲观，不自卑自闭，不碌碌无为。</div>
+
+        <h3>三、中职学生日常行为规范</h3>
+        <div class="clause" style="white-space:pre-wrap;">（一）自尊自爱 注重仪表
+1.维护国家荣誉，尊敬国旗、国徽，会唱国歌，升降国旗、奏唱国歌时要肃立、脱帽、行注目礼。
+2.穿戴整洁、朴素大方。不佩戴首饰，不烫发，不染发，男生不留长发，女生不披肩，不穿拖鞋和无后襻的鞋进公共场所和教室。
+3.讲究卫生，养成良好的卫生习惯。不随地吐痰，不乱扔废弃物。
+4.举止文明，不说脏话，不骂人，不打架，不赌博。不涉足未成年人不宜的活动和场所。
+5.情趣健康，不看色情、凶杀、暴力、封建迷信的书刊、音像制品，不听不唱不健康歌曲，不参加迷信活动。
+6.爱惜名誉，拾金不昧，抵制不良诱惑，不做有损人格的事。
+7.学会自我调适情绪，正确对待困难和挫折，不自卑，不嫉妒，不偏激，保持心理健康。
+8.加强自我保护意识，注意安全。防火灾、防溺水、防触电、防盗、防中毒等。
+
+（二）诚实守信 礼貌待人
+1.平等待人，与人和善。尊重他人的人格、宗教信仰、民族风俗习惯。谦恭礼让，尊老爱幼，帮助残疾人。
+2.尊重教职员工，见面行礼或主动问好，回答师长问话要起立，递接物品时要用双手，给老师提意见态度要诚恳。
+3.同学之间互相尊重、团结互助、理解宽容、真诚相待，不欺负同学，不戏弄他人，发生矛盾多做自我批评。异性交往，大方得体。
+4.使用礼貌用语，要讲普通话;讲话注意场合，态度友善。
+5.尊重他人隐私，不随意进入他人房间、不私自动用他人物品、不拆看他人信件和日记。
+6.不随意打断他人的讲话，不打扰他人学习工作和休息，妨碍他人要道歉。
+7.诚实守信，言行一致。答应他人的事要做到，做不到时表示歉意，借他人钱物要及时归还。不说谎，不骗人，不弄虚作假，考试不作弊。
+
+（三）遵规守纪 勤奋学习
+1.遵守学校规章制度，出入学校要凭校徽、校牌，上课期间要凭老师签字。按时到校，不迟到，不早退，不旷课。有事须请假。
+2.上课专心听讲，勤于思考，认真做好学习笔记，积极参加讨论，勇于发表见解，按时按量完成作业。上课期间不准玩手机或不集中存放，一旦被老师发现则由班主任保管一周，再还给学生。
+3.认真参加技能训练，提高专业动手能力。积极参加生产实习、公益劳动和社会实践。
+4.积极参加学校组织的各项活动，遵守活动的要求和规定，积极参加体育锻炼，参加校园文化活动，学习和掌握一定的艺术基础知识和基本技能。
+5.认真值日，保持教室、校园整洁优美。不在教室和校园内追逐打闹喧哗，维护学校良好的秩序。
+6.爱护校舍和公物，不在黑板、墙壁、课桌、布告栏等处乱涂改刻画。借用公物要按时归还，损坏东西要赔偿。
+7.遵守宿舍和食堂的制度，保持内务整洁，爱惜粮食，节约水电，服从管理。
+
+（四）勤劳俭朴 孝敬父母
+1.生活节俭，不互相攀比，不乱花钱。
+2.学会料理个人生活，按时作息，合理安排课余时间。体贴帮助父母长辈，主动承担力所能及的家务劳动，关心照顾亲人。
+3.经常与父母交流生活、学习、思想等情况，尊重父母意见和教导。对家长有意见要有礼貌地提出，讲道理，不任性，不耍脾气，不顶撞。
+4.外出和到家时，向父母打招呼，未经家长同意，不得在外住宿或留宿他人。
+5.待客热情，起立迎送。不影响邻里正常生活，邻里有困难时主动关心帮助。
+
+（五）严于律已 遵守公德
+1.遵守国家法律法规，不做法律禁止的事。
+2.遵守交通法规，不闯红灯，不违章骑车，过马路走人行横道，不跨越隔离栏。
+3.遵守公共秩序，乘公共交通工具主动购票，给老、幼、病残、孕及师长让座，不争抢座位。
+4.爱护公用设施、文物古迹，爱护庄稼、花草、树木，爱护有益动物和生态环境。
+5.遵守网络道德和安全规定，不浏览、不制作、不传播不良信息，慎交网友，不进入营业性网吧。
+6.珍惜生命，不吸烟，不喝酒，不滥用药物，拒绝毒品。不参加各种名目的非法组织，不参加非法活动。
+7.公共场所不喧哗，瞻仰烈士陵园等相关场所保持肃静。观看演出和比赛，不起哄不滋扰，做文明观众。
+8.见义勇为，敢于斗争，对违反社会公德的行为要进行劝阻，发现违法犯罪行为及时报告。
+
+（六）钻研技能 敬业爱岗
+1.遵守实习单位规章制度和劳动纪律，执行规程，安全操作。
+2.服从岗位安排，主动接受岗位培训，履行岗位职责。
+3.尊重带教老师，与企业员工和睦相处。
+4.虚心好学，刻苦钻研操作技能，努力完成工作任务。
+5.珍惜工作岗位，切实履行就业协议，不违约。</div>
+    </div>
+
+    <!-- 第二部分：校纪校规 -->
+    <div class="card" id="sec2">
+        <h2>第二部分 校纪校规</h2>
+        <h3>一、学生一日常规</h3>
+        <div class="clause" style="white-space:pre-wrap;">（一）晨起6:40—7.00；按时起床洗漱及内务整理，紧张迅速，内务整洁。
+（二）早操：7:00—7:30
+（三）早餐、晨扫：7:30—8:00；按时用餐，有序就餐，杜绝浪费，讲究卫生，值日生彻底打扫教室及环境区域卫生。
+（四）上午课：8:30—12:00；积极投入，精神饱满，全神贯注，礼貌提问，参与互动、独立完成作业。
+（五）课间操：10:00—10:30；进场迅速，精神饱满，动作到位，退场有序。
+（六）午餐：12:00—13:00；自觉排队，服从管理，不浪费饭菜，讲究卫生。
+（七）午休：13:00—14:10；午休钟响前回到寝室，服从生活老师的管理，保证午休质量。
+（八）中午起床及内务整理：14:10—14:20；按时起床，紧张迅速，内务整洁。
+（九）下午课：14:30—16:10；不迟到、不早退，不旷课并积极投入。
+（十）课外活动：16:20—17:10；根据自己的兴趣爱好，积极主动地参与各种文体活动。
+（十一）卫生扫除：17:15—17:40；值日生彻底打扫教室及环境区域卫生。
+（十二）晚餐：17:40—18:30；分年级就餐，自觉排队，服从管理，不浪费饭菜。
+（十三）晚自习：19:00—21:00；准时到教室上晚自习，不迟到，不早退。
+（十四）晚上自主安排：21:00—22:00；22:00以前必须回到宿舍。
+（十五）晚寝：22:20—次日6:40；服从生活老师的管理，准时熄灯就寝。
+（十六）周末学校如无特别安排均为休假时间，须留校的学生，应主动签定《留校申请单》。
+（十七）周常规、学期常规、学年常规按学校周工作安排和校历执行。</div>
+
+        <h3>二、学生管理规定（摘要）</h3>
+        <div class="clause" style="white-space:pre-wrap;">（一）在校规定：学生必须遵守《中职学生守则》、《中职学生日常行为规范》及学校的各项规章制度。
+（二）进出规范：学生在上课期间进宿舍或带行李离校，须持请假条和放行条。
+（三）课堂礼貌要求：预备铃响后1分钟内值日干部就位；上课不戴帽、不吃食品；坐姿端正，不打瞌睡；有特殊情况需离开课室，必须经上课老师批准。</div>
+
+        <h3>三、学生考勤制度</h3>
+        <div class="clause" style="white-space:pre-wrap;">（一）学生必须按时到校上课，因病、因事不能上课者，应和班主任老师请假，否则作旷课处理。
+（二）每班设立教学日志，学生考勤每周公布一次，每月由政教处向全校公布一次。
+（三）请假三天以内的由班主任签核实意见后送政教处审批，三天以上由校级领导审批。
+（四）有慢性病不能坚持学习的学生，凭医院证明申请休学一年。
+（五）一学期累计旷课达到21课时，或请事假累计达到35课时者，给予警告处分；累计旷课达到35课时，或请事假累计达到56课时者，给予严重警告处分；累计旷课达到50课时，或请事假累计达到70课时者，给予记过处分；累计旷课达到80课时，或请事假累计达到90课时者，给予留校察看处分；累计旷课达到90课时，或无故离校连续两周者，作自动退学处理。
+（六）迟到、早退2次当旷课一节，请事假10节当旷课一节。</div>
+
+        <h3>四、学生仪容规范</h3>
+        <div class="clause" style="white-space:pre-wrap;">1.按要求穿班服或校服，正确佩戴徽章或标志。
+2.穿衣裤要扣好纽扣和拉好拉链，不穿奇装异服。
+3.男生不留长发，男女生不染发、不烫发、不留古怪发型、不戴首饰，不留长趾甲、不纹身、不穿拖鞋上课。
+4.上体育课要穿运动服、运动鞋。</div>
+
+        <h3>五、升国旗仪式规定</h3>
+        <div class="clause">每周一早上举行全校师生升旗仪式，全体师生向国旗行注目礼，奏唱国歌升国旗。</div>
+
+        <h3>六、集会规定</h3>
+        <div class="clause">集会时应将手机关掉或调至振动档，不做与会议无关的各种事情，保持会场的安静和干净。</div>
+
+        <h3>七、军训制度</h3>
+        <div class="clause">凡入我校的学生，必须接受学校有计划的军事训练，训练时间为7—10天。</div>
+
+        <h3>八、教室管理制度</h3>
+        <div class="clause" style="white-space:pre-wrap;">教室要安排轮流值日，桌椅排放要整齐，卫生用具摆放要整齐。爱护教室内外所有公共物品和设施，损坏公物要按规定赔偿。</div>
+
+        <h3>九、学生宿舍规则</h3>
+        <div class="clause" style="white-space:pre-wrap;">自觉遵守学校的住宿管理制度，实行晚睡点名制度。做到"八不"：不打架、不吵闹、不更改室内外公用物品、不生火、不私藏管制刀具、不入异性宿舍、不影响他人休息。</div>
+
+        <h3>十、学校清洁卫生标准</h3>
+        <div class="clause">（详见完整手册）教室、宿舍、公共区、卫生间每日打扫，保持整洁。</div>
+
+        <h3>十一、周末学生管理办法</h3>
+        <div class="clause" style="white-space:pre-wrap;">周末学生不离校必须在周五向班主任提出申请。周末留住学生要严格遵守作息时间，否则做违纪处理。</div>
+
+        <h3>十二、学校安全管理制度</h3>
+        <div class="clause" style="white-space:pre-wrap;">安全是学校一切活动的保障，全校师生应随时做好防火、防盗、防毒、防病工作。学生不得将易燃、易爆、剧毒、刀具等带到学校。</div>
+
+        <h3>十三、手机使用管理规定（试行）</h3>
+        <div class="clause" style="white-space:pre-wrap;">原则上不带手机到校，如需带手机到学校的学生请在指定地点（寝室）和指定时间（晚上9.00-10.30）内使用。
+第一次违规带到教室使用，班主任代管手机一周，批评教育。
+第二次违规带到教室使用，班主任代管手机两周，通报批评，并扣德育操行分5—15分。
+第三次违规带到教室使用，班主任代管手机一个月，一个月后由其家长领回手机，予以全校通报批评、警告或严重警告处分。
+第四次违规使用，学校代管手机一个学期，学期结束后由其家长领回手机，对违纪学生予以记过、记大过处分。
+对拒不交出手机或因收缴而顶撞教师，视情节轻重对违纪学生予以记过、留校察看处分，情节特别严重的依据学校预警制——红色预警（取消学籍，劝其退学）。</div>
+
+        <h3>十四、学生违纪抽烟管理条例</h3>
+        <div class="clause" style="white-space:pre-wrap;">1.第一次登记并且当面教育扣操行分1分。
+2.第二次由班主任安排劳动教育扣操行分2分。
+3.第三次全校通报批评教育扣操行分3分。
+4.第四次记大过处分扣操行分4分。
+5.第五次停课反省扣操行分5分。</div>
+
+        <h3>十五、学校与家长、学生安全公约</h3>
+        <div class="clause">（详见完整手册）学生在校外发生的事故由学生本人承担责任，学校不承担监护责任。</div>
+    </div>
+
+    <!-- 第三部分：考核评比 -->
+    <div class="card" id="sec3">
+        <h2>第三部分 学生在校考核评比</h2>
+        <h3>一、学生操行评定管理方案</h3>
+        <div class="clause" style="white-space:pre-wrap;">学生每人每学年操行基础分为100分；考核过程中的加分和扣分在此基础上进行累加和扣除。
+每学年操行考核分低于70分，由班主任及政教处谈话取消本学年的两次评优评先资格。操行分低于60分，告知家长并给予校内警告。操行分低于50分，予以劝退。
+学生毕业时操行分低于80分取消优秀毕业生评定，低于70分延迟半年发放毕业证，低于60分不给与毕业。
+操行等次分优秀(90分以上)、良好（80～89）、合格（60～79）、不及格（59分以下）四个等级。</div>
+
+        <h3>二、学生操行评分细则</h3>
+        <div class="clause" style="white-space:pre-wrap;"><b>【扣分细则】</b>
+出勤情况：旷课每节扣2分，迟到一次扣0.5分，旷晚自习一次扣5分，旷早操或集会一次扣1分。
+遵规守纪：扰乱课堂扣2分，顶撞辱骂威胁老师扣40分，不交作业扣0.5分，讽刺谩骂学生干部扣10分，抽烟扣1分，喝酒赌博扣5分，打架斗殴扣30-40分，邀外人打群架扣50分，收取保护费抢劫扣40分，私带外人进宿舍教室扣10分，私拉电线扣10分，宿舍使用明火扣10分，夜不归宿扣10分，翻越围墙扣10分，骑摩托车上学扣10分，偷盗扣40分。
+文明素养：穿拖鞋进教室扣0.5分，破坏公物扣5分，乱扔垃圾扣1分，不文明用语扣1分。
+仪容仪表：染发烫发扣1分，男生留长发戴首饰扣1分，女生染指甲化浓妆扣1分，未穿校服扣1分，未拉拉链衣着不整扣0.5分，走路玩手机游戏扣1分。
+内务卫生：宿舍卫生不达标扣1分，教室清洁区卫生脏乱差扣1分。
+食堂餐饮：倒饭一碗扣3分、半碗扣2分、三分之一碗扣1分，插队扣1分，不收碗扣1分。
+
+<b>【加分细则】</b>
+考勤奖：全勤每周加1分。
+学习奖：期末考试一二三等奖，学期总评分别加6、3、1分。
+荣誉奖：省级竞赛一二三等奖分别加15、10、5分，州级加8、5、3分，校级获奖加1分，文明寝室成员加1分，优秀班级班干部加2分。
+团结奖：月度无纠纷加1分。
+正气奖：举报不良行为加2分，做好人好事加2分，制止报告安全隐患加2分。
+奉献奖：义务劳动加2分，临时打扫教室加1分，向团委投稿加1分，稿件被采用加2分，参与黑板报手抄报加1分。
+卫生奖：月度卫生先进宿舍每人加1分。
+进步奖：表现明显进步加2分。
+其他奖：班主任认定应鼓励表彰加2分。</div>
+
+        <h3>三、班级管理操行分管理办法（试行）</h3>
+        <div class="clause" style="white-space:pre-wrap;">不服从学生会管理视情况扣1-5分；晚自习玩手机、串位每人次扣2分；早操迟到或不整齐扣1分；教室/清洁区卫生连续不合格扣分。</div>
+
+        <h3>四、学生成绩管理</h3>
+        <div class="clause">考试课期末占40%，期中占30%，平时占30%。60-69分为及格，59分及以下为不及格。</div>
+
+        <h3>五、三好学生、优秀学生干部评选条件</h3>
+        <div class="clause">德育操行评定为"优秀"，期末考试各科成绩均在85分以上，体育课成绩在80分以上。</div>
+    </div>
+
+    <!-- 第四部分：助学金 -->
+    <div class="card" id="sec4">
+        <h2>第四部分 助学金（奖）学金暂行办法</h2>
+        <div class="clause" style="white-space:pre-wrap;">学校每年从学费收入中提取5%的经费和争取社会捐助、教师捐助等渠道筹集资金用于贫困学生的奖励、资助。
+国家助学金资助标准为每生每年1500元，按学期发放，每学期按750元/人标准。
+受处分者取消其当年助学金、奖学金的评定资格。</div>
+    </div>
+
+    <!-- 第五部分：违纪处分条例 -->
+    <div class="card" id="sec5">
+        <h2>第五部分 学生违纪处分条例</h2>
+        <div class="clause" style="white-space:pre-wrap;"><b>处分种类：</b>（一）警告；（二）记过；（三）记大过；（四）留校察看；（五）勒令退学；（六）开除学籍。
+
+<b>打架斗殴：</b>动手打人给予记过以上处分；策划怂恿他人打架给予留校察看以上处分；持械伤人给予勒令退学以上处分；伙同校外人员打架给予留校察看以上处分。
+
+<b>赌博：</b>凡参与赌博者，以记过以上处分；组织赌博者从重处分。
+
+<b>抽烟：</b>凡在校内外抽烟（带烟）者，给予警告处分；再次抽烟给予记过处分；教育不改的给予勒令退学或开除学籍处分。
+
+<b>酗酒：</b>凡在校内外酗酒者，给予记过处分；酗酒闹事给予记过以上处分。
+
+<b>盗窃诈骗：</b>首次盗窃给予记过以上处分；再次盗窃给予勒令退学或开除学籍处分；抢劫或参与抢劫给予留校察看以上处分。
+
+<b>夜不归宿：</b>首次给予警告处分；再次给予记过以上处分；教育不改的给予勒令退学或开除学籍处分。
+
+<b>擅自离校：</b>擅自离校一周以内给予记过以下处分；一至两周给予留校察看处分；两周以上给予勒令退学或开除学籍处分。
+
+<b>考试作弊：</b>首次给予记过处分；第二次给予留校察看处分；累计两次以上给予勒令退学或开除学籍处分。
+
+<b>旷课处分：</b>一学期累计旷课达到21课时给予警告处分；35课时给予严重警告处分；50课时给予记过处分；80课时给予留校察看处分；90课时或无故离校连续两周者作自动退学处理。
+
+受处分者同时取消其参加优秀学生、十佳校园之星等荣誉的评定资格，同时取消其当年助学金、奖学金的评定资格。</div>
+    </div>
+
+    <!-- 附件 -->
+    <div class="card" id="sec6">
+        <h2>第六部分 附件</h2>
+        <div class="clause" style="white-space:pre-wrap;">本细则由政教处负责解释。
+本条例于2025年3月修订，2025年3月1日起施行。
+受处分学生对处分有异议的可向学校提出书面申诉。</div>
+    </div>
+
+    <!-- 第七部分：优秀学生、优秀学生干部评选方案 -->
+    <div class="card" id="sec7">
+        <h2>第七部分 优秀学生、优秀学生干部评选方案</h2>
+        <h3>一、评选条件</h3>
+        <h3>（一）三好学生评选条件</h3>
+        <div class="clause" style="white-space:pre-wrap;">
+1. 思想品德好
+（1）有坚定正确的政治方向，热爱中国共产党，拥护党的基本路线，热爱祖国、热爱集体、热爱劳动，积极参加社会实践及公益活动。
+（2）遵守学校各项规章制度，遵纪守法，遵守社会公德。在校期间使用文明语言及普通话。
+（3）尊敬师长，团结同学，关心他人，待人诚恳礼貌，具有健康的心理品质，德育操行评定等级为“优秀”。
+（4）法治观念强，勇于开展批评与自我批评，敢于同不良行为做斗争。
+2. 学习好
+（1）学习目的明确，有勤奋刻苦精神，学习态度端正，勤学好问，有良好的学习习惯，能较好地掌握各门功课的基础知识和基本技能，学习成绩优良。
+（2）积极参加各种课外兴趣小组活动，具有较强的分析问题和解决问题的能力。
+（3）成绩优良，各科考试及格，期末考试各科成绩均在85分以上（以百分制算，包括体育成绩）。
+3. 身体好
+（1）上好每节体育课，积极参加体育锻炼和课外文娱活动，认真做好“两操”。（无逃操、旷课现象）
+（2）热爱劳动，具有良好的劳动习惯、卫生习惯和健康的身体素质、心理素质。具有艰苦奋斗、无私奉献精神。
+（3）积极参加体育活动，体育合格，体育成绩良好，体育课成绩在80分以上（因病、残免修体育课的学生，能积极参加力所能及的锻炼者可参评）。
+        </div>
+
+        <h3>（二）优秀班干部、优秀学生会干部、优秀护校队干部评选条件</h3>
+        <div class="clause" style="white-space:pre-wrap;">
+1. 思想品德素质高，热爱党，热爱社会主义祖国，关心时事政治，追求进步，无不良行为，严格遵守国家法令和学校规章制度。
+2. 热爱学校，热爱班级，集体观念强，有良好的道德修养，尊敬师长，团结同学，在各方面能以身作则，富有团结协作精神，积极组织和引导同学参与学校各项活动并起到模范带头作用。
+3. 热心为集体工作，为同学服务，勇于锻炼自己。有开拓进取精神，严于律已，宽以待人，遵守学校各种规章制度。在班级和部门中工作突出并有突出事例。
+4. 有创新、竞争意识，工作大胆，敢于负责，敢于同不良倾向作斗争，有较强的组织、领导能力和独立工作能力，所在班级和部门有良好的作用或明显的进步，在同学中享有较高的威信。
+5. 当好学校和班主任的助手，经常向班主任及各相关部门汇报、请示工作，提出合理化建议，圆满完成所承担的任务，同时在校期间使用文明语言及普通话。
+6. 及时向所在班级和部门传达学校、年级、班主任、团支部工作布置，能主持正义，敢于抵制和揭发不良风气。
+7. 德育操行评定为优秀，学习目的明确，学习成绩良好，期末考试科平均成绩在80分以上（以百分制计算，包括体育成绩）
+8. 积极参加体育锻炼，课间操积极参加，从不无故缺席并表现良好。
+        </div>
+
+        <h3>二、评选办法</h3>
+        <div class="clause" style="white-space:pre-wrap;">
+（一）评选工作由班主任主持。先由班级民主初评，凡符合以上条件的均可作为候选人被提名，组织全班同学进行评议、推荐，最后班委会研究确定选送名单。
+（二）各班推荐的“三好学生”、“优秀学生干部”正式填表上报政教处审批。
+        </div>
+
+        <h3>三、名额分配</h3>
+        <div class="clause" style="white-space:pre-wrap;">
+（一）优秀学生每班上报5%人；
+（二）优秀班干部每班上报1人。
+        </div>
+
+        <h3>四、表彰</h3>
+        <div class="clause" style="white-space:pre-wrap;">
+（一）“优秀学生”、“优秀学生干部”每学期评定一次并表扬，召开校表彰大会予以表彰。
+（二）获“三好学生”、“优秀学生干部”称号的学生由学校统一发给奖状、并记入学籍档案。
+（三）从中推荐省、市、区“优秀学生”和“优秀学生干部”的人选。
+        </div>
+
+        <h3>五、注意事项</h3>
+        <div class="clause" style="white-space:pre-wrap;">
+（一）评选必须严格按照条件，宁缺毋滥。
+（二）凡有下列情况之一者，不得评为优秀学生和优秀学生干部：
+1. 严重违反《中小学生守则》和学校各项规章制度者。
+2. 犯有错误，不接受教育者。
+3. 无故旷课者、考试作弊者。
+4. 团员无故不参加团组织生活者。
+5. 受处分者。
+        </div>
+    </div>
+</div>`;    }   // buildUI 函数结束
 
     // 导航与模态框关闭
     document.addEventListener('click', function(e) {
@@ -2058,69 +2429,95 @@ async function refreshDashboard() {
         const age = getAgeFromIdcard(s.idcard);
         const gender = s.gender || '';
         const zoudu = (s.zoudu === '是') ? '走读' : '住校';
-     return `<tr>
-    <td>${s.name}</td>
-    <td>${gender}</td>
-    <td>${age}</td>
-    <td>${zoudu}</td>
-    <td>${s.idcard || ''}</td>
-    <td>${s.parent || '—'}</td>
-    <td>${s.phone || '—'}</td>
-    <td>${s.status === '在读' ? '✅在读' : s.status}</td>
-    <td><span class="badge ${badgeClass(level(sc))}">${sc}</span></td>
-    <td>
-        ${canModify() ? `
-            <button class="btn-sm" onclick="window.editStudent('${s.idcard}')">编辑</button>
-            <button class="btn-sm btn-danger" onclick="window.toggleStudent('${s.idcard}')">${s.status === '在读' ? '退学' : '恢复'}</button>
-            <button class="btn-sm btn-danger" onclick="window.deleteStudent('${s.idcard}')">🗑 删除</button>
-        ` : `
-            <button class="btn-sm btn-danger" onclick="window.deleteStudent('${s.idcard}')">🗑 申请删除</button>
-        `}
-    </td>
-</tr>`;
+        return `<tr>
+            <td>${s.name}</td>
+            <td>${gender}</td>
+            <td>${age}</td>
+            <td>${zoudu}</td>
+            <td>${s.idcard || ''}</td>
+            <td>${s.parent || '—'}</td>
+            <td>${s.phone || '—'}</td>
+            <td>
+                ${s.status === '在读' ? '✅在读' : `⚠️${s.status}`}
+                <button class="btn-sm btn-outline" style="margin-left:4px; padding:2px 6px; font-size:11px;"
+                        onclick="window.changeStudentStatus('${s.idcard}', '${s.status}')">🔄 改状态</button>
+            </td>
+            <td>${s.class_role || '—'}</td>
+            <td><span class="badge ${badgeClass(level(sc))}">${sc}</span></td>
+            <td>
+                ${canModify() ? `
+                    <button class="btn-sm" onclick="window.editStudent('${s.idcard}')">编辑</button>
+                    <button class="btn-sm btn-danger" onclick="window.toggleStudent('${s.idcard}')">${s.status === '在读' ? '退学' : '恢复'}</button>
+                    <button class="btn-sm btn-danger" onclick="window.deleteStudent('${s.idcard}')">🗑 删除</button>
+                ` : `
+                    <button class="btn-sm btn-danger" onclick="window.deleteStudent('${s.idcard}')">🗑 申请删除</button>
+                `}
+            </td>
+        </tr>`;
     }).join('');
 }
 
     // 学生模态框和增删改
     function openStudentModal(editId) {
-        if (!document.getElementById('modal-student')) {
-            document.body.insertAdjacentHTML('beforeend', `<div class="modal" id="modal-student"><div class="modal-content"><h3 id="stu-title">新增学生</h3><div class="form-row"><input id="stu-name" placeholder="姓名" aria-label="学生姓名"><select id="stu-gender"><option>男</option><option>女</option></select></div><div class="form-row"><input id="stu-idcard" placeholder="身份证"><input id="stu-parent" placeholder="家长"></div><div class="form-row"><input id="stu-phone" placeholder="电话"><select id="stu-zoudu"><option>否</option><option>是</option></select></div><input type="hidden" id="stu-edit-id"><div style="text-align:right;margin-top:12px"><button class="btn-outline" onclick="window.closeModal('modal-student')">取消</button><button class="btn-primary" onclick="window.saveStudent()">保存</button></div></div></div>`);
-        }
-        document.getElementById('stu-title').textContent = editId ? '编辑学生' : '新增学生';
-        document.getElementById('stu-edit-id').value = editId || '';
-        if (editId) {
-            const s = students.find(st => st.idcard === editId);
-            if (s) {
-                document.getElementById('stu-name').value = s.name;
-                document.getElementById('stu-gender').value = s.gender;
-                document.getElementById('stu-idcard').value = s.idcard;
-                document.getElementById('stu-parent').value = s.parent||'';
-                document.getElementById('stu-phone').value = s.phone||'';
-                document.getElementById('stu-zoudu').value = s.zoudu||'否';
-            }
-        } else {
-            document.getElementById('stu-name').value = '';
-            document.getElementById('stu-idcard').value = '';
-            document.getElementById('stu-parent').value = '';
-            document.getElementById('stu-phone').value = '';
-        }
-        openModal('modal-student');
+    if (!document.getElementById('modal-student')) {
+        document.body.insertAdjacentHTML('beforeend', `<div class="modal" id="modal-student"><div class="modal-content"><h3 id="stu-title">新增学生</h3><div class="form-row"><input id="stu-name" placeholder="姓名" aria-label="学生姓名"><select id="stu-gender"><option>男</option><option>女</option></select></div><div class="form-row"><input id="stu-idcard" placeholder="身份证"><input id="stu-parent" placeholder="家长"></div><div class="form-row"><input id="stu-phone" placeholder="电话"><select id="stu-zoudu"><option>否</option><option>是</option></select></div><div class="form-row"><input id="stu-class-role" placeholder="班级职务（如班长、劳动委员）"></div><input type="hidden" id="stu-edit-id"><div style="text-align:right;margin-top:12px"><button class="btn-outline" onclick="window.closeModal('modal-student')">取消</button><button class="btn-primary" onclick="window.saveStudent()">保存</button></div></div></div>`);
     }
+    document.getElementById('stu-title').textContent = editId ? '编辑学生' : '新增学生';
+    document.getElementById('stu-edit-id').value = editId || '';
+    if (editId) {
+        const s = students.find(st => st.idcard === editId);
+        if (s) {
+            document.getElementById('stu-name').value = s.name;
+            document.getElementById('stu-gender').value = s.gender;
+            document.getElementById('stu-idcard').value = s.idcard;
+            document.getElementById('stu-parent').value = s.parent||'';
+            document.getElementById('stu-phone').value = s.phone||'';
+            document.getElementById('stu-zoudu').value = s.zoudu||'否';
+            document.getElementById('stu-class-role').value = s.class_role || '';
+        }
+    } else {
+        document.getElementById('stu-name').value = '';
+        document.getElementById('stu-idcard').value = '';
+        document.getElementById('stu-parent').value = '';
+        document.getElementById('stu-phone').value = '';
+        document.getElementById('stu-class-role').value = '';
+    }
+    openModal('modal-student');
+}
 
     window.openStudentModal = () => openStudentModal(null);
     window.editStudent = (id) => openStudentModal(id);
     window.saveStudent = async function() {
-        const name = document.getElementById('stu-name').value.trim();
-        const idcard = document.getElementById('stu-idcard').value.trim();
-        if (!name || !idcard) { toast('姓名和身份证必填','error'); return; }
-        const editId = document.getElementById('stu-edit-id').value;
-        const data = { name, idcard, gender: document.getElementById('stu-gender').value, parent: document.getElementById('stu-parent').value, phone: document.getElementById('stu-phone').value, zoudu: document.getElementById('stu-zoudu').value, status: '在读' };
-        if (editId) await sb.from('students').update(data).eq('idcard', editId);
-        else await sb.from('students').insert(data);
-        closeModal('modal-student');
-        await loadData(); populateAllSelects(); renderRoster(); refreshDashboard();
-        toast('保存成功');
+    const name = document.getElementById('stu-name').value.trim();
+    const idcard = document.getElementById('stu-idcard').value.trim();
+    if (!name || !idcard) { toast('姓名和身份证必填','error'); return; }
+    const editId = document.getElementById('stu-edit-id').value;
+    const data = {
+        name,
+        idcard,
+        gender: document.getElementById('stu-gender').value,
+        parent: document.getElementById('stu-parent').value,
+        phone: document.getElementById('stu-phone').value,
+        zoudu: document.getElementById('stu-zoudu').value,
+        class_role: document.getElementById('stu-class-role').value.trim(),
+        status: '在读'   // 新增时默认在读
     };
+    let error;
+    if (editId) {
+        // 编辑时保留原状态，不更新 status
+        delete data.status;
+        ({ error } = await sb.from('students').update(data).eq('idcard', editId));
+    } else {
+        ({ error } = await sb.from('students').insert(data));
+    }
+    if (error) { toast('保存失败：' + error.message, 'error'); return; }
+    closeModal('modal-student');
+    await loadData();
+    populateAllSelects();
+    renderRoster();
+    refreshDashboard();
+    toast('保存成功');
+};
     window.toggleStudent = async function(idcard) {
         if (!confirm('确定变更状态？')) return;
         const s = students.find(st => st.idcard === idcard);
@@ -2129,6 +2526,75 @@ async function refreshDashboard() {
             await loadData(); populateAllSelects(); renderRoster();
         }
     };
+window.changeStudentStatus = function(idcard, currentStatus) {
+    // 移除可能已存在的旧弹窗
+    const oldModal = document.getElementById('modal-change-status');
+    if (oldModal) oldModal.remove();
+
+    const presetStatuses = ['在读', '退学', '休学', '厌学（暂不返校）', '劝返中', '请假（长期）', '其他（自定义）'];
+
+    let optionsHtml = '';
+    for (const st of presetStatuses) {
+        const selected = (st === currentStatus || (st === '其他（自定义）' && !presetStatuses.slice(0, -1).includes(currentStatus))) ? 'selected' : '';
+        optionsHtml += `<option value="${st}" ${selected}>${st}</option>`;
+    }
+
+    const html = `
+        <div class="modal-content" style="max-width:400px;">
+            <h3>🔄 修改学生状态</h3>
+            <div style="margin-bottom:10px;">
+                <label>当前状态：<b>${currentStatus}</b></label>
+            </div>
+            <select id="new-status-select" style="width:100%; margin-bottom:8px;">
+                ${optionsHtml}
+            </select>
+            <input type="text" id="new-status-custom" placeholder="自定义状态（若选“其他”）" style="width:100%; display:none;">
+            <div style="text-align:right; margin-top:12px;">
+                <button class="btn-outline" onclick="document.getElementById('modal-change-status').remove()">取消</button>
+                <button class="btn-primary" onclick="window.saveStudentStatus('${idcard}')">💾 保存</button>
+            </div>
+        </div>
+    `;
+
+    const modal = document.createElement('div');
+    modal.id = 'modal-change-status';
+    modal.className = 'modal active';
+    modal.innerHTML = html;
+    document.body.appendChild(modal);
+
+    // 监听下拉选择变化，显示/隐藏自定义输入框
+    document.getElementById('new-status-select').addEventListener('change', function() {
+        const customInput = document.getElementById('new-status-custom');
+        if (this.value === '其他（自定义）') {
+            customInput.style.display = '';
+            customInput.focus();
+        } else {
+            customInput.style.display = 'none';
+        }
+    });
+};
+
+window.saveStudentStatus = async function(idcard) {
+    const selectEl = document.getElementById('new-status-select');
+    const customEl = document.getElementById('new-status-custom');
+    let newStatus = selectEl.value;
+    if (newStatus === '其他（自定义）') {
+        newStatus = customEl.value.trim();
+        if (!newStatus) { toast('请输入自定义状态', 'error'); return; }
+    }
+
+    const { error } = await sb.from('students').update({ status: newStatus }).eq('idcard', idcard);
+    if (error) {
+        toast('修改失败：' + error.message, 'error');
+    } else {
+        toast('状态已更新为：' + newStatus);
+        document.getElementById('modal-change-status').remove();
+        await loadData();
+        populateAllSelects();
+        renderRoster();
+        refreshDashboard();
+    }
+};
 // 删除学生
 window.deleteStudent = async function(idcard) {
     if (!canModify()) {
@@ -3971,13 +4437,16 @@ window.renderDisciplineWarning = function() {
 window.renderPhoneDiscipline = function() {
     const activeStudents = students.filter(s => s.status === '在读');
     const result = [];
-    // 手机违规代码
-    const phoneCodes = ['M1','M2','C13','C14','C15'];
+    // 手机违规代码（M1、M2、C13-C15，以及带后缀的 M1-1、M1-2 等）
+    const phonePrefixes = ['M1', 'M2', 'C13', 'C14', 'C15'];
 
     activeStudents.forEach(s => {
         const myLogs = logs.filter(l => l.student === s.name);
-        // 统计所有手机违规代码的次数
-        const phoneLogs = myLogs.filter(l => phoneCodes.includes(l.code));
+        // 统计所有手机违规记录：代码完全匹配或以前缀开头
+        const phoneLogs = myLogs.filter(l => {
+            if (!l.code) return false;
+            return phonePrefixes.some(prefix => l.code === prefix || l.code.startsWith(prefix + '-'));
+        });
         const totalViolations = phoneLogs.length;
 
         let suggestion = '—';
@@ -4001,8 +4470,7 @@ window.renderPhoneDiscipline = function() {
             <td style="color:${r.suggestion === '—' ? '#10b981' : '#ef4444'}; font-weight:bold;">${r.suggestion}</td>
         </tr>
     `).join('');
-};
-// 快速登记手机违规（弹出模态框）
+};// 快速登记手机违规（弹出模态框）
 window.openAddPhoneViolation = function() {
     // 创建模态框
     if (!document.getElementById('modal-phone-violation')) {
@@ -5191,7 +5659,176 @@ window.handleRequest = async function(id, newStatus) {
     // 刷新申请列表和仪表盘通知
     window.loadActionRequests();
     window.renderDashboardNoticeBar();
-};// ========== 仪表盘通知栏 ==========
+};
+window.renderCandidates = async function() {
+    const container = document.getElementById('candidates-container');
+    if (!container) return;
+
+    await loadData();
+
+    const active = students.filter(s => s.status === '在读');
+    const allLogs = logs;
+
+    // 判断是否有处分（依据评选方案第五部分）
+    const hasDisciplinaryAction = (name) => {
+        const severeCodes = ['C9','C12','C11','C10','C2','C4','C3','C5','C6','C7','C8','C1'];
+        if (allLogs.some(l => l.student === name && severeCodes.includes(l.code))) return true;
+        const smokeCount = allLogs.filter(l => l.student === name && l.code === 'C1').length;
+        if (smokeCount >= 3) return true;
+        const phoneCodes = ['M1','M2','M1-3','M1-4'];
+        const phoneCount = allLogs.filter(l => l.student === name && phoneCodes.includes(l.code)).length;
+        if (phoneCount >= 3) return true;
+        let absentPeriods = 0;
+        let lateEarlyCount = 0;
+        allLogs.filter(l => l.student === name).forEach(l => {
+            const r = l.reason || '';
+            if (l.code === 'A1' || l.code === 'A3') {
+                const am = parseInt((r.match(/上午(\d+)节/) || [0,0])[1]);
+                const pm = parseInt((r.match(/下午(\d+)节/) || [0,0])[1]);
+                const eve = parseInt((r.match(/晚自习(\d+)节/) || [0,0])[1]);
+                absentPeriods += am + pm + eve;
+            } else if (l.code === 'A2' || l.code === 'A4') {
+                lateEarlyCount++;
+            }
+        });
+        absentPeriods += Math.floor(lateEarlyCount / 2);
+        return absentPeriods >= 21;
+    };
+
+    const hasAbsent = (name) => {
+        return allLogs.some(l => l.student === name && (l.code === 'A1' || l.code === 'A3'));
+    };
+
+    // 获取具体违纪扣分记录（排除请假记录，最多展示5条）
+    const getDeductionReasons = (name) => {
+        const deductionLogs = allLogs.filter(l =>
+            l.student === name && l.value < 0 && l.code !== '请假'  // ← 关键修改：请假不计入违纪
+        );
+        if (deductionLogs.length === 0) return null;
+        const details = deductionLogs.slice(0, 5).map(l => {
+            return `${l.date} ${l.code || '违纪'}：${l.reason || '无描述'}（${l.value}分）`;
+        });
+        if (deductionLogs.length > 5) details.push(`...等共${deductionLogs.length}条违纪扣分记录`);
+        return details.join('；');
+    };
+
+    const threeGood = [];
+    const excellentCadres = [];
+    const failedStudents = [];
+
+    for (const s of active) {
+        const sc = calcScore(s.name);
+        const reasons = [];
+
+        if (sc < 90) {
+            reasons.push('德育操行未达“优秀”（<90分），不满足方案一-(一)-1-(3)条');
+        }
+        if (hasDisciplinaryAction(s.name)) {
+            reasons.push('有严重违纪或受处分记录，不满足方案五-2-1/5条');
+        }
+        if (hasAbsent(s.name)) {
+            reasons.push('存在无故旷课记录，不满足方案五-2-3条');
+        }
+        const deductionDetails = getDeductionReasons(s.name);
+        if (deductionDetails) {
+            reasons.push('存在违纪扣分记录：' + deductionDetails);
+        }
+
+        const isCadre = s.class_role && s.class_role.trim() !== '';
+
+        if (reasons.length === 0) {
+            const basisLines = [
+                `✅ 方案一-(一)-1-(3)：德育操行“优秀”（${sc}分）`,
+                `✅ 方案五-2-1/2/5：无严重违纪、处分记录`,
+                `✅ 方案五-2-3：无无故旷课`,
+                `✅ 零违纪扣分记录（请假除外，严格遵守学校各项规章制度）`
+            ];
+            const basis = basisLines.join('<br>');
+            threeGood.push({ name: s.name, conduct: sc, basis });
+
+            if (isCadre) {
+                const cadreBasis = [
+                    ...basisLines,
+                    `✅ 方案一-(二)-7：德育操行优秀，学习目的明确（操行分${sc}）`,
+                    `✅ 方案一-(二)-1-6：担任${s.class_role}，积极为集体服务`
+                ].join('<br>');
+                excellentCadres.push({ name: s.name, conduct: sc, role: s.class_role, basis: cadreBasis });
+            }
+        } else {
+            failedStudents.push({ name: s.name, conduct: sc, reasons: reasons.join('<br>') });
+        }
+    }
+
+    threeGood.sort((a, b) => b.conduct - a.conduct);
+    excellentCadres.sort((a, b) => b.conduct - a.conduct);
+
+    const totalStudents = active.length;
+    const threeGoodQuota = Math.max(1, Math.ceil(totalStudents * 0.05));
+    const cadreQuota = 1;
+
+    const cadreSuggestedNames = new Set();
+    for (let i = 0; i < Math.min(cadreQuota, excellentCadres.length); i++) {
+        cadreSuggestedNames.add(excellentCadres[i].name);
+    }
+
+    let html = '';
+    html += '<h3>🥇 三好学生候选人（请假不计入违纪，操行优秀）</h3>';
+    if (threeGood.length === 0) {
+        html += '<p style="color:var(--text-secondary);">暂无符合条件的学生</p>';
+    } else {
+        html += '<table><thead><tr><th>排名</th><th>姓名</th><th>操行分</th><th>建议</th><th>详细依据</th></tr></thead><tbody>';
+        let suggestedCount = 0;
+        for (let i = 0; i < threeGood.length; i++) {
+            const stu = threeGood[i];
+            const isCadreSuggested = cadreSuggestedNames.has(stu.name);
+            const isThreeGoodSuggested = !isCadreSuggested && (suggestedCount < threeGoodQuota);
+            if (isThreeGoodSuggested) suggestedCount++;
+            const suggested = isThreeGoodSuggested ? '⭐ 建议入选' : '';
+            const rowStyle = isThreeGoodSuggested ? 'background:#fff9c4;' : '';
+            html += `<tr style="${rowStyle}"><td>${i+1}</td><td>${stu.name}</td><td>${stu.conduct}</td><td>${suggested}</td><td style="font-size:12px;white-space:pre-wrap;">${stu.basis}</td></tr>`;
+        }
+        html += '</tbody></table>';
+    }
+
+    html += '<h3 style="margin-top:16px;">🎖️ 优秀学生干部候选人（请假不计入违纪）</h3>';
+    if (excellentCadres.length === 0) {
+        html += '<p style="color:var(--text-secondary);">暂无符合条件的学生</p>';
+    } else {
+        html += '<table><thead><tr><th>排名</th><th>姓名</th><th>职务</th><th>操行分</th><th>建议</th><th>详细依据</th></tr></thead><tbody>';
+        for (let i = 0; i < excellentCadres.length; i++) {
+            const stu = excellentCadres[i];
+            const suggested = i < cadreQuota ? '⭐ 建议入选' : '';
+            const rowStyle = i < cadreQuota ? 'background:#fff9c4;' : '';
+            html += `<tr style="${rowStyle}"><td>${i+1}</td><td>${stu.name}</td><td>${stu.role}</td><td>${stu.conduct}</td><td>${suggested}</td><td style="font-size:12px;white-space:pre-wrap;">${stu.basis}</td></tr>`;
+        }
+        html += '</tbody></table>';
+    }
+
+    html += '<div style="margin-top:16px;">';
+    html += '<h3 style="cursor:pointer;" onclick="var p=this.nextElementSibling; p.style.display=p.style.display==\'none\'?\'block\':\'none\'; this.querySelector(\'span\').textContent=p.style.display==\'none\'?\'▶\':\'▼\';">';
+    html += '<span>▶</span> 🔍 未入选学生及具体原因（点击展开）</h3>';
+    html += '<div style="display:none; border:1px solid var(--border); border-radius:6px; padding:8px; max-height:300px; overflow-y:auto;">';
+    if (failedStudents.length === 0) {
+        html += '<p style="color:var(--text-secondary);">所有在读学生均已符合条件。</p>';
+    } else {
+        html += '<table><thead><tr><th>姓名</th><th>操行分</th><th>不推荐原因</th></tr></thead><tbody>';
+        failedStudents.sort((a,b) => b.conduct - a.conduct);
+        for (const stu of failedStudents) {
+            html += `<tr><td>${stu.name}</td><td>${stu.conduct}</td><td style="font-size:12px;color:var(--danger);white-space:pre-wrap;">${stu.reasons}</td></tr>`;
+        }
+        html += '</tbody></table>';
+    }
+    html += '</div></div>';
+
+    html += `<p style="margin-top:12px; font-size:12px; color:var(--text-secondary);">
+        📌 名额：三好学生 ${threeGoodQuota} 人（班级人数的5%），优秀班干部 ${cadreQuota} 人。<br>
+        ⭐ 建议入选（优秀学生干部与三好学生不重复），最终名单由班主任根据评选方案确认。<br>
+        📋 依据《评选方案》，请假属正常手续，不计入违纪；以操行总分代替学科成绩。<br>
+        🚫 已排除：受处分、无故旷课、任何违纪扣分（不含请假）的学生。
+    </p>`;
+    container.innerHTML = html;
+};
+// ========== 仪表盘通知栏 ==========
 window.renderDashboardNoticeBar = async function() {
     var dashboard = document.getElementById('page-dashboard');
     if (!dashboard) return;
