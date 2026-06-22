@@ -705,7 +705,7 @@ window.handleLogin = async function() {
             role: '班主任',
             phone: '13038688446',
             username: 'admin',
-            name: '管理员',
+            name: '金老师',
             class_role: '班主任'
         };
         toast(`🔓 登录成功，欢迎回来，${userProfile.role} ${userProfile.name || ''}`);
@@ -1808,15 +1808,16 @@ if (p === 'settings' && !canModify()) {
 }
     if (p === 'roster') renderRoster();
     if (p === 'discipline') {
-        document.getElementById('weekly-date').value = fmt(new Date());
-        document.getElementById('weekly-week-num').value = getWeek();
-        document.getElementById('summary-week-num').value = getWeek();
-        var filterWeekInput = document.getElementById('filter-week');
-        if (filterWeekInput) filterWeekInput.value = getWeek();
-        window.renderScoreLog();
-        renderWeeklyTable();
-        window.renderWeeklySummary();
-    }
+    const elWeek = document.getElementById('weekly-week-num');
+    const elSum = document.getElementById('summary-week-num');
+    const elDate = document.getElementById('weekly-date');
+    if (elWeek) elWeek.value = getWeek();
+    if (elSum) elSum.value = getWeek();
+    if (elDate) elDate.value = fmt(new Date());
+    window.renderScoreLog();
+    renderWeeklyTable();
+    window.renderWeeklySummary();   // ← 这一行自动查询当前周操行汇总
+}
     if (p === 'class-log') { renderClassLogs(); renderDailyLogs(); }
     if (p === 'alert-records') {
     renderAlerts();
@@ -2342,7 +2343,10 @@ window.loadSemesterConfig = async function() {
                 <td style="white-space:normal; word-break:break-word;">${weekday} ${r.code}：${r.reason || ''}${valueStr}</td>
                 <td style="color:${r.value < 0 ? '#ef4444' : '#10b981'}">${r.value > 0 ? '+' : ''}${r.value}</td>
                 <td>${r.operator || '—'}</td>
-                <td><button class="btn-danger btn-xs" onclick="window.deleteLog(${r.id})">删</button></td>
+                <td>
+    <button class="btn-sm btn-outline" onclick="window.editScoreLog(${r.id})">✏️ 编辑</button>
+    <button class="btn-danger btn-xs" onclick="window.deleteLog(${r.id})">删</button>
+</td>
             </tr>`;
         }).join('')
         : '<tr><td colspan="9" style="text-align:center;">暂无匹配记录</td></tr>';
@@ -2673,11 +2677,39 @@ window.showAttendanceDetail = async function(date, field) {
         listEl.innerHTML = `<p style="color:red;">${e.message || e}</p>`;
     }
 };
-window.renderWeeklySummary = function() {
+window.renderWeeklySummary = async function() {
+    await loadData(); // 每次查询前强制重新加载最新日志
     const wk = parseInt(document.getElementById('summary-week-num').value);
     if (isNaN(wk)) { toast('请输入周次', 'error'); return; }
 
-    const weekLogs = logs.filter(l => l.week === wk);
+    // ========== 计算所选周次的结束日期 ==========
+    let weekEndDate = null;   // 截止日期，留空表示无限制（使用全部日志）
+    const saved = localStorage.getItem('semester_config');
+    if (saved) {
+        const cfg = JSON.parse(saved);
+        const semesterStart = new Date(cfg.startDate);
+        const weekStart = new Date(semesterStart);
+        weekStart.setDate(weekStart.getDate() + (wk - 1) * 7);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        weekEnd.setHours(23, 59, 59, 999);
+        weekEndDate = fmt(weekEnd);   // 格式 yyyy-mm-dd
+    }
+
+    // 过滤出截止到该周结束的日志
+    const logsUpToWeek = weekEndDate
+        ? logs.filter(l => l.date <= weekEndDate)
+        : logs;   // 未配置学期时使用全部日志
+
+    // 计算截至该周的操行分
+    const calcScoreUpToWeek = (name) => {
+        let t = 100;
+        logsUpToWeek.filter(l => l.student === name).forEach(l => t += l.value || 0);
+        return t;
+    };
+
+    // 以下代码基本不变，仅将 calcScore 替换为 calcScoreUpToWeek
+    const weekLogs = logsUpToWeek.filter(l => l.week === wk);
     const groups = {};
     weekLogs.forEach(l => {
         if (!groups[l.student]) groups[l.student] = [];
@@ -2700,7 +2732,7 @@ window.renderWeeklySummary = function() {
         const records = groups[s.name] || [];
         const weekTotal = records.reduce((sum, r) => sum + (r.value || 0), 0);
         const weekTotalStr = weekTotal === 0 ? '0' : (weekTotal > 0 ? '+' + weekTotal : weekTotal.toString());
-        const currentScore = calcScore(s.name);
+        const currentScore = calcScoreUpToWeek(s.name);   // ← 使用截至当周的操行分
 
         if (records.length === 0) {
             html += `<tr><td>${s.name}</td><td style="color:var(--text-secondary);">无记录</td><td>0</td><td>${currentScore}</td></tr>`;
@@ -2709,13 +2741,10 @@ window.renderWeeklySummary = function() {
             const items = records.map((r, i) => {
                 const d = new Date(r.date);
                 const weekday = dayNames[d.getDay()];
-                // 查找代码描述
                 const codeItem = allDeduct.find(c => c.code === r.code) || allBonus.find(c => c.code === r.code);
                 const codeDesc = codeItem ? (codeItem.description || codeItem.desc) : '';
-                // 构建事由文本：如果 reason 中已包含描述，则直接使用，否则补充代码含义
                 let reasonText = r.reason || '';
                 if (codeDesc && !reasonText.includes(codeDesc)) {
-                    // 避免重复拼接
                     if (r.code && reasonText.startsWith(r.code)) {
                         reasonText = reasonText;
                     } else {
@@ -2731,8 +2760,7 @@ window.renderWeeklySummary = function() {
         }
     });
     tbody.innerHTML = html;
-};
-// 导出周操行汇总为 Excel (CSV)
+};// 导出周操行汇总为 Excel (CSV)
 window.exportWeeklySummary = function() {
     const table = document.getElementById('weekly-summary-table');
     if (!table) return;
